@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 
@@ -61,3 +62,8 @@ def append_event(session: Session, entry: AuditEntry) -> AuditEvent:
     session.add(event)
     session.flush()
     return event
+
+
+def policy_audit_hook(session: Session, event: Mapping[str, Any]) -> None:
+    """Write a `PolicyService` audit record to the chain. Pass as `PolicyService(audit=...)`."""
+    append_event(session, AuditEntry.model_validate(dict(event)))

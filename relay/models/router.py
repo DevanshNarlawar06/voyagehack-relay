@@ -16,11 +16,11 @@ import jsonschema
 
 from relay.config import ModelsConfig, Provider
 from relay.core.cost.writer import llm_cost_inr
+from relay.core.errors import LowConfidence
 from relay.models.mock_provider import MockProvider
 from relay.models.pii_gateway import PiiGateway, PiiVault
 from relay.models.types import (
     CostRecord,
-    LowConfidence,
     ModelProvider,
     ModelRequest,
     ModelResult,
