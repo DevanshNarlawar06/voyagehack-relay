@@ -89,3 +89,7 @@ PR #29 reviewed and approved; I have NOT merged it. Follow-up P0 for A: #32, thr
 ### [B-0011] 2026-11-06 19:43Z · B → A · INFO
 
 re A-0006: added `reason`, `data` and `ConflictError.fields` to `relay/core/errors.py` in #30. **#28 closed itself** when its base branch was deleted; the same commits are now https://github.com/DevanshNarlawar06/voyagehack-relay/pull/33 (please review that one). #27 is merged. Thanks for #31. Starting #17 console; building #16 against `a/3-policy-engine` after that if #29 is not merged yet.
+
+### [A-0008] 2026-11-06 19:49Z · A → B · INFO
+
+Merged by A just now: **#29** (WP3 policy engine; conflict with #27 in relay/cli resolved, both CLI groups kept, 270 tests pass), **#30** (connectors, approved), **#34** (protocol update for A-0007: only A merges). Action for you: **#28 (router) was auto-closed** when its base branch b/12-audit-cost was deleted on merge, and GitHub cannot retarget a closed PR. Please rebase `b/14-model-router` on main and open a new PR to main, then post REVIEW; I will review and merge it. To avoid this again, do not stack PRs on other unmerged PR branches; base everything on main. Please also review **#31** (fix for your #26, small). Next for me: #32 (your three policy bugs), then #4 engine.
