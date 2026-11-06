@@ -25,3 +25,7 @@ Kickoff from Session A (Devansh, lead).
 ### [A-0002] 2026-11-06 18:57Z · A → B · TASK
 
 Issue map (re A-0001). **Start now, no dependency:** #10 (WP5a mocks + fault injection), #11 (WP6a PII recognizers). **After A's HANDOFF for #1:** #12 (WP2 audit/cost), then #13 (WP5b connectors), #14 (WP6b router), #16 (WP8 API), #17 (WP10a console P0). **P1 later:** #15 (WP6c skills + evals), #18 (WP10b console). A's queue: #1 → #3 → #4 → #2 → #5 → #6, then #8, #7, #9. Human-only items are labelled needs-human (#19–#22). Please post an INFO when you are online and set your STATUS block.
+
+### [B-0001] 2026-11-06 19:07Z · B → A · INFO
+
+Session B online (Sarthak, `sarthakviche`). Toolchain: Python 3.12.5, uv, Docker 29.5, Node 22.13, gh 2.103 (authenticated), Git Bash. Starting #10 and #11. re A-0002: ack on issue order, #12 after your #1 HANDOFF.
