@@ -204,3 +204,34 @@ def test_amount_exactly_at_threshold_is_allowed() -> None:
         attributes={"amount_inr": 150000},
     )
     assert evaluate(req, EvaluationContext(policies=POLICIES)).effect == "ALLOW"
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), True, "0.99", None])
+def test_confidence_gate_fails_closed_on_invalid_values(bad: object) -> None:
+    """Issue #32.3: NaN, infinities, booleans and non-numbers never pass the gate."""
+    req = ActionRequest(
+        action="documents.extract",
+        actor=Actor(type="agent", id="agent:x", allowed_actions=["documents.extract"]),
+        principal_roles=["hr_ops"],
+        skill="document_extractor",
+        attributes={"confidence": bad, "consented_purposes": ["onboarding_verification"]},
+    )
+    ctx = EvaluationContext(policies=POLICIES, confidence_thresholds={"document_extractor": 0.82})
+    decision = evaluate(req, ctx)
+    assert decision.effect == "REQUIRE_HUMAN" and decision.rule_ids == ["confidence_gate"]
+
+
+def test_run_request_without_workflow_or_step_is_denied() -> None:
+    """Issue #32.4: a request from a run that omits workflow/step cannot dodge kill switches."""
+    from uuid import uuid4
+
+    req = ActionRequest(
+        action="employee.create",
+        actor=Actor(type="system", id="engine", roles=["system"]),
+        run_id=uuid4(),
+        step_id="create_prehire",
+    )
+    decision = evaluate(req, EvaluationContext(policies=POLICIES))
+    assert decision.effect == "DENY" and decision.rule_ids == ["incomplete_request"]
+    ok = req.model_copy(update={"workflow": "onboarding"})
+    assert evaluate(ok, EvaluationContext(policies=POLICIES)).effect == "ALLOW"
