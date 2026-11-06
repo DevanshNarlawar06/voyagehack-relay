@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from relay.api.deps import ApiServices
+from relay.api.intake_routes import router as intake_router
 from relay.api.routers import router
 
 _DEFAULT_CONSOLE_ORIGIN = "http://localhost:3000"
@@ -24,4 +25,5 @@ def create_app(services: ApiServices) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(router)
+    app.include_router(intake_router)
     return app

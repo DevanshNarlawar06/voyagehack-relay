@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Annotated, Any, Protocol
 from uuid import UUID
 
@@ -16,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from relay.config import RelayConfig, get_settings
 from relay.connectors.base import Connector, FaultControl
+from relay.core.engine.ports import SkillPort
 from relay.core.policy import ActionRequest, Actor, Decision, PolicyService, SubjectRef
 from relay.db.models import User
 from relay.db.session import session_scope
@@ -53,6 +56,12 @@ class EngineGateway(Protocol):
         """Apply a human decision and resume the step. Authorizes the decider itself."""
         ...
 
+    def record_subject_action(
+        self, run_id: UUID, action: str, payload: Mapping[str, Any] | None = None, *, actor: str
+    ) -> bool:
+        """The data subject did something a step waits for. False if nothing was waiting."""
+        ...
+
 
 @dataclass
 class ApiServices:
@@ -63,6 +72,9 @@ class ApiServices:
     connectors: dict[str, Connector] = field(default_factory=dict)
     faults: FaultControl | None = None
     engine: EngineGateway | None = None
+    intake: SkillPort | None = None
+    helpdesk: SkillPort | None = None
+    storage_dir: Path = Path(os.environ.get("RELAY_STORAGE_DIR", "storage/documents"))
 
 
 def get_services(request: Request) -> ApiServices:
