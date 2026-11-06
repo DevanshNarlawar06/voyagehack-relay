@@ -16,6 +16,7 @@ class Entity(StrEnum):
     EMAIL = "EMAIL"
     DOB = "DOB"
     BANK_ACCOUNT = "BANK_ACCOUNT"
+    PERSON = "PERSON"
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,0 +1,13 @@
+skill: comms_drafter
+version: 1
+description: Draft welcome notes, manager briefs and knowledge transfer plans
+principal: run.subject
+allowed_actions: [comms.manager_brief, comms.welcome, comms.kt_plan]
+prompt_version: v1
+max_output_tokens: 150  # PRD 13.2 cap
+output_schema:
+  type: object
+  properties:
+    subject: { type: string }
+    body: { type: string }
+  required: [subject, body]

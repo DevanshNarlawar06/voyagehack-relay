@@ -1,0 +1,13 @@
+skill: intake
+version: 1
+description: Turn a chat message into an intent and slots
+principal: conversation.user
+allowed_actions: [chat.intake]
+prompt_version: v1
+threshold: 0.67  # from evals/threshold_report.md; two of three samples must agree
+max_output_tokens: 80
+output_schema:
+  type: object
+  properties:
+    intent: { enum: [onboarding_status, documents_uploaded, policy_question, resign, data_request, posh_report, grievance_report, whistleblower_report, unknown] }
+  required: [intent]

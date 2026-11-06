@@ -19,6 +19,7 @@ from relay.core.cost.writer import llm_cost_inr
 from relay.core.errors import LowConfidence
 from relay.models.mock_provider import MockProvider
 from relay.models.pii_gateway import PiiGateway, PiiVault
+from relay.models.recognizers import known_value_recognizer
 from relay.models.types import (
     CostRecord,
     ModelProvider,
@@ -88,6 +89,7 @@ class _Attempt:
 
     cost: Decimal
     payload_ids: list[UUID]
+    gateway: PiiGateway
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +114,19 @@ class ModelRouter:
         self._sink = sink
         self._gateway = gateway or PiiGateway()
 
+    def is_offline(self, tier: str) -> bool:
+        """True if a tier is the deterministic mock, whose answers are not real content."""
+        return self._config.provider_for_tier(tier).litellm_model.startswith(_MOCK_PREFIX)
+
+    def _gateway_for(self, request: ModelRequest) -> PiiGateway:
+        gateway = self._gateway
+        for entity in {entity for entity, _ in request.known_values}:
+            values = [value for known, value in request.known_values if known is entity]
+            recognizer = known_value_recognizer(entity, values)
+            if recognizer is not None:
+                gateway = gateway.with_recognizer(recognizer)
+        return gateway
+
     def complete(self, request: ModelRequest) -> ModelResult:
         """Mask, call tier1, gate on confidence, escalate to tier2 once, record everything.
 
@@ -119,12 +134,13 @@ class ModelRouter:
         Returns the output with PII tokens restored.
         """
         vault = request.vault if request.vault is not None else PiiVault()
+        gateway = self._gateway_for(request)
         messages = [
-            {"role": m.role, "content": self._gateway.mask(m.content, vault).text}
+            {"role": m.role, "content": gateway.mask(m.content, vault).text}
             for m in request.messages
         ]
         threshold = self._threshold(request)
-        attempt = _Attempt(Decimal(0), [])
+        attempt = _Attempt(Decimal(0), [], gateway)
         failures = 0
         for tier in ("tier1", "tier2"):
             try:
@@ -207,7 +223,7 @@ class ModelRouter:
         instruction = _REPAIR_INSTRUCTION + json.dumps(request.output_schema)
         repair = [
             *messages,
-            {"role": "assistant", "content": self._gateway.mask(reply, vault).text},
+            {"role": "assistant", "content": attempt.gateway.mask(reply, vault).text},
             {"role": "user", "content": instruction},
         ]
         reply = self._call(tier, request, repair, temperature, attempt, vault)
@@ -255,7 +271,7 @@ class ModelRouter:
             logger.warning("model provider %s failed: %s", name, type(exc).__name__)
             raise ModelUnavailable(f"provider {name} failed") from None
         # A reply can repeat PII the model was never sent, so it is masked before being stored.
-        masked_reply = self._gateway.mask(response.text, vault).text
+        masked_reply = attempt.gateway.mask(response.text, vault).text
         in_row = PayloadRecord(
             direction="in",
             masked_text=masked_reply,

@@ -1,0 +1,150 @@
+{"text": "what's my onboarding status", "intent": "onboarding_status"}
+{"text": "status of my onboarding please", "intent": "onboarding_status"}
+{"text": "where is my onboarding at", "intent": "onboarding_status"}
+{"text": "how far along am I in onboarding", "intent": "onboarding_status"}
+{"text": "can you check my onboarding status", "intent": "onboarding_status"}
+{"text": "where am I in the process", "intent": "onboarding_status"}
+{"text": "onboarding status?", "intent": "onboarding_status"}
+{"text": "any update on my onboarding status", "intent": "onboarding_status"}
+{"text": "how far along is my joining", "intent": "onboarding_status"}
+{"text": "what is the status of my onboarding today", "intent": "onboarding_status"}
+{"text": "tell me my onboarding status", "intent": "onboarding_status"}
+{"text": "has everything been set up for my first day", "intent": "onboarding_status"}
+{"text": "is my joining paperwork moving", "intent": "onboarding_status"}
+{"text": "any news on my onboarding status", "intent": "onboarding_status"}
+{"text": "how far along are we", "intent": "onboarding_status"}
+{"text": "where is my onboarding right now", "intent": "onboarding_status"}
+{"text": "please share my onboarding status", "intent": "onboarding_status"}
+{"text": "what is pending before I start", "intent": "onboarding_status"}
+{"text": "am I all set for monday", "intent": "onboarding_status"}
+{"text": "what's left for me to do before joining", "intent": "onboarding_status"}
+{"text": "I've uploaded my documents", "intent": "documents_uploaded"}
+{"text": "just uploaded my pan", "intent": "documents_uploaded"}
+{"text": "submitted my documents", "intent": "documents_uploaded"}
+{"text": "I uploaded everything", "intent": "documents_uploaded"}
+{"text": "sent the documents", "intent": "documents_uploaded"}
+{"text": "sent my docs yesterday", "intent": "documents_uploaded"}
+{"text": "submitted my docs", "intent": "documents_uploaded"}
+{"text": "documents uploaded", "intent": "documents_uploaded"}
+{"text": "i have uploaded the aadhaar", "intent": "documents_uploaded"}
+{"text": "uploaded the files you asked for", "intent": "documents_uploaded"}
+{"text": "I already uploaded the bank proof", "intent": "documents_uploaded"}
+{"text": "I uploaded my degree certificate", "intent": "documents_uploaded"}
+{"text": "I have uploaded them all", "intent": "documents_uploaded"}
+{"text": "uploaded the photo too", "intent": "documents_uploaded"}
+{"text": "submitted my documents this morning", "intent": "documents_uploaded"}
+{"text": "the papers are in now", "intent": "documents_uploaded"}
+{"text": "you should have my scans", "intent": "documents_uploaded"}
+{"text": "done with the paperwork you wanted", "intent": "documents_uploaded"}
+{"text": "attached all of it earlier", "intent": "documents_uploaded"}
+{"text": "how many leaves do I get in probation", "intent": "policy_question"}
+{"text": "what is the notice period for G3", "intent": "policy_question"}
+{"text": "what is my notice period", "intent": "policy_question"}
+{"text": "am I eligible for gratuity", "intent": "policy_question"}
+{"text": "how does provident fund work", "intent": "policy_question"}
+{"text": "how much pf is deducted", "intent": "policy_question"}
+{"text": "leave policy please", "intent": "policy_question"}
+{"text": "what is the probation period", "intent": "policy_question"}
+{"text": "when do I get full and final", "intent": "policy_question"}
+{"text": "how many casual leaves do I get", "intent": "policy_question"}
+{"text": "sick leave rules", "intent": "policy_question"}
+{"text": "can I take leave during notice", "intent": "policy_question"}
+{"text": "is earned leave allowed in probation", "intent": "policy_question"}
+{"text": "how long is probation here", "intent": "policy_question"}
+{"text": "gratuity rules", "intent": "policy_question"}
+{"text": "what is the PF rate", "intent": "policy_question"}
+{"text": "does probation affect leaves", "intent": "policy_question"}
+{"text": "how many days of notice do I owe", "intent": "policy_question"}
+{"text": "explain gratuity to me", "intent": "policy_question"}
+{"text": "is there a provident fund", "intent": "policy_question"}
+{"text": "how much time off can I take", "intent": "policy_question"}
+{"text": "when do I get my last pay after leaving", "intent": "policy_question"}
+{"text": "what happens to my retirement savings", "intent": "policy_question"}
+{"text": "how long until I am confirmed", "intent": "policy_question"}
+{"text": "I want to resign", "intent": "resign"}
+{"text": "I would like to resign", "intent": "resign"}
+{"text": "I am resigning", "intent": "resign"}
+{"text": "I want to quit my job", "intent": "resign"}
+{"text": "putting in my papers", "intent": "resign"}
+{"text": "I'd like to put in my notice", "intent": "resign"}
+{"text": "how do I serve my notice", "intent": "resign"}
+{"text": "I am going to resign next week", "intent": "resign"}
+{"text": "please process my resignation", "intent": "resign"}
+{"text": "I have decided to resign", "intent": "resign"}
+{"text": "I want to submit my resignation", "intent": "resign"}
+{"text": "I am ready to resign", "intent": "resign"}
+{"text": "I want to quit my job next month", "intent": "resign"}
+{"text": "how do I resign", "intent": "resign"}
+{"text": "I wish to resign from my role", "intent": "resign"}
+{"text": "I've accepted another offer and will be leaving", "intent": "resign"}
+{"text": "this will be my last month here", "intent": "resign"}
+{"text": "I'm moving on from the company", "intent": "resign"}
+{"text": "time for me to leave TBO", "intent": "resign"}
+{"text": "show me my data", "intent": "data_request"}
+{"text": "can I see my personal data", "intent": "data_request"}
+{"text": "export my data", "intent": "data_request"}
+{"text": "please delete my personal data", "intent": "data_request"}
+{"text": "erase my data", "intent": "data_request"}
+{"text": "correct my data", "intent": "data_request"}
+{"text": "I want to see my data", "intent": "data_request"}
+{"text": "show all my data", "intent": "data_request"}
+{"text": "please correct my personal data", "intent": "data_request"}
+{"text": "delete my data", "intent": "data_request"}
+{"text": "what information do you hold about me", "intent": "data_request"}
+{"text": "send me a copy of everything you have on me", "intent": "data_request"}
+{"text": "remove my records", "intent": "data_request"}
+{"text": "my address on file is wrong", "intent": "data_request"}
+{"text": "I need to report sexual harassment", "intent": "posh_report"}
+{"text": "my lead keeps sexually harassing me", "intent": "posh_report"}
+{"text": "I want to file a POSH complaint", "intent": "posh_report"}
+{"text": "someone touched me inappropriately at work", "intent": "posh_report"}
+{"text": "report a posh issue", "intent": "posh_report"}
+{"text": "this is about posh", "intent": "posh_report"}
+{"text": "I was sexually harassed at the offsite", "intent": "posh_report"}
+{"text": "a colleague keeps making comments about my body", "intent": "posh_report"}
+{"text": "my manager asked me out repeatedly and it makes me unsafe", "intent": "posh_report"}
+{"text": "I have a grievance", "intent": "grievance_report"}
+{"text": "I want to file a complaint about my manager", "intent": "grievance_report"}
+{"text": "I need to raise a grievance", "intent": "grievance_report"}
+{"text": "I want to make a formal complaint", "intent": "grievance_report"}
+{"text": "file a complaint for me", "intent": "grievance_report"}
+{"text": "I'm being bullied by my team", "intent": "grievance_report"}
+{"text": "raise a grievance about pay", "intent": "grievance_report"}
+{"text": "my manager is treating me unfairly", "intent": "grievance_report"}
+{"text": "I am being singled out at work", "intent": "grievance_report"}
+{"text": "I want to whistleblow", "intent": "whistleblower_report"}
+{"text": "I want to report fraud", "intent": "whistleblower_report"}
+{"text": "reporting corruption in procurement", "intent": "whistleblower_report"}
+{"text": "whistleblower report please", "intent": "whistleblower_report"}
+{"text": "I need to report a bribe", "intent": "whistleblower_report"}
+{"text": "I'm reporting fraud by a vendor", "intent": "whistleblower_report"}
+{"text": "someone in finance is taking kickbacks", "intent": "whistleblower_report"}
+{"text": "I found fake invoices", "intent": "whistleblower_report"}
+{"text": "the coffee machine is broken", "intent": "unknown"}
+{"text": "what's for lunch", "intent": "unknown"}
+{"text": "hello", "intent": "unknown"}
+{"text": "thanks", "intent": "unknown"}
+{"text": "can you book me a cab", "intent": "unknown"}
+{"text": "good morning", "intent": "unknown"}
+{"text": "the lift is out of order", "intent": "unknown"}
+{"text": "please reset my badge", "intent": "unknown"}
+{"text": "which floor is finance on", "intent": "unknown"}
+{"text": "the printer jammed", "intent": "unknown"}
+{"text": "any snacks left", "intent": "unknown"}
+{"text": "can I change my desk", "intent": "unknown"}
+{"text": "is today a holiday in Pune", "intent": "unknown"}
+{"text": "how do I book a meeting room", "intent": "unknown"}
+{"text": "who approves my travel", "intent": "unknown"}
+{"text": "can you share the holiday calendar link", "intent": "unknown"}
+{"text": "how do I join the sports club", "intent": "unknown"}
+{"text": "where do I collect my id", "intent": "unknown"}
+{"text": "is there a shuttle from the metro", "intent": "unknown"}
+{"text": "what is the guest wifi", "intent": "unknown"}
+{"text": "my monitor flickers", "intent": "unknown"}
+{"text": "who is the CEO", "intent": "unknown"}
+{"text": "my laptop is slow", "intent": "unknown"}
+{"text": "ok", "intent": "unknown"}
+{"text": "tell me a joke", "intent": "unknown"}
+{"text": "what time is the all hands", "intent": "unknown"}
+{"text": "is the office open on saturday", "intent": "unknown"}
+{"text": "where is the parking", "intent": "unknown"}

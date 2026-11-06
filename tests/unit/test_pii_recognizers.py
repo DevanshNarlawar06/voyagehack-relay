@@ -230,4 +230,5 @@ def test_precision_and_recall_on_fixture_set() -> None:
     recall = sum(tp.values()) / (sum(tp.values()) + sum(fn.values()))
     assert precision >= 0.95, (precision, fp)
     assert recall >= 0.95, (recall, fn)
-    assert all(tp[entity] > 0 for entity in Entity)
+    # PERSON comes from known values (test_skills.py), not from a pattern, until NER exists.
+    assert all(tp[entity] > 0 for entity in Entity if entity is not Entity.PERSON)

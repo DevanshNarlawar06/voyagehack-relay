@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from relay.db.models import CostEvent, CostKind, ModelPayload, PayloadDirection
 from relay.models.types import CostRecord, PayloadRecord
@@ -48,3 +48,24 @@ class DatabaseSink:
             )
         )
         self._session.flush()
+
+
+class IndependentSink:
+    """Writes each row in its own transaction, for callers with no session, such as skills.
+
+    What left our infrastructure is on record even if the step that sent it later rolls back.
+    """
+
+    def __init__(self, sessions: sessionmaker[Session]) -> None:
+        """Bind a session factory."""
+        self._sessions = sessions
+
+    def record_payload(self, payload: PayloadRecord) -> None:
+        """Insert one `model_payloads` row and commit."""
+        with self._sessions.begin() as session:
+            DatabaseSink(session).record_payload(payload)
+
+    def record_cost(self, cost: CostRecord) -> None:
+        """Insert one `cost_events` row and commit."""
+        with self._sessions.begin() as session:
+            DatabaseSink(session).record_cost(cost)
