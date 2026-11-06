@@ -1,0 +1,278 @@
+[
+  {
+    "employee_code": "TBO1000",
+    "earned": 18,
+    "casual": 1,
+    "sick": 7
+  },
+  {
+    "employee_code": "TBO1001",
+    "earned": 24,
+    "casual": 0,
+    "sick": 3
+  },
+  {
+    "employee_code": "TBO1002",
+    "earned": 24,
+    "casual": 2,
+    "sick": 7
+  },
+  {
+    "employee_code": "TBO1003",
+    "earned": 6,
+    "casual": 3,
+    "sick": 0
+  },
+  {
+    "employee_code": "TBO1004",
+    "earned": 11,
+    "casual": 7,
+    "sick": 0
+  },
+  {
+    "employee_code": "TBO1005",
+    "earned": 6,
+    "casual": 0,
+    "sick": 4
+  },
+  {
+    "employee_code": "TBO1006",
+    "earned": 16,
+    "casual": 8,
+    "sick": 7
+  },
+  {
+    "employee_code": "TBO1007",
+    "earned": 14,
+    "casual": 8,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1008",
+    "earned": 13,
+    "casual": 6,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1009",
+    "earned": 3,
+    "casual": 4,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1010",
+    "earned": 7,
+    "casual": 5,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1011",
+    "earned": 2,
+    "casual": 0,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1012",
+    "earned": 0,
+    "casual": 3,
+    "sick": 8
+  },
+  {
+    "employee_code": "TBO1013",
+    "earned": 7,
+    "casual": 0,
+    "sick": 0
+  },
+  {
+    "employee_code": "TBO1014",
+    "earned": 9,
+    "casual": 0,
+    "sick": 3
+  },
+  {
+    "employee_code": "TBO1015",
+    "earned": 0,
+    "casual": 0,
+    "sick": 4
+  },
+  {
+    "employee_code": "TBO1016",
+    "earned": 5,
+    "casual": 6,
+    "sick": 3
+  },
+  {
+    "employee_code": "TBO1017",
+    "earned": 24,
+    "casual": 7,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1018",
+    "earned": 13,
+    "casual": 7,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1019",
+    "earned": 10,
+    "casual": 5,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1020",
+    "earned": 18,
+    "casual": 3,
+    "sick": 0
+  },
+  {
+    "employee_code": "TBO1021",
+    "earned": 2,
+    "casual": 2,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1022",
+    "earned": 14,
+    "casual": 0,
+    "sick": 8
+  },
+  {
+    "employee_code": "TBO1023",
+    "earned": 22,
+    "casual": 1,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1024",
+    "earned": 24,
+    "casual": 7,
+    "sick": 7
+  },
+  {
+    "employee_code": "TBO1025",
+    "earned": 0,
+    "casual": 5,
+    "sick": 7
+  },
+  {
+    "employee_code": "TBO1026",
+    "earned": 19,
+    "casual": 2,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1027",
+    "earned": 6,
+    "casual": 8,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1028",
+    "earned": 23,
+    "casual": 3,
+    "sick": 3
+  },
+  {
+    "employee_code": "TBO1029",
+    "earned": 15,
+    "casual": 0,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1030",
+    "earned": 15,
+    "casual": 1,
+    "sick": 8
+  },
+  {
+    "employee_code": "TBO1031",
+    "earned": 13,
+    "casual": 1,
+    "sick": 5
+  },
+  {
+    "employee_code": "TBO1032",
+    "earned": 17,
+    "casual": 1,
+    "sick": 2
+  },
+  {
+    "employee_code": "TBO1033",
+    "earned": 18,
+    "casual": 1,
+    "sick": 4
+  },
+  {
+    "employee_code": "TBO1034",
+    "earned": 15,
+    "casual": 0,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1035",
+    "earned": 15,
+    "casual": 5,
+    "sick": 5
+  },
+  {
+    "employee_code": "TBO1036",
+    "earned": 8,
+    "casual": 8,
+    "sick": 5
+  },
+  {
+    "employee_code": "TBO1037",
+    "earned": 1,
+    "casual": 6,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1038",
+    "earned": 7,
+    "casual": 5,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1039",
+    "earned": 12,
+    "casual": 7,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1040",
+    "earned": 16,
+    "casual": 2,
+    "sick": 5
+  },
+  {
+    "employee_code": "TBO1041",
+    "earned": 18,
+    "casual": 7,
+    "sick": 3
+  },
+  {
+    "employee_code": "TBO1042",
+    "earned": 8,
+    "casual": 8,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1043",
+    "earned": 4,
+    "casual": 4,
+    "sick": 1
+  },
+  {
+    "employee_code": "TBO1044",
+    "earned": 14,
+    "casual": 2,
+    "sick": 6
+  },
+  {
+    "employee_code": "TBO1045",
+    "earned": 8,
+    "casual": 3,
+    "sick": 6
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "employee_code": "TBO1019",
+    "resignation_date": "2026-11-09",
+    "requested_last_day": "2027-01-08",
+    "reason": "relocation",
+    "buyout_requested": true
+  },
+  {
+    "employee_code": "TBO1005",
+    "resignation_date": "2026-11-09",
+    "requested_last_day": "2027-01-08",
+    "reason": "relocation",
+    "buyout_requested": false
+  },
+  {
+    "employee_code": "TBO1045",
+    "resignation_date": "2026-11-05",
+    "requested_last_day": "2026-12-24",
+    "reason": "relocation",
+    "buyout_requested": false
+  },
+  {
+    "employee_code": "TBO1025",
+    "resignation_date": "2026-11-05",
+    "requested_last_day": "2026-12-24",
+    "reason": "higher studies",
+    "buyout_requested": false
+  },
+  {
+    "employee_code": "TBO1036",
+    "resignation_date": "2026-11-09",
+    "requested_last_day": "2027-01-08",
+    "reason": "higher studies",
+    "buyout_requested": false
+  }
+]

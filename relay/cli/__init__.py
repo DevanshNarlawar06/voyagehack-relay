@@ -190,3 +190,31 @@ def validate(
         for e in errors:
             typer.echo(f"     - {e}")
     raise typer.Exit(1 if failed else 0)
+
+
+seed_app = typer.Typer(no_args_is_help=True, help="Synthetic dataset (seed/fixtures).")
+app.add_typer(seed_app, name="seed")
+
+
+@seed_app.command("generate")
+def seed_generate() -> None:
+    """Regenerate seed/fixtures/*.json deterministically."""
+    from relay.seeding.generate import generate, write
+
+    for path in write(generate()):
+        typer.echo(f"wrote {path.name}")
+
+
+@seed_app.command("load")
+def seed_load() -> None:
+    """Load seed/fixtures into the database (idempotent)."""
+    from relay.db.session import session_scope
+    from relay.seeding.generate import read
+    from relay.seeding.load import load
+
+    with session_scope() as session:
+        report = load(session, read())
+    typer.echo(
+        f"users={report.users} employees={report.employees} candidates={report.candidates} "
+        f"approved_offers={report.approved_offers}"
+    )
