@@ -15,6 +15,8 @@ db_app = typer.Typer(no_args_is_help=True, help="Database migrations.")
 config_app = typer.Typer(no_args_is_help=True, help="Configuration.")
 app.add_typer(db_app, name="db")
 app.add_typer(config_app, name="config")
+audit_app = typer.Typer(no_args_is_help=True, help="Audit log.")
+app.add_typer(audit_app, name="audit")
 
 
 @app.command()
@@ -30,6 +32,20 @@ def db_upgrade(revision: str = "head") -> None:
 
     upgrade(revision)
     typer.echo(f"database upgraded to {revision}")
+
+
+@audit_app.command("verify")
+def audit_verify(url: str | None = None) -> None:
+    """Recompute the audit hash chain. Exits 1 at the first break."""
+    from relay.core.audit.verifier import verify_chain
+    from relay.db.session import session_scope
+
+    with session_scope(url) as session:
+        result = verify_chain(session)
+    if not result.ok:
+        typer.echo(f"audit chain BROKEN at seq {result.first_bad_seq}: {result.problem}")
+        raise typer.Exit(code=1)
+    typer.echo(f"audit chain ok: {result.checked} events, head {result.head_hash}")
 
 
 @config_app.command("check")

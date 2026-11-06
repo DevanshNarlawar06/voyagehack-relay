@@ -549,7 +549,15 @@ class ModelPayload(Base):
 
 class CostEvent(Base):
     __tablename__ = "cost_events"
-    __table_args__ = (Index("ix_cost_events_run", "run_id"),)
+    __table_args__ = (
+        Index("ix_cost_events_run", "run_id"),
+        Index(
+            "uq_cost_events_infra_alloc_run",
+            "run_id",
+            unique=True,
+            postgresql_where=text("kind = 'infra_alloc'"),
+        ),
+    )
 
     run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workflow_runs.id"))
     step_run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("step_runs.id"))
