@@ -1,0 +1,44 @@
+pack: reserved
+cases:
+  - name: system cannot approve an offer
+    request: { action: hiring.offer.approve, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_offer, rule_ids: [reserved] }
+  - name: agent cannot reject a candidate (fair hiring)
+    request:
+      action: hiring.candidate.reject
+      actor: {type: agent, id: "agent:intake", roles: [], allowed_actions: ["hiring.*"]}
+      principal_roles: [hr_admin]
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_offer }
+  - name: hr_admin without the offer approver role still needs the approver
+    request: { action: hiring.offer.approve, actor: {type: human, id: u-hradmin, roles: [hr_admin]} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_offer }
+  - name: named offer approver can approve
+    request: { action: hiring.offer.approve, actor: {type: human, id: u-offer, roles: [approver_offer]} }
+    expect: { effect: ALLOW }
+  - name: salary change is reserved under comp.*
+    request: { action: comp.salary.change, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: DENY, rule_ids: [rbac] }
+  - name: resignation acceptance goes to the manager
+    request: { action: employment.resignation.accept, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: manager }
+  - name: F&F sign-off goes to finance
+    request: { action: payroll.fnf.signoff, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_finance }
+  - name: config addition reserves probation confirmation for the manager
+    request: { action: employment.probation.confirm, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: manager }
+  - name: manager can confirm probation
+    request: { action: employment.probation.confirm, actor: {type: human, id: u-mgr, roles: [manager]} }
+    expect: { effect: ALLOW }
+  - name: agent may route a grievance
+    request:
+      action: grievance.route
+      actor: {type: agent, id: "agent:intake", allowed_actions: ["grievance.route"]}
+      principal_roles: [employee]
+    expect: { effect: ALLOW }
+  - name: agent may never decide a POSH case
+    request:
+      action: posh.case.decide
+      actor: {type: agent, id: "agent:intake", allowed_actions: ["posh.*"]}
+      principal_roles: [hr_admin]
+    expect: { effect: DENY, rule_ids: [route_only] }

@@ -1,0 +1,14 @@
+pack: approvals
+cases:
+  - name: cheap laptop is allowed
+    request: { action: assets.laptop.allocate, actor: {type: system, id: engine, roles: [system]}, attributes: { amount_inr: 40000 } }
+    expect: { effect: ALLOW }
+  - name: expensive laptop needs approval
+    request: { action: assets.laptop.allocate, actor: {type: system, id: engine, roles: [system]}, attributes: { amount_inr: 210000 } }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_it_spend, rule_ids: [laptop_high_spend] }
+  - name: missing amount fails closed to approval
+    request: { action: assets.laptop.allocate, actor: {type: system, id: engine, roles: [system]}, attributes: {} }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_it_spend }
+  - name: the IT spend approver approving is the approval
+    request: { action: assets.laptop.allocate, actor: {type: human, id: u-itspend, roles: [approver_it_spend]}, attributes: { amount_inr: 210000 } }
+    expect: { effect: ALLOW }
