@@ -1,4 +1,4 @@
-# WP1 owns this file. Postgres is enough to start; api/worker/web/mocks/slack are added by their WPs.
+# WP1 owns this file. api/worker/web/mocks/slack are added by their WPs.
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -19,9 +19,10 @@ services:
     build: .
     depends_on:
       postgres: { condition: service_healthy }
-    environment:
+    environment: &relay-env
       DATABASE_URL: postgresql+psycopg://relay:relay@postgres:5432/relay
       RELAY_MOCKS_URL: http://mocks:9000
+      RELAY_WEB_URL: "${RELAY_WEB_URL:-http://localhost:3000}"
       RELAY_NOTIFY_URL: http://mocks:9000
       RELAY_CONSOLE_ORIGIN: "${RELAY_CONSOLE_ORIGIN:-http://localhost:3000}"
       RELAY_ENCRYPTION_KEY: "${RELAY_ENCRYPTION_KEY:-}"
@@ -29,6 +30,19 @@ services:
       RELAY_STORAGE_DIR: /app/storage/documents
     volumes: ["documents:/app/storage"]
     ports: ["8000:8000"]
+  worker:
+    # Two engine workers (PRD 8). Steps are leased with SKIP LOCKED, so they never collide, and
+    # a killed worker's lease is reclaimed by the other. The api container runs migrations; a
+    # worker that starts first exits and is restarted until the schema is there.
+    build: .
+    command: ["uv", "run", "--no-sync", "relay", "worker"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      api: { condition: service_started }
+    environment: *relay-env
+    volumes: ["documents:/app/storage"]
+    restart: on-failure
+    deploy: { replicas: 2 }
 volumes:
   documents:
   pgdata:
