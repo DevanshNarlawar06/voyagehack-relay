@@ -91,3 +91,19 @@ def test_each_joiner_was_sent_a_signed_link_that_ctx_never_holds_in_plain_text(r
     for body in links:
         token = body.split("/upload?token=")[1].split()[0]
         assert token not in contexts
+
+
+def test_every_exception_task_carries_the_analyst_summary(report) -> None:  # type: ignore[no-untyped-def]
+    _, sessions, _ = report
+    analysed = (
+        m.HumanTaskKind.CONFLICT,
+        m.HumanTaskKind.LOW_CONFIDENCE,
+        m.HumanTaskKind.OUTAGE,
+    )
+    with sessions() as s:
+        tasks = list(s.scalars(select(m.HumanTask).where(m.HumanTask.kind.in_(analysed))))
+    assert tasks
+    for task in tasks:
+        analysis = task.context_packet["analysis"]
+        assert analysis["summary"] and analysis["likely_cause"]
+        assert analysis["suggested_option"] in (None, *task.options)

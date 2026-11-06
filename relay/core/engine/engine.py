@@ -66,6 +66,14 @@ DECIDABLE = {
 EXCEPTION_OPTIONS = ["retry", "override", "fail"]
 ESCALATION_OPTIONS = ["chase", "override", "fail"]
 ESCALATION_ACTION = "sla.escalation"
+ANALYST = "exception_analyst"
+ANALYSE_ACTION = "exception.analyse"
+ANALYSED_TASKS = {
+    m.HumanTaskKind.CONFLICT,
+    m.HumanTaskKind.LOW_CONFIDENCE,
+    m.HumanTaskKind.OUTAGE,
+    m.HumanTaskKind.EXCEPTION,
+}
 APPROVAL_OPTIONS = ["approve", "reject"]
 ENGINE_ACTOR = Actor(type="system", id="engine", roles=["system"])
 DEFAULT_POOL = "pool:hr_ops"
@@ -756,10 +764,15 @@ class Engine:
         user_id: uuid.UUID | None = None,
         status: m.StepStatus = m.StepStatus.WAITING_HUMAN,
     ) -> m.HumanTask:
+        context = {"step": step.id, "workflow": f"{wf.name}@{wf.version}", **packet}
+        if kind in ANALYSED_TASKS:
+            analysis = self._analyse(s, run, wf, step, sr, kind, options, packet)
+            if analysis is not None:
+                context["analysis"] = analysis
         task = m.HumanTask(
             run_id=run.id, step_run_id=sr.id, kind=kind, action=action, assignee_role=role,
             assignee_user_id=user_id, options=options, status=m.HumanTaskStatus.OPEN,
-            context_packet={"step": step.id, "workflow": f"{wf.name}@{wf.version}", **packet},
+            context_packet=context,
         )  # fmt: skip
         s.add(task)
         s.flush()
@@ -769,6 +782,65 @@ class Engine:
         )
         self._advance(s, run, wf)
         return task
+
+    def _analyse(
+        self,
+        s: Session,
+        run: m.WorkflowRun,
+        wf: WorkflowDefinition,
+        step: Step,
+        sr: m.StepRun,
+        kind: m.HumanTaskKind,
+        options: list[str],
+        packet: Mapping[str, Any],
+    ) -> dict[str, Any] | None:
+        """Ask `exception_analyst` for the summary a person sees on the task (PRD 22, demo 4).
+
+        It acts as an agent (principal ∩ allowlist, with a Decision row like any step) and sees
+        only the reason, field names, options and step: no personal data. Any failure is logged
+        and the task opens without a summary; the analyst can never block a person's queue.
+        """
+        skill = self.deps.skills.get(ANALYST)
+        if skill is None:
+            return None
+        req = ActionRequest(
+            action=ANALYSE_ACTION,
+            actor=Actor(
+                type="agent", id=f"skill:{ANALYST}", allowed_actions=list(skill.allowed_actions)
+            ),
+            on_behalf_of=DEFAULT_POOL,
+            principal_roles=list(ENGINE_ACTOR.roles),
+            subject=SubjectRef(type=run.subject_type, id=run.subject_id),
+            run_id=run.id,
+            step_id=step.id,
+            workflow=wf.name,
+            skill=ANALYST,
+        )
+        try:
+            decision, _ = self.policy.authorize(s, req)
+            if decision.effect != "ALLOW":
+                return None
+            out = skill.run(
+                {
+                    "kind": kind.value,
+                    "reason": str(packet.get("reason", "")),
+                    "fields": list(packet.get("fields") or []),
+                    "step": step.id,
+                    "options": options,
+                    "facts": {"workflow": wf.name, "attempts": sr.attempt},
+                },
+                run_id=run.id,
+                step_run_id=sr.id,
+            )
+        except Exception:  # never block the task on the analyst
+            log.warning("exception_analyst failed for step %s", step.id, exc_info=True)
+            return None
+        return {
+            **dict(out.output),
+            "skill_version": out.skill_version,
+            "prompt_version": out.prompt_version,
+            "model_id": out.model_id,
+        }
 
     def decide_task(
         self,
