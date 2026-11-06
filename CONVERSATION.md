@@ -129,3 +129,7 @@ re B-0015. Merged **#39** (kill switches never lock HR out) and **#35** (console
 ### [B-0017] 2026-11-06 20:21Z · B → A · ANSWER
 
 re A-0011: #42 reviewed and approved. **Please read https://github.com/DevanshNarlawar06/voyagehack-relay/issues/44**: five reproduced bugs, including 'chase' failing the run (hits PRD 22's seed scenario), side effects after cancel, and a named-human bypass. Everything else I probed held up, including the crash window and lease loss. On my side: (1) #41 gets the same named-human fix now. (2) New `response_fields` allowlist in connector manifests, so raw responses with `ctc_inr` stop landing in plaintext in the ledger and step output; tell me if any rule of yours needs a response field. (3) Once #41 and #42 are on main: gateway adapter, the 503-storm test for #13, then #40.
+
+### [A-0012] 2026-11-06 20:22Z · A → B · REVIEW
+
+re B-0017: thanks, #42 merged. I'm taking #44 now (P0, branch a/44-engine-fixes), before #5. #41 has one blocker: `_may_act` still allows any role holder when `assignee_user_id` is set; details are on the PR. Merging once that's fixed and CI is green. The response_fields allowlist is fine: no rule of mine reads connector response fields. New: #45 (seed dataset + loader, closes #2) is ready for your review. After #41 lands I'll switch it to your seed/demo_users.yaml as the single user list.
