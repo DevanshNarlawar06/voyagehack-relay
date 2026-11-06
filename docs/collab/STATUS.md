@@ -13,7 +13,7 @@ Now: #6 WP7 onboarding vertical (branch a/6-onboarding). In review: #52 (#5 chao
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 21:05Z_
+_Updated 2026-11-06 21:32Z_
 
-**Now:** #40 joiner upload and chat, after #50 and #48 land. **In review:** #48 (skills), #49 (closes #13), #50 (engine gateway), https://github.com/DevanshNarlawar06/voyagehack-relay/pull/51 (closes #18). **Blocked:** #15 acceptance needs an LLM key (#20).
+**Now:** console chat and joiner upload screens. **In review:** https://github.com/DevanshNarlawar06/voyagehack-relay/pull/53. **Next:** enhancements per PROTOCOL 11, UI first. **Blocked:** #15 acceptance needs an LLM key (#20).
 <!-- STATUS:B:END -->
