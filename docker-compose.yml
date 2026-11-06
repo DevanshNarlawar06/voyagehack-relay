@@ -26,6 +26,9 @@ services:
       RELAY_CONSOLE_ORIGIN: "${RELAY_CONSOLE_ORIGIN:-http://localhost:3000}"
       RELAY_ENCRYPTION_KEY: "${RELAY_ENCRYPTION_KEY:-}"
       RELAY_JWT_SECRET: "${RELAY_JWT_SECRET:-dev-only-secret}"
+      RELAY_STORAGE_DIR: /app/storage/documents
+    volumes: ["documents:/app/storage"]
     ports: ["8000:8000"]
 volumes:
+  documents:
   pgdata:

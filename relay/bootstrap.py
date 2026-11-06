@@ -42,12 +42,17 @@ _DEFAULT_MOCKS_URL = "http://localhost:9000"
 
 def default_services(engine: EngineGateway | None = None) -> ApiServices:
     """Build the production wiring: policy decisions reach the hash chain, connectors from YAML."""
+    config = get_config()
+    sessions = session_factory()
+    skills = build_skills(ModelRouter(config.models, IndependentSink(sessions)))
     return ApiServices(
         policy=PolicyService(audit=policy_audit_hook),
-        config=get_config(),
+        config=config,
         connectors=dict(load_connectors()),
         faults=HttpFaultControl(os.environ.get("RELAY_MOCKS_URL", _DEFAULT_MOCKS_URL)),
         engine=engine,
+        intake=skills["intake"],
+        helpdesk=skills["helpdesk"],
     )
 
 

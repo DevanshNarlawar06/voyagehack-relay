@@ -485,6 +485,18 @@ class PolicyDraft(Timestamped, Base):
     updated_by: Mapped[str] = mapped_column(String(200))
 
 
+class UploadLink(Timestamped, Base):
+    """A signed one-time upload link. Only the random part is kept, never the signed token."""
+
+    __tablename__ = "upload_links"
+
+    nonce: Mapped[str] = mapped_column(String(64), unique=True)
+    person_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("persons.id"))
+    run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workflow_runs.id"))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Conversation(Timestamped, Base):
     __tablename__ = "conversations"
 

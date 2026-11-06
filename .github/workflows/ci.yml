@@ -21,6 +21,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://relay:relay@localhost:5432/relay
       RELAY_REQUIRE_DB: "1"
+      RELAY_CHAOS_RUNS: "100"  # WP4b acceptance: 100/100 exactly once (issue #5)
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

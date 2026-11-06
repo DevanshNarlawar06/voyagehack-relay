@@ -546,10 +546,10 @@ def list_employees(auth: Auth, session: Db) -> list[s.EmployeeOut]:
 def get_employee(employee_id: UUID, auth: Auth, session: Db) -> s.EmployeeDetailOut:
     """Return an employee's record: lifecycle, documents (redacted), consents, data requests."""
     auth.require("employee.read", subject=SubjectRef(type="employee", id=str(employee_id)))
-    employee = session.get(m.Employee, employee_id)
-    if employee is None:
+    record = views.employee_detail(session, employee_id)
+    if record is None:
         raise _not_found("This employee")
-    return views.employee_detail(session, employee)
+    return record
 
 
 # ---------------------------------------------------------------- DPDP
