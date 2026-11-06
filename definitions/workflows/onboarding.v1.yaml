@@ -30,19 +30,22 @@ steps:
     inputs: { joining_date: "ctx.employee.joining_date", grade: "ctx.employee.grade" }
     outputs: { terms: "result" }
 
+  - id: issue_upload_link
+    kind: rule
+    uses: rules.hr.issue_upload_link
+    action: documents.request
+    needs: [compute_terms]
+    inputs: { employee_id: "ctx.employee.employee_id", run_id: "run_id", now: "now" }
+    outputs: { invite: "result" }
+
   - id: request_documents_and_consent
     kind: connector
     uses: notify.slack_dm
     action: documents.request
-    needs: [compute_terms]
+    needs: [issue_upload_link]
     inputs:
       recipient: "ctx.employee.personal_email"
-      body: >-
-        'Welcome to TBO, ' + ctx.employee.full_name + '. Please upload your PAN, Aadhaar and a bank
-        proof at https://relay.test/upload/' + ctx.employee.employee_id + ' . Notice
-        dpdp_onboarding_v1: we use these documents only to verify your identity
-        (onboarding_verification) and to pay your salary (payroll_setup). You can withdraw consent
-        at any time from the same page.'
+      body: "ctx.invite.message"  # sealed: opened only for the outgoing message
 
   - id: await_documents
     kind: wait
@@ -78,7 +81,7 @@ steps:
     inputs:
       employee_id: "ctx.employee.employee_id"
       sealed: "ctx.extracted.sealed"
-      submitted_joining_date: "ctx.upload.joining_date"
+      submitted_joining_date: "ctx.bundle.submitted_joining_date"
     outputs: { identity: "result" }
 
   - id: activate_employee_id

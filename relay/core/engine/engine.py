@@ -1178,6 +1178,7 @@ class Engine:
             "ctx": run.context.get("ctx", {}),
             "trigger": run.context.get("trigger", {}),
             "now": now.isoformat(),
+            "run_id": str(run.id),
         }
 
     def _eval_map(

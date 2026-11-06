@@ -7,6 +7,7 @@ is retried after a crash finds its earlier write instead of repeating it.
 
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from collections import Counter
@@ -25,6 +26,8 @@ from relay.skills.document_extractor import open_sealed
 BUDDY_MIN_TENURE_DAYS = 183  # "tenure > 6 months" (PRD 5.1 step 14)
 CODE_PREFIX = "TBO"
 CORPORATE_DOMAIN = "tbo.test"
+CONSENT_NOTICE = "dpdp_onboarding_v1"
+WEB_URL = os.environ.get("RELAY_WEB_URL", "http://localhost:3000")
 
 
 def _norm(name: str) -> str:
@@ -46,6 +49,7 @@ class HrRules:
         """Name -> function, as workflows reference them in `uses`."""
         return {
             "rules.hr.create_prehire": self.create_prehire,
+            "rules.hr.issue_upload_link": self.issue_upload_link,
             "rules.hr.collect_documents": self.collect_documents,
             "rules.hr.cross_check_identity": self.cross_check_identity,
             "rules.hr.allocate_employee_code": self.allocate_employee_code,
@@ -113,6 +117,33 @@ class HrRules:
                 "ctc_matches_offer": True,
             }
 
+    # ------------------------------------------------------------ step 3 (input)
+
+    def issue_upload_link(self, employee_id: str, run_id: str, now: str) -> dict[str, Any]:
+        """A signed, one-time upload link for the joiner, and the invitation that carries it.
+
+        Both are sealed: the token is a credential, so ctx never holds it in plain text. The
+        notify connector opens the message only for the outgoing call.
+        """
+        from relay.api.uploads import LINK_LIFETIME, issue_link
+
+        with self.sessions.begin() as s:
+            emp = s.get(m.Employee, uuid.UUID(employee_id))
+            if emp is None:
+                raise PermanentError(f"no employee {employee_id}")
+            person = s.get(m.Person, emp.person_id)
+            assert person is not None
+            token = issue_link(s, emp.person_id, uuid.UUID(run_id), datetime.fromisoformat(now))
+            url = f"{WEB_URL}/upload?token={token}"
+            hours = int(LINK_LIFETIME.total_seconds() // 3600)
+            message = (
+                f"Welcome to TBO, {person.full_name}. Please upload your PAN, Aadhaar and a bank "
+                f"proof here within {hours} hours: {url} . Notice {CONSENT_NOTICE}: we use these "
+                "documents only to verify your identity (onboarding_verification) and to pay your "
+                "salary (payroll_setup). You can withdraw consent at any time from the same page."
+            )
+            return {"token": seal_value(token), "message": seal_value(message)}
+
     # ------------------------------------------------------------ step 5 (input)
 
     def collect_documents(self, documents: Any) -> dict[str, Any]:
@@ -123,15 +154,20 @@ class HrRules:
         passed through. The bundle stays sealed in ctx (PRD 10.1).
         """
         if is_sealed(documents):
-            return {"documents": documents, "count": None}
+            return {"documents": documents, "count": None, "submitted_joining_date": None}
         bundle: list[dict[str, Any]] = []
+        joining: str | None = None
         with self.sessions() as s:
             for ref in documents:
                 row = s.get(m.Document, uuid.UUID(str(ref["id"])))
                 if row is None:
                     raise PermanentError(f"no uploaded document {ref['id']}")
                 sidecar = dict(row.extracted or {})
+                # The signed acceptance form states the joining date the joiner agreed to.
+                joining = str(sidecar.pop("joining_date", "")) or joining
                 confidence = float(sidecar.pop("ocr_confidence", 1.0))
+                if row.category is m.DocumentCategory.OTHER:
+                    continue
                 bundle.append(
                     {
                         "category": row.category.value,
@@ -139,7 +175,11 @@ class HrRules:
                         "ocr_confidence": confidence,
                     }
                 )
-        return {"documents": seal_value(bundle), "count": len(bundle)}
+        return {
+            "documents": seal_value(bundle),
+            "count": len(bundle),
+            "submitted_joining_date": joining,
+        }
 
     # ------------------------------------------------------------ step 6
 
