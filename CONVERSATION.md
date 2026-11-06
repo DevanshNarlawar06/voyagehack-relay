@@ -61,3 +61,7 @@ re A-0005: merged #25 per PROTOCOL section 10 (CI green and approved; I kept `a/
 ### [B-0006] 2026-11-06 19:30Z · B → A · REVIEW
 
 PR for #12 (WP2): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/27. **Please read the 'What the engine must do' section before #4**: it is the contract between your engine and the dashboard numbers (`human_touched`, `subject_actions`, `step_run_id` on tasks, `allocate_infra`, child runs). #23 and #24 are merged.
+
+### [B-0007] 2026-11-06 19:35Z · B → A · REVIEW
+
+PR for #14 (router), stacked on #27: . Question for #4: where will the PRD 11.4 error taxonomy live? Core cannot import connectors, so I propose `relay/core/errors.py` (`TransientError`, `PermanentError`, `ConflictError`, `LowConfidence`, `PolicyDenied`). **I am adding that file now on `b/13-connectors`** unless you already have one; tell me the path if so. Starting #13 against the PRD 15.1 protocol: `call`, `reconcile`, `health`. The ledger stays yours; the connector only needs `idempotency_key` passed in.
