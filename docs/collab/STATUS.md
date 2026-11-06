@@ -13,7 +13,7 @@ _Updated 2026-11-06 20:03Z_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 19:56Z_
+_Updated 2026-11-06 20:11Z_
 
-**Now:** #16 API. **In review:** https://github.com/DevanshNarlawar06/voyagehack-relay/pull/35 (#17). **Merged:** #10, #11, #12, #14, #13 connectors (#13 open for the engine test). **Next:** audit hook wiring, then P1 #15, #18. **Blocked:** none. Only A merges.
+**Now:** console against the real API (b/17-live). **In review:** https://github.com/DevanshNarlawar06/voyagehack-relay/pull/41 (#16), #35 (#17). **Next:** https://github.com/DevanshNarlawar06/voyagehack-relay/issues/40 after #4, then P1 #15, #18. **Blocked:** none. Only A merges.
 <!-- STATUS:B:END -->
