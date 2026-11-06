@@ -1,0 +1,12 @@
+# Seeded console users (PRD 16.1, demo auth). All synthetic; sign-in has no password, by design,
+# and only exists while config/app.yaml has demo_mode: true.
+users:
+  - { email: hr.admin@tbo-demo.test, display_name: Meera Nair, roles: [hr_admin, hr_ops] }
+  - { email: hr.ops@tbo-demo.test, display_name: Rohan Das, roles: [hr_ops] }
+  - { email: manager@tbo-demo.test, display_name: Anita Pillai, roles: [manager] }
+  - { email: it.approver@tbo-demo.test, display_name: Kabir Shah, roles: [approver_it_spend] }
+  - { email: offer.approver@tbo-demo.test, display_name: Tara Joshi, roles: [approver_offer] }
+  - { email: finance.approver@tbo-demo.test, display_name: Dev Malhotra, roles: [approver_finance] }
+  - { email: it.ops@tbo-demo.test, display_name: Farah Khan, roles: [it_ops] }
+  - { email: auditor@tbo-demo.test, display_name: Leela Iyer, roles: [auditor] }
+  - { email: developer@tbo-demo.test, display_name: Arjun Rao, roles: [developer] }
