@@ -60,3 +60,19 @@ class Connector(Protocol):
     async def health(self) -> HealthStatus:
         """Check the external system. Never raises."""
         ...
+
+
+class FaultControl(Protocol):
+    """Standing faults on the mock systems, for the console's demo controls."""
+
+    async def list(self) -> list[dict[str, Any]]:
+        """Return the active fault rules."""
+        ...
+
+    async def add(self, system: str, fault: str) -> dict[str, Any]:
+        """Start injecting `fault` into `system`."""
+        ...
+
+    async def clear(self) -> None:
+        """Remove every fault rule."""
+        ...

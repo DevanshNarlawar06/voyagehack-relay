@@ -32,6 +32,11 @@ roles:
     - "documents.*"
     - "hr.*"
     - "chat.*"
+    - "metrics.read"
+    - "policy.read"
+    - "kill_switch.read"
+    - "connectors.read"
+    - "events.ingest"
   hr_admin: ["*"]
   manager:
     - "runs.read.team"
@@ -45,7 +50,7 @@ roles:
   approver_offer: ["hiring.*", "tasks.*"]
   approver_it_spend: ["assets.laptop.allocate", "assets.laptop.allocate.exception", "tasks.*"]
   approver_finance: ["comp.*", "payroll.*", "statutory.*", "tasks.*"]
-  it_ops: ["tasks.*", "assets.*", "directory.*"]
+  it_ops: ["tasks.*", "assets.*", "directory.*", "connectors.read"]
   admin_ops: ["tasks.*", "access.*"]
   finance_ops: ["tasks.*", "payroll.*"]
   new_joiner:
@@ -63,8 +68,10 @@ roles:
     - "grievance.route"
     - "posh.route"
     - "whistleblower.route"
-  auditor: ["audit.read", "audit.export", "runs.read"]
+  auditor: ["audit.read", "audit.export", "runs.read", "metrics.read", "policy.read", "kill_switch.read", "connectors.read"]
   developer: ["definitions.*", "runs.read"]
+  # hr_admin holds "*", which is how it gets policy.edit, policy.activate, kill_switch.set,
+  # controls.fault and runs.cancel.
 
 # Action catalogue (registry validation checks every workflow `action` is declared here).
 actions:

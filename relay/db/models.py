@@ -474,6 +474,17 @@ class PolicyVersion(Timestamped, Base):
     activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class PolicyDraft(Timestamped, Base):
+    """An HR admin's unactivated edit of a pack. One per pack; deleted on activation."""
+
+    __tablename__ = "policy_drafts"
+
+    pack: Mapped[str] = mapped_column(String(64), unique=True)
+    content: Mapped[str] = mapped_column(Text)
+    tests: Mapped[str | None] = mapped_column(Text)
+    updated_by: Mapped[str] = mapped_column(String(200))
+
+
 class Conversation(Timestamped, Base):
     __tablename__ = "conversations"
 

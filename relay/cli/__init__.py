@@ -20,6 +20,8 @@ app.add_typer(db_app, name="db")
 policy_app = typer.Typer(no_args_is_help=True, help="Policy packs: test and activate.")
 app.add_typer(config_app, name="config")
 audit_app = typer.Typer(no_args_is_help=True, help="Audit log.")
+seed_app = typer.Typer(no_args_is_help=True, help="Synthetic data.")
+app.add_typer(seed_app, name="seed")
 app.add_typer(audit_app, name="audit")
 app.add_typer(policy_app, name="policy")
 
@@ -42,6 +44,17 @@ def db_upgrade(revision: str = "head") -> None:
 
     upgrade(revision)
     typer.echo(f"database upgraded to {revision}")
+
+
+@seed_app.command("users")
+def seed_users(url: str | None = None) -> None:
+    """Create or update the demo users in seed/demo_users.yaml. Safe to repeat."""
+    from relay.db.session import session_scope
+    from seed.users import load_demo_users
+
+    with session_scope(url) as session:
+        count = load_demo_users(session)
+    typer.echo(f"{count} demo users ready")
 
 
 @audit_app.command("verify")
