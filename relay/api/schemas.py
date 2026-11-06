@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Literal
 from uuid import UUID
@@ -292,6 +292,58 @@ class EventOut(BaseModel):
     """The runs an event started."""
 
     run_ids: list[UUID]
+
+
+class EmployeeOut(BaseModel):
+    """One row of the employees list. No 🔒 field appears in any employee response."""
+
+    id: UUID
+    full_name: str
+    employee_code: str | None
+    state: str
+    role_title: str | None
+    department: str | None
+
+
+class LifecycleOut(BaseModel):
+    """One lifecycle event."""
+
+    id: UUID
+    event_type: str
+    at: datetime
+
+
+class DocumentOut(BaseModel):
+    """That a document exists, never what it says."""
+
+    id: UUID
+    category: str
+    retention_until: date | None
+
+
+class ConsentOut(BaseModel):
+    """One consent."""
+
+    purpose_id: str
+    notice_version: str
+    withdrawn_at: datetime | None
+
+
+class EmployeeRequestOut(BaseModel):
+    """One DPDP request on an employee's record."""
+
+    id: UUID
+    type: str
+    status: str
+
+
+class EmployeeDetailOut(EmployeeOut):
+    """An employee's record."""
+
+    lifecycle: list[LifecycleOut]
+    documents: list[DocumentOut]
+    consents: list[ConsentOut]
+    data_requests: list[EmployeeRequestOut]
 
 
 class DataRequestIn(BaseModel):

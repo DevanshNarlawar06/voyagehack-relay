@@ -12,7 +12,13 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, aliased
 
 from relay.api.schemas import (
+    ConsentOut,
     ContextPacketOut,
+    DocumentOut,
+    EmployeeDetailOut,
+    EmployeeOut,
+    EmployeeRequestOut,
+    LifecycleOut,
     RunDetailOut,
     RunOut,
     StepDecisionOut,
@@ -292,3 +298,72 @@ def list_tasks(session: Session, user: m.User) -> list[TaskOut]:
         .order_by(case((m.HumanTask.sla_due_at.is_(None), 1), else_=0), m.HumanTask.sla_due_at)
     )
     return [task_out(task, step_id) for task, step_id in session.execute(query)]
+
+
+def _employee_out(employee: m.Employee, person: m.Person) -> EmployeeOut:
+    return EmployeeOut(
+        id=employee.id,
+        full_name=person.full_name,
+        employee_code=employee.employee_code,
+        state=employee.state.value,
+        role_title=employee.role_title,
+        department=employee.department,
+    )
+
+
+def list_employees(session: Session) -> list[EmployeeOut]:
+    """List employees by name."""
+    rows = session.execute(
+        select(m.Employee, m.Person)
+        .join(m.Person, m.Employee.person_id == m.Person.id)
+        .order_by(m.Person.full_name)
+        .limit(_MAX_RUNS)
+    )
+    return [_employee_out(employee, person) for employee, person in rows]
+
+
+def employee_detail(session: Session, employee: m.Employee) -> EmployeeDetailOut:
+    """Build an employee's record. Document contents and 🔒 columns are never selected."""
+    person = session.get(m.Person, employee.person_id)
+    assert person is not None
+    lifecycle = session.execute(
+        select(m.LifecycleEvent.id, m.LifecycleEvent.event_type, m.LifecycleEvent.created_at)
+        .where(m.LifecycleEvent.employee_id == employee.id)
+        .order_by(m.LifecycleEvent.created_at)
+    )
+    documents = session.execute(
+        select(m.Document.id, m.Document.category, m.Document.retention_until).where(
+            m.Document.person_id == person.id
+        )
+    )
+    consents = session.execute(
+        select(m.Consent.purpose_id, m.Consent.notice_version, m.Consent.withdrawn_at).where(
+            m.Consent.person_id == person.id
+        )
+    )
+    requests = session.execute(
+        select(m.DataRequest.id, m.DataRequest.type, m.DataRequest.status).where(
+            m.DataRequest.person_id == person.id
+        )
+    )
+    return EmployeeDetailOut(
+        **_employee_out(employee, person).model_dump(),
+        lifecycle=[
+            LifecycleOut(id=r.id, event_type=r.event_type, at=r.created_at) for r in lifecycle
+        ],
+        documents=[
+            DocumentOut(id=r.id, category=r.category.value, retention_until=r.retention_until)
+            for r in documents
+        ],
+        consents=[
+            ConsentOut(
+                purpose_id=r.purpose_id,
+                notice_version=r.notice_version,
+                withdrawn_at=r.withdrawn_at,
+            )
+            for r in consents
+        ],
+        data_requests=[
+            EmployeeRequestOut(id=r.id, type=r.type.value, status=r.status) for r in requests
+        ],
+    )
