@@ -1,0 +1,14 @@
+skill: helpdesk
+version: 1
+description: Answer policy questions from retrieved text, with citations
+principal: conversation.user
+allowed_actions: [chat.answer]
+prompt_version: v1
+threshold: 0.5  # similarity floor; see evals/threshold_report.md
+max_output_tokens: 200
+output_schema:
+  type: object
+  properties:
+    answer: { type: string }
+    citations: { type: array, items: { type: string }, minItems: 1 }
+  required: [answer, citations]

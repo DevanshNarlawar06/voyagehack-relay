@@ -1,0 +1,14 @@
+skill: exception_analyst
+version: 1
+description: Build the context packet a person sees on a conflict or failure
+principal: run.subject
+allowed_actions: [exception.analyse]
+prompt_version: v1
+max_output_tokens: 200
+output_schema:
+  type: object
+  properties:
+    summary: { type: string }
+    likely_cause: { type: string }
+    suggested_option: { type: [string, "null"] }
+  required: [summary, likely_cause]

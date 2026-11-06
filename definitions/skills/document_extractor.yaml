@@ -1,0 +1,18 @@
+skill: document_extractor
+version: 1
+description: Extract and validate identity and bank fields from uploaded documents
+principal: run.subject
+allowed_actions: [documents.extract]
+prompt_version: v1
+threshold: 0.8  # from evals/threshold_report.md
+max_output_tokens: 200
+output_schema:
+  type: object
+  properties:
+    pan: { type: [string, "null"] }
+    aadhaar: { type: [string, "null"] }
+    name: { type: [string, "null"] }
+    dob: { type: [string, "null"] }
+    account: { type: [string, "null"] }
+    ifsc: { type: [string, "null"] }
+  required: []
