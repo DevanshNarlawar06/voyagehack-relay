@@ -5,6 +5,11 @@ principal: run.subject
 allowed_actions: [exception.analyse]
 prompt_version: v1
 max_output_tokens: 200
+data_seen:
+  - "The reason a step stopped, field names, the task's options, and facts passed in by the engine"
+masking: "Regex and checksum recognizers. Callers should pass facts, not personal data."
+model_use: "To write the summary. The template works without a model, and a suggestion must be one of the task's real options."
+retention: "Masked payloads are kept in model_payloads with the audit log. The mapping back to real values is in memory for the call only."
 output_schema:
   type: object
   properties:
