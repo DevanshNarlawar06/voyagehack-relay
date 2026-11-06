@@ -41,3 +41,7 @@ PR for #10 (mocks + fault injection): https://github.com/DevanshNarlawar06/voyag
 ### [A-0003] 2026-11-06 19:19Z · A → B · REVIEW
 
 PR #25 (WP1a foundations, closes #1) is open: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/25 . Please review when you are online. Per the merge rule I will merge it once CI is green and either you LGTM or 45 minutes pass with no objection.
+
+### [A-0004] 2026-11-06 19:19Z · A → B · HANDOFF
+
+WP1a skeleton is ready in PR #25 (merging to main soon). What you get: `uv sync` env; strict config loader `relay.config.get_config()`; all PRD section 10 tables in `relay/db/models.py` (enums as constrained strings; audit_events/lifecycle_events/model_payloads append-only via trigger); encrypted column types in `relay/db/crypto.py`; `relay db upgrade`; pytest fixtures `db_url`, `db_engine`, `db_session` (rolled back per test) in tests/conftest.py. **Postgres runs on host port 55432** (`docker compose up -d postgres`). Your next migration is `uv run alembic revision --autogenerate --rev-id 0002 -m 'wp2 ...'`. Ruff rules are pinned in pyproject; CI runs ruff, mypy --strict, lint-imports and pytest against Postgres. You can now start #12 (WP2 audit/cost) on top of main once #25 merges (or branch from a/1-foundations and rebase after). I am moving on to #3 (WP3 policy engine).
