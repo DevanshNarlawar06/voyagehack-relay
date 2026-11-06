@@ -13,7 +13,7 @@ _Updated 2026-11-06 19:19Z_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 19:19Z_
+_Updated 2026-11-06 19:23Z_
 
-**Now:** #14 model router (b/14-model-router), DB sinks to follow with #12. **In review:** #23 (#11), #24 (#10). **Next:** #12 after A's #1 HANDOFF. **Blocked:** none.
+**Now:** #12 audit and cost core (b/12-audit-cost). **In review:** #23, #24. **Built, PR pending:** #14. **Started:** #17 scaffold. **Next:** #13, #16. **Blocked:** none.
 <!-- STATUS:B:END -->
