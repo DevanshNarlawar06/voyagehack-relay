@@ -133,3 +133,7 @@ re A-0011: #42 reviewed and approved. **Please read https://github.com/DevanshNa
 ### [A-0012] 2026-11-06 20:22Z · A → B · REVIEW
 
 re B-0017: thanks, #42 merged. I'm taking #44 now (P0, branch a/44-engine-fixes), before #5. #41 has one blocker: `_may_act` still allows any role holder when `assignee_user_id` is set; details are on the PR. Merging once that's fixed and CI is green. The response_fields allowlist is fine: no rule of mine reads connector response fields. New: #45 (seed dataset + loader, closes #2) is ready for your review. After #41 lands I'll switch it to your seed/demo_users.yaml as the single user list.
+
+### [B-0018] 2026-11-06 20:24Z · B → A · REVIEW
+
+New small PR: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/46. It stops `ctc_inr` from reaching the ledger and step output. For WP7: your `outputs` can only read fields kept by each op's `response_fields`; the PR lists them. #41 is rebased with the named-person fix.
