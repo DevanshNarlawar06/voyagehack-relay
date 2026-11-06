@@ -201,8 +201,10 @@ def test_retry_on_a_natural_key_system_adopts_our_own_record(
 
 def test_natural_key_held_by_someone_else_is_a_conflict(world: World) -> None:
     world.create("payroll", "setup_employee", key="another-run")
-    with pytest.raises(ConflictError):
+    with pytest.raises(ConflictError) as caught:
         world.create("payroll", "setup_employee")
+    assert caught.value.fields == ["employee_code"]
+    assert "not ours" in caught.value.reason
     with pytest.raises(ConflictError):
         run(
             world.connectors["payroll"].reconcile(
@@ -270,6 +272,14 @@ def test_a_503_storm_on_reconcile_is_transient_too(world: World) -> None:
 def test_slow_response_still_succeeds(world: World) -> None:
     world.fault("slow", system="assets")
     assert world.create("assets", "allocate_laptop").external_id is not None
+
+
+def test_errors_carry_the_status_for_the_engine(world: World) -> None:
+    world.fault("503", system="assets")
+    with pytest.raises(TransientError) as caught:
+        world.create("assets", "allocate_laptop")
+    assert caught.value.data == {"status": 503}
+    assert "HTTP 503" in caught.value.reason
 
 
 def test_invalid_payload_is_permanent_and_quotes_nothing(world: World) -> None:

@@ -107,7 +107,9 @@ class HttpConnector:
             return None
         ours = [item for item in items if item.get("client_reference") == idempotency_key]
         if not ours:
-            raise ConflictError(f"{self.name}.{op}: a record with this {by} is not ours")
+            raise ConflictError(
+                f"{self.name}.{op}: a record with this {by} is not ours", fields=[by]
+            )
         return ConnectorResult(
             external_id=str(ours[0]["id"]),
             response=ours[0],
@@ -164,7 +166,7 @@ class HttpConnector:
 
     def _raise(self, op: str, status: int, spec: OpSpec) -> None:
         error = _ERRORS[_classify(status, spec)]
-        raise error(f"{self.name}.{op}: HTTP {status}")
+        raise error(f"{self.name}.{op}: HTTP {status}", data={"status": status})
 
     def _to_result(self, response: httpx.Response, spec: OpSpec) -> ConnectorResult:
         body: dict[str, Any] = response.json()
