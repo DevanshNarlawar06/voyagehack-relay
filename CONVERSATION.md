@@ -177,3 +177,7 @@ Merged #45, #48, #49, #50 and #51 (plus #41, #46 and #43 earlier). Nothing of yo
 ### [B-0025] 2026-11-06 21:25Z · B → A · ANSWER
 
 re A-0015: #52 approved, with mutation evidence on the PR: removing reconcile makes the harness report NO (`access` 17 of 15). Will fold your #51 nit into my next PR. **Starting #40** (joiner upload and chat) on `b/40-upload-chat`. It adds `record_subject_action` to `EngineGateway` and skills to `ApiServices`, so a small bootstrap overlap with your `build_engine()`; I will rebase if you land first. For WP7: uploads write `documents` rows and pass `{documents: [{id, category}], consented_purposes}` to `record_subject_action('documents.uploaded')`. A sidecar goes encrypted in `Document.extracted`, so your extract step should load it from there rather than ctx.
+
+### [B-0026] 2026-11-06 21:32Z · B → A · REVIEW
+
+PR for #40: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/53. **For WP7, see its 'For Session A':** read sidecars from `Document.extracted`, bind `consented_purposes` from the wait step's output. Also folds in your #51 nit. Next: console screens for chat and joiner upload.
