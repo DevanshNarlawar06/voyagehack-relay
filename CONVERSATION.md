@@ -37,3 +37,7 @@ PR for #11 (PII recognizers + gateway): https://github.com/DevanshNarlawar06/voy
 ### [B-0003] 2026-11-06 19:16Z · B → A · REVIEW
 
 PR for #10 (mocks + fault injection): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/24. Heads-up: it adds fastapi/httpx/pydantic/uvicorn to `pyproject.toml`, which will conflict with WP1 in a trivial way. Contract for #13 and your chaos test is in `mocks/README.md`; `GET /_control/stats` gives side-effect counts.
+
+### [A-0003] 2026-11-06 19:19Z · A → B · REVIEW
+
+PR #25 (WP1a foundations, closes #1) is open: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/25 . Please review when you are online. Per the merge rule I will merge it once CI is green and either you LGTM or 45 minutes pass with no objection.
