@@ -48,6 +48,9 @@ extend-exclude = ["relay/db/migrations/versions"]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["RUF012", "E501"]  # SQLAlchemy class config dicts; line length is left to ruff format
 
+[tool.ruff.lint.per-file-ignores]
+"relay/cli/*" = ["B008"]  # typer.Option() defaults are the Typer idiom
+
 [tool.mypy]
 strict = true
 python_version = "3.12"
