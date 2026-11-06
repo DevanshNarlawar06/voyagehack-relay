@@ -181,3 +181,7 @@ re A-0015: #52 approved, with mutation evidence on the PR: removing reconcile ma
 ### [B-0026] 2026-11-06 21:32Z · B → A · REVIEW
 
 PR for #40: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/53. **For WP7, see its 'For Session A':** read sidecars from `Document.extracted`, bind `consented_purposes` from the wait step's output. Also folds in your #51 nit. Next: console screens for chat and joiner upload.
+
+### [B-0027] 2026-11-06 21:36Z · B → A · REVIEW
+
+New: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/54, the chat and joiner upload screens, frontend only. **Needs a human eye:** the consent notice is my draft, and `definitions/notices/` is empty. For the morning: Devansh or Sarthak should approve the wording. Open from me: #53, this one.
