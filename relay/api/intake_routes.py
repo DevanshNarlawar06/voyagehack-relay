@@ -185,6 +185,51 @@ def upload_documents(
     return UploadOut(documents=documents, resumed=True)
 
 
+class AcknowledgeIn(BaseModel):
+    """The joiner's link, and which required policies they read (PRD 5.1 step 17)."""
+
+    token: str
+    policies: list[str] = Field(
+        default_factory=lambda: ["code_of_conduct", "posh", "it_acceptable_use"]
+    )
+
+
+@router.post("/policies/acknowledgements", tags=["documents"])
+def acknowledge_policies(body: AcknowledgeIn, session: Db, services: Services) -> dict[str, Any]:
+    """The joiner acknowledges the required policies, using the link from their invitation."""
+    engine = services.engine
+    if engine is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Not available right now.")
+    try:
+        link = uploads.claim_link(session, body.token, datetime.now(UTC), allow_used=True)
+    except uploads.InvalidLink as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from None
+    decision, _ = services.policy.authorize(
+        session,
+        ActionRequest(
+            action="policies.acknowledge",
+            actor=Actor(type="human", id=f"subject:{link.person_id}", roles=["new_joiner"]),
+            subject=SubjectRef(type="person", id=str(link.person_id)),
+        ),
+    )
+    run_id, person_id = link.run_id, link.person_id
+    session.commit()  # the decision is on record; the engine works in its own transaction
+    if decision.effect != "ALLOW":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, decision.reason)
+    resumed = engine.record_subject_action(
+        run_id,
+        "policies.acknowledged",
+        {"policies": list(body.policies)},
+        actor=f"subject:{person_id}",
+    )
+    if not resumed:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Your onboarding isn't ready for this yet. Please try again shortly.",
+        )
+    return {"resumed": True}
+
+
 @router.post("/chat", tags=["chat"])
 def post_chat(body: ChatIn, auth: Auth, session: Db, services: Services) -> ChatOut:
     """Web chat: the same intake path Slack will use (PRD 27.4)."""

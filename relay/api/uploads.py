@@ -75,8 +75,14 @@ def issue_link(session: Session, person_id: uuid.UUID, run_id: uuid.UUID, now: d
     return f"{body}.{_sign(body)}"
 
 
-def claim_link(session: Session, token: str, now: datetime) -> m.UploadLink:
-    """Check a token and lock its row. Every failure gives the same answer, so nothing leaks."""
+def claim_link(
+    session: Session, token: str, now: datetime, *, allow_used: bool = False
+) -> m.UploadLink:
+    """Check a token and lock its row. Every failure gives the same answer, so nothing leaks.
+
+    `allow_used` accepts a link already spent on the upload, until it expires: the joiner's
+    later steps on the same run (policy acknowledgement) reuse it instead of a new credential.
+    """
     refused = InvalidLink("This upload link is not valid. Please ask HR for a new one.")
     body, _, signature = token.partition(".")
     if not signature or not hmac.compare_digest(signature, _sign(body)):
@@ -88,7 +94,8 @@ def claim_link(session: Session, token: str, now: datetime) -> m.UploadLink:
     link = session.scalar(
         select(m.UploadLink).where(m.UploadLink.nonce == claims.get("n")).with_for_update()
     )
-    if link is None or link.used_at is not None or link.expires_at <= now:
+    used = link is not None and link.used_at is not None and not allow_used
+    if link is None or used or link.expires_at <= now:
         raise refused
     return link
 
