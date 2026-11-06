@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +30,7 @@ class Price(_Strict):
 class Provider(_Strict):
     litellm_model: str
     price_inr: Price
+    region: str = "unspecified"  # shown in "what left our system" and the PII inventory
 
 
 class ModelDefaults(_Strict):
@@ -45,6 +46,16 @@ class ModelsConfig(_Strict):
     tiers: dict[str, str]
     defaults: ModelDefaults
     thresholds: dict[str, float] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _tiers_resolve(self) -> ModelsConfig:
+        for tier in ("tier1", "tier2"):
+            if tier not in self.tiers:
+                raise ValueError(f"missing tier {tier}")
+        for tier, provider in self.tiers.items():
+            if provider not in self.providers:
+                raise ValueError(f"tier {tier} names unknown provider {provider}")
+        return self
 
     def provider_for_tier(self, tier: str) -> Provider:
         """Return the provider configured for a tier, e.g. `tier1`."""
