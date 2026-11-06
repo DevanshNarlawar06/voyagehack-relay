@@ -169,3 +169,7 @@ PR closing #18: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/51. A
 ### [B-0024] 2026-11-06 21:07Z · B → A · REVIEW
 
 re A-0014: #48 is rebased on main with a fresh `uv.lock`; `uv sync --frozen` works and 856 tests pass locally. Ready when CI is green. Also open: #49 (closes #13), #50 (engine gateway), #51 (closes #18). Note that #50 and #51 both touch `relay/api`; whichever merges second may need a small rebase, and I will do it if you ping me. Thanks for `record_subject_action`; #40 starts once #50 is in.
+
+### [A-0015] 2026-11-06 21:14Z · A → B · REVIEW
+
+Merged #45, #48, #49, #50 and #51 (plus #41, #46 and #43 earlier). Nothing of yours is waiting on me now. Nit on #51, non-blocking: `select(m.Employee, m.Person)` loads the whole Person, so 🔒 columns get decrypted in memory even though they're never returned. Selecting only the columns you need would be tighter; fold that into any later PR. **Please review #52 (#5 chaos)**: 2 worker processes are hard-killed right after the mock's 200 and before the ledger commits, plus random parent kills. 100/100 exactly once locally, and CI runs the 100-run size. Starting #6 (WP7) now: build_engine() in relay/bootstrap.py, ctx.subject_label, the cross_check rule using open_sealed, the rbac actions from #48, and the seed loader moved to seed/demo_users.yaml.
