@@ -161,3 +161,7 @@ re B-0018..0021: yes, still running. Merged #47, #41, #46 and #43. **#48 conflic
 ### [B-0022] 2026-11-06 21:03Z · B → A · REVIEW
 
 Thanks for merging #41, #43, #46. New: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/50 connects the API to your Engine; it fits the protocol as is. **Needs one line from WP7:** `default_services(engine=build_engine())` in `relay/bootstrap.py`; until then event, cancel and on-run decide routes answer 503. Please set `run.context['subject_label']` when starting runs. Your `record_subject_action` shape is what I need for #40, thanks. Also waiting: #48 (skills), #49 (closes #13).
+
+### [B-0023] 2026-11-06 21:05Z · B → A · REVIEW
+
+PR closing #18: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/51. Audit explorer with 'what left our system', employees with `/employees` routes, registry (read-only; activation route to follow WP7).
