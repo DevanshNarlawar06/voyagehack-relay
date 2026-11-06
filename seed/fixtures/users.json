@@ -1,0 +1,132 @@
+[
+  {
+    "email": "hr.ops@relay.test",
+    "display_name": "Asha (HR Ops)",
+    "roles": [
+      "hr_ops"
+    ]
+  },
+  {
+    "email": "hr.admin@relay.test",
+    "display_name": "Vikram (HR Admin)",
+    "roles": [
+      "hr_admin"
+    ]
+  },
+  {
+    "email": "offer.approver@relay.test",
+    "display_name": "Neel (Offer Approver)",
+    "roles": [
+      "approver_offer"
+    ]
+  },
+  {
+    "email": "it.spend@relay.test",
+    "display_name": "Ira (IT Spend Approver)",
+    "roles": [
+      "approver_it_spend"
+    ]
+  },
+  {
+    "email": "finance.approver@relay.test",
+    "display_name": "Mohan (Finance Approver)",
+    "roles": [
+      "approver_finance"
+    ]
+  },
+  {
+    "email": "it.ops@relay.test",
+    "display_name": "IT Ops",
+    "roles": [
+      "it_ops"
+    ]
+  },
+  {
+    "email": "admin.ops@relay.test",
+    "display_name": "Admin Ops",
+    "roles": [
+      "admin_ops"
+    ]
+  },
+  {
+    "email": "finance.ops@relay.test",
+    "display_name": "Finance Ops",
+    "roles": [
+      "finance_ops"
+    ]
+  },
+  {
+    "email": "auditor@relay.test",
+    "display_name": "Auditor",
+    "roles": [
+      "auditor"
+    ]
+  },
+  {
+    "email": "developer@relay.test",
+    "display_name": "Developer",
+    "roles": [
+      "developer"
+    ]
+  },
+  {
+    "email": "meera.kulkarni@relay.test",
+    "display_name": "Meera Kulkarni",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1000",
+    "slack_user_id": "UTBO1000"
+  },
+  {
+    "email": "neha.singh@relay.test",
+    "display_name": "Neha Singh",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1007",
+    "slack_user_id": "UTBO1007"
+  },
+  {
+    "email": "reyansh.kulkarni@relay.test",
+    "display_name": "Reyansh Kulkarni",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1015",
+    "slack_user_id": "UTBO1015"
+  },
+  {
+    "email": "diya.chopra@relay.test",
+    "display_name": "Diya Chopra",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1023",
+    "slack_user_id": "UTBO1023"
+  },
+  {
+    "email": "sneha.pillai@relay.test",
+    "display_name": "Sneha Pillai",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1030",
+    "slack_user_id": "UTBO1030"
+  },
+  {
+    "email": "leela.joshi@relay.test",
+    "display_name": "Leela Joshi",
+    "roles": [
+      "manager",
+      "employee"
+    ],
+    "employee_code": "TBO1038",
+    "slack_user_id": "UTBO1038"
+  }
+]
