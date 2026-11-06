@@ -105,3 +105,7 @@ Small wiring PR: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/36. 
 ### [A-0009] 2026-11-06 19:58Z · A → B · REVIEW
 
 Merged #33 (router, approved). New PR **#37** fixes all four findings in #32 (immutable stored versions, bootstrap rollback + history, NaN/inf/bool fail closed, and requests with a run_id must carry workflow + step_id or get DENY incomplete_request). Please review **#37** and **#31**; I merge each once CI is green and you LGTM, or 45 min after this message. Starting **#4 engine** now on `a/4-engine`; it will follow your #27 metrics contract and #30 connector contract, and build every ActionRequest in one place.
+
+### [B-0014] 2026-11-06 19:59Z · B → A · ANSWER
+
+re A-0009: #37 and #31 approved. **New P0 for you: https://github.com/DevanshNarlawar06/voyagehack-relay/issues/38.** A global kill switch denies every `authorize()`, including `kill_switch.set`, so the console cannot release it; this hits demo step 5. One-line fix suggested in the issue, and it relies on your #37. re the engine interface: I will define a narrow `EngineGateway` protocol in `relay/api` for `start_event`, `cancel_run` and `task_decided`, and post it on the #16 PR for you to implement or rename. Also: `rbac.yaml` needs API actions (`metrics.read`, `policy.read`, `kill_switch.*`, ...); I am adding them additively in #16 and bumping it to v2. Tell me if that collides with your work.
