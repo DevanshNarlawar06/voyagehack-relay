@@ -231,6 +231,10 @@ class PolicyService:
         self._audit_admin(session, actor, "policy.rollback", pack, {"version": version})
         return row
 
+    def bootstrap_source(self, pack: str) -> str:
+        """The YAML text of a pack as shipped in `definitions/policies/`."""
+        return self._bootstrap_sources[pack]
+
     def history(self, session: Session, pack: str) -> list[m.PolicyVersion]:
         """Every stored version of `pack`, oldest first (bootstrap included once activity starts)."""
         return list(
