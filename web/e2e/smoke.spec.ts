@@ -108,6 +108,37 @@ test("the registry lists workflow versions", async ({ page }) => {
   await expect(page.getByRole("rowheader", { name: "Onboarding" })).toBeVisible();
 });
 
+test("chat answers with a source, and says when it goes to a person", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Ask Relay");
+  await page.getByRole("button", { name: "How many leaves do I get in probation?" }).click();
+  await expect(page.getByText(/Source: Leave during probation/)).toBeVisible();
+  await page.getByLabel("Your message").fill("the coffee machine is broken");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByText("Sent to a person")).toBeVisible();
+});
+
+const PDF = { name: "pan.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7 synthetic") };
+
+test("a joiner uploads with no account, and consent is explicit", async ({ page }) => {
+  await page.goto("/upload?token=one-time");
+  const send = page.getByRole("button", { name: "Send my documents" });
+  await expect(send).toBeDisabled();
+  await page.getByLabel("PAN card").setInputFiles(PDF);
+  await expect(send).toBeDisabled(); // nothing is ticked for them
+  await page.getByLabel("Verify my identity").check();
+  await send.click();
+  await expect(page.getByRole("heading", { name: /we have your documents/ })).toBeVisible();
+});
+
+test("an oversized file is caught before upload, and a bare link explains itself", async ({ page }) => {
+  await page.goto("/upload?token=t");
+  await page.getByLabel("PAN card").setInputFiles({ ...PDF, buffer: Buffer.alloc(10 * 1024 * 1024 + 1) });
+  await expect(page.getByText(/larger than 10 MB/)).toBeVisible();
+  await page.goto("/upload");
+  await expect(page.getByRole("heading", { name: "This link is incomplete" })).toBeVisible();
+});
+
 test("roles limit what a user can do", async ({ page }) => {
   await signIn(page, "Leela Iyer");
   await expect(page.getByText("Auditor", { exact: true })).toBeVisible();

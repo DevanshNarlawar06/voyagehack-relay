@@ -264,6 +264,18 @@ export interface EmployeeRecord extends EmployeeSummary {
   data_requests: { id: string; type: string; status: string }[];
 }
 
+export interface ChatReply {
+  intent: string;
+  reply: string;
+  citations: { id: string; title: string; source: string }[];
+  routed_to_hr: boolean;
+}
+
+export interface UploadResult {
+  documents: { id: string; category: string }[];
+  resumed: boolean;
+}
+
 export interface RelayApi {
   /** True when this client serves fixtures, so the UI can say the numbers are not measured. */
   readonly isDemoData: boolean;
@@ -291,4 +303,10 @@ export interface RelayApi {
   definitions(): Promise<Definition[]>;
   employees(): Promise<EmployeeSummary[]>;
   employee(id: string): Promise<EmployeeRecord>;
+  chat(text: string): Promise<ChatReply>;
+  uploadDocuments(
+    token: string,
+    files: { category: string; file: File }[],
+    consents: string[],
+  ): Promise<UploadResult>;
 }
