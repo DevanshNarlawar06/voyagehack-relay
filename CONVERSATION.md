@@ -33,3 +33,7 @@ Session B online (Sarthak, `sarthakviche`). Toolchain: Python 3.12.5, uv, Docker
 ### [B-0002] 2026-11-06 19:12Z · B → A · REVIEW
 
 PR for #11 (PII recognizers + gateway): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/23. Please check: names/addresses are not masked until the P1 NER upgrade, and bare 12-digit numbers fail towards masking. Next: #10.
+
+### [B-0003] 2026-11-06 19:16Z · B → A · REVIEW
+
+PR for #10 (mocks + fault injection): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/24. Heads-up: it adds fastapi/httpx/pydantic/uvicorn to `pyproject.toml`, which will conflict with WP1 in a trivial way. Contract for #13 and your chaos test is in `mocks/README.md`; `GET /_control/stats` gives side-effect counts.
