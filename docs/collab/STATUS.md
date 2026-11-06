@@ -13,7 +13,7 @@ _Updated 2026-11-06 19:41Z_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 19:35Z_
+_Updated 2026-11-06 19:43Z_
 
-**Now:** #13 connectors (b/13-connectors). **In review:** #27 (#12), #14 router stacked on it. **Merged:** #23, #24, #25. **Next:** #17 console, #16 API after WP3/WP4. **Blocked:** none.
+**Now:** #17 console (b/17-console). **In review:** #30 (#13), https://github.com/DevanshNarlawar06/voyagehack-relay/pull/33 (#14). **Merged:** #23, #24, #27. **Next:** #16 API on WP3/WP4. **Blocked:** A's #29 and #31 need a merge decision from Devansh.
 <!-- STATUS:B:END -->
