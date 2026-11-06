@@ -5,31 +5,15 @@ It lives here because only `relay.connectors` may make HTTP calls (PRD 6.4).
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any
 
 import httpx
 
 from relay.core.errors import TransientError
 
 
-class FaultControl(Protocol):
-    """Standing faults on the mock systems."""
-
-    async def list(self) -> list[dict[str, Any]]:
-        """Return the active fault rules."""
-        ...
-
-    async def add(self, system: str, fault: str) -> dict[str, Any]:
-        """Start injecting `fault` into `system`."""
-        ...
-
-    async def clear(self) -> None:
-        """Remove every fault rule."""
-        ...
-
-
 class HttpFaultControl:
-    """Talks to `/_control/faults` on the mock service."""
+    """Implements `FaultControl` against `/_control/faults` on the mock service."""
 
     def __init__(self, base_url: str, transport: httpx.AsyncBaseTransport | None = None) -> None:
         """Bind to the mock service. `transport` lets tests call it in process."""

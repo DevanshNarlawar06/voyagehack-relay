@@ -15,8 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from relay.config import RelayConfig, get_settings
-from relay.connectors.base import Connector
-from relay.connectors.faults import FaultControl
+from relay.connectors.base import Connector, FaultControl
 from relay.core.policy import ActionRequest, Actor, Decision, PolicyService, SubjectRef
 from relay.db.models import HumanTask, User
 from relay.db.session import session_scope

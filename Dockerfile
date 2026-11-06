@@ -11,4 +11,4 @@ COPY definitions ./definitions
 COPY seed ./seed
 ENV PYTHONPATH=/app
 EXPOSE 8000
-CMD ["sh", "-c", "uv run --no-sync relay db upgrade && uv run --no-sync relay seed users && uv run --no-sync uvicorn relay.api.app:create_app --factory --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "uv run --no-sync relay db upgrade && uv run --no-sync relay seed users && uv run --no-sync uvicorn relay.bootstrap:create_app --factory --host 0.0.0.0 --port 8000"]

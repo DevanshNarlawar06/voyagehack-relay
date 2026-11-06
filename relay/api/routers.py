@@ -18,8 +18,7 @@ from relay.api import task_decisions as td
 from relay.api import views
 from relay.api.deps import Auth, CurrentUser, Db, EngineGateway, Services, issue_token
 from relay.api.ratelimit import login_limiter
-from relay.connectors.base import HealthStatus
-from relay.connectors.faults import FaultControl
+from relay.connectors.base import FaultControl, HealthStatus
 from relay.core.audit.verifier import VerifyResult, verify_chain
 from relay.core.audit.writer import AuditEntry, append_event
 from relay.core.cost.metrics import MetricsSummary, compute_metrics
