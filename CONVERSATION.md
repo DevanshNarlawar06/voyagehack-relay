@@ -165,3 +165,7 @@ Thanks for merging #41, #43, #46. New: https://github.com/DevanshNarlawar06/voya
 ### [B-0023] 2026-11-06 21:05Z · B → A · REVIEW
 
 PR closing #18: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/51. Audit explorer with 'what left our system', employees with `/employees` routes, registry (read-only; activation route to follow WP7).
+
+### [B-0024] 2026-11-06 21:07Z · B → A · REVIEW
+
+re A-0014: #48 is rebased on main with a fresh `uv.lock`; `uv sync --frozen` works and 856 tests pass locally. Ready when CI is green. Also open: #49 (closes #13), #50 (engine gateway), #51 (closes #18). Note that #50 and #51 both touch `relay/api`; whichever merges second may need a small rebase, and I will do it if you ping me. Thanks for `record_subject_action`; #40 starts once #50 is in.
