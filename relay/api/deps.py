@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, Protocol
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from relay.config import RelayConfig, get_settings
 from relay.connectors.base import Connector, FaultControl
 from relay.core.policy import ActionRequest, Actor, Decision, PolicyService, SubjectRef
-from relay.db.models import HumanTask, User
+from relay.db.models import User
 from relay.db.session import session_scope
 
 _JWT_ALGORITHM = "HS256"
@@ -26,20 +26,31 @@ _DEV_JWT_SECRET = "dev-only-secret"
 
 
 class EngineGateway(Protocol):
-    """What the API needs from the workflow engine (#4). Routers stay ignorant of how it works."""
+    """What the API needs from the workflow engine. `relay.core.engine.Engine` fits as it is.
 
-    def start_event(
-        self, session: Session, event: str, payload: dict[str, Any], actor: str
+    Each method runs in the engine's own transaction, so commit before calling one.
+    """
+
+    def handle_event(
+        self, event: str, payload: Mapping[str, Any], *, actor: str, subject_id: str
     ) -> list[UUID]:
         """Start the workflows triggered by a domain event and return their run ids."""
         ...
 
-    def cancel_run(self, session: Session, run_id: UUID, actor: str) -> None:
+    def cancel_run(self, run_id: UUID, *, actor: str, reason: str) -> None:
         """Cancel a run."""
         ...
 
-    def task_decided(self, session: Session, task: HumanTask) -> None:
-        """Resume the step waiting on a human task that was just decided."""
+    def decide_task(
+        self,
+        task_id: UUID,
+        *,
+        user_id: UUID,
+        option: str,
+        reason: str | None = None,
+        output: Mapping[str, Any] | None = None,
+    ) -> None:
+        """Apply a human decision and resume the step. Authorizes the decider itself."""
         ...
 
 

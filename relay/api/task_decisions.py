@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -12,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from relay.api.deps import Authorizer, EngineGateway
 from relay.core.audit.writer import AuditEntry, append_event
+from relay.core.engine.engine import TaskDecisionRefused
 from relay.db import models as m
 
 _NEEDS_REASON = re.compile(r"reject|override|refer")
@@ -30,6 +32,10 @@ class TaskRefused(Exception):
 
 class TaskConflict(Exception):
     """The task was already decided or is otherwise closed."""
+
+
+class EngineUnavailable(Exception):
+    """The task is on a run, and nothing is running that could resume it."""
 
 
 class InvalidDecision(ValueError):
@@ -69,28 +75,20 @@ def claim_task(session: Session, task_id: UUID, user: m.User) -> m.HumanTask:
     return task
 
 
-def _run_scope(session: Session, task: m.HumanTask) -> dict[str, Any]:
-    """Say where a task belongs, which the policy engine requires of any request from a run."""
-    if task.run_id is None:
-        return {}
-    workflow = session.scalar(
-        select(m.WorkflowRun.definition_name).where(m.WorkflowRun.id == task.run_id)
-    )
-    step_id = session.scalar(select(m.StepRun.step_id).where(m.StepRun.id == task.step_run_id))
-    return {"run_id": task.run_id, "workflow": workflow, "step_id": step_id}
-
-
 def decide_task(
     auth: Authorizer,
     engine: EngineGateway | None,
     task_id: UUID,
     option: str,
     reason: str,
+    output: Mapping[str, Any] | None = None,
 ) -> m.HumanTask:
-    """Record a decision, audit it and let the engine resume.
+    """Record a decision and let the run continue.
 
-    The role check comes first and has no bypass: `hr_admin` can do almost anything else, but a
-    reserved decision belongs to the role it was routed to.
+    These checks come first and have no bypass: `hr_admin` can do almost anything else, but a
+    reserved decision belongs to the role and person it was routed to. For a task on a run, the
+    engine then authorizes the decider and resumes the step in one transaction. A task with no run,
+    such as an offer approval, has nothing to resume and is recorded here.
     """
     session, user = auth.session, auth.user
     task = _load_for_update(session, task_id)
@@ -102,15 +100,28 @@ def decide_task(
         raise InvalidDecision(f"{option} is not one of this task's options.")
     if reason_required(task, option) and not reason.strip():
         raise InvalidDecision("Please give a reason for this decision.")
+    if task.run_id is None:
+        return _record_without_a_run(auth, task_id, option, reason)
+    if engine is None:
+        # Recording it here would look done while the step waits forever.
+        raise EngineUnavailable
+    session.commit()  # release the row lock: the engine locks this task in its own transaction
+    try:
+        engine.decide_task(
+            task_id, user_id=user.id, option=option, reason=reason.strip() or None, output=output
+        )
+    except TaskDecisionRefused as exc:
+        raise TaskRefused(str(exc)) from None
+    session.expire_all()
+    return _load_for_update(session, task_id)
 
-    scope = _run_scope(session, task)
-    if task.kind in _DECIDES_THE_ACTION:
-        verdict = auth.check(task.action, **scope)
-    else:
-        verdict = auth.check("tasks.decide", **scope)
+
+def _record_without_a_run(auth: Authorizer, task_id: UUID, option: str, reason: str) -> m.HumanTask:
+    session, user = auth.session, auth.user
+    task = _load_for_update(session, task_id)
+    verdict = auth.check(task.action if task.kind in _DECIDES_THE_ACTION else "tasks.decide")
     if verdict.effect != "ALLOW":
         raise TaskRefused(verdict.reason)
-
     # auth.check committed, which released the row lock, so take it again before writing.
     session.expire(task)
     task = _load_for_update(session, task_id)
@@ -128,14 +139,10 @@ def decide_task(
             actor_type=m.ActorType.HUMAN,
             actor_id=f"human:{user.email}",
             action=f"task.decide:{task.action}",
-            run_id=task.run_id,
-            step_run_id=task.step_run_id,
             effect=verdict.effect,
             policy_version=verdict.policy_version,
             reasoning=task.reason,
             data={"task_id": str(task.id), "kind": task.kind.value, "option": option},
         ),
     )
-    if engine is not None:
-        engine.task_decided(session, task)
     return task

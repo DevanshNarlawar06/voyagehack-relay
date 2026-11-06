@@ -22,6 +22,7 @@ from relay.connectors.base import FaultControl, HealthStatus
 from relay.core.audit.verifier import VerifyResult, verify_chain
 from relay.core.audit.writer import AuditEntry, append_event
 from relay.core.cost.metrics import MetricsSummary, compute_metrics
+from relay.core.engine.engine import TriggerRefused
 from relay.core.errors import TransientError
 from relay.core.policy import PolicyTestFailure
 from relay.core.policy.packs import PACK_NAMES, parse_pack
@@ -83,8 +84,14 @@ def post_event(body: s.EventIn, auth: Auth, session: Db, services: Services) -> 
     """Ingest a domain event, which starts the matching workflows."""
     auth.require("events.ingest")
     engine = _require_engine(services.engine)
-    run_ids = engine.start_event(session, body.event, body.payload, f"human:{auth.user.email}")
-    session.commit()
+    session.commit()  # the engine works in its own transaction
+    try:
+        run_ids = engine.handle_event(
+            body.event, body.payload, actor=f"human:{auth.user.email}", subject_id=body.subject_id
+        )
+    except TriggerRefused as exc:
+        # Already audited as a DENY. PRD 5.1: no recorded approval, no onboarding.
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from None
     return s.EventOut(run_ids=run_ids)
 
 
@@ -130,13 +137,16 @@ def get_run(run_id: UUID, auth: Auth, session: Db) -> s.RunDetailOut:
 
 
 @router.post("/runs/{run_id}/cancel", status_code=status.HTTP_204_NO_CONTENT, tags=["runs"])
-def cancel_run(run_id: UUID, auth: Auth, session: Db, services: Services) -> None:
+def cancel_run(
+    run_id: UUID, auth: Auth, session: Db, services: Services, body: s.CancelIn | None = None
+) -> None:
     """Cancel a run."""
     auth.require("runs.cancel")
     engine = _require_engine(services.engine)
     _get_run(session, run_id)
-    engine.cancel_run(session, run_id, f"human:{auth.user.email}")
-    session.commit()
+    session.commit()  # the engine works in its own transaction
+    reason = body.reason if body else s.CancelIn().reason
+    engine.cancel_run(run_id, actor=f"human:{auth.user.email}", reason=reason)
 
 
 # ---------------------------------------------------------------- human tasks
@@ -156,10 +166,20 @@ def _task_error(exc: Exception) -> HTTPException:
         return HTTPException(status.HTTP_403_FORBIDDEN, str(exc))
     if isinstance(exc, td.TaskConflict):
         return HTTPException(status.HTTP_409_CONFLICT, str(exc))
+    if isinstance(exc, td.EngineUnavailable):
+        return HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, "The workflow engine is not running."
+        )
     return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc))
 
 
-_TASK_ERRORS = (td.TaskNotFound, td.TaskRefused, td.TaskConflict, td.InvalidDecision)
+_TASK_ERRORS = (
+    td.TaskNotFound,
+    td.TaskRefused,
+    td.TaskConflict,
+    td.InvalidDecision,
+    td.EngineUnavailable,
+)
 
 
 def _task_response(session: Session, task: m.HumanTask) -> s.TaskOut:
@@ -185,7 +205,7 @@ def decide_task(
 ) -> s.TaskOut:
     """Record a decision. Reserved decisions need a human holding the routed role (PRD 6.3)."""
     try:
-        task = td.decide_task(auth, services.engine, task_id, body.option, body.reason)
+        task = td.decide_task(auth, services.engine, task_id, body.option, body.reason, body.output)
     except _TASK_ERRORS as exc:
         raise _task_error(exc) from None
     session.commit()
