@@ -15,8 +15,10 @@ ops:
     side_effect: false
     method: GET
     path: /ticketing/tickets/{external_id}
+    response_fields: [comments, queue]
   comment:
     side_effect: true
     method: POST
     path: /ticketing/tickets/{external_id}/comments
     idempotency_mode: header
+    response_fields: [comments]

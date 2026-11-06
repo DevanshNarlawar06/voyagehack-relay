@@ -11,6 +11,7 @@ ops:
     idempotency_mode: header
     inject_reference: true
     defaults: { channel: slack }
+    response_fields: [channel]
     reconcile: { path: /notify/messages }
   email:
     side_effect: true
@@ -19,4 +20,5 @@ ops:
     idempotency_mode: header
     inject_reference: true
     defaults: { channel: email }
+    response_fields: [channel]
     reconcile: { path: /notify/messages }

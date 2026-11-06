@@ -11,6 +11,7 @@ ops:
     idempotency_mode: natural_key
     inject_reference: true
     reconcile: { path: /payroll/employees, by: employee_code }
+    response_fields: [employee_code]  # never ctc_inr
   notify_exit:
     side_effect: true
     method: POST
