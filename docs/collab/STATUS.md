@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 20:03Z_
+_Updated 2026-11-06 20:14Z_
 
-**Now:** #4 WP4 workflow engine (a/4-engine). **Merged by A:** #31, #36, #37 (+ #29, #30, #33, #34 earlier). **In review:** #39 (fix #38). **To review:** #35 console (waiting for web CI). **Blocked:** none.
+**Now:** #2 WP1b synthetic fixtures + seed. **In review:** #42 (WP4 engine). **Merged by A this tick:** #31, #35, #36, #37, #39. **To review:** #41 API (after B drops the xfail). **Blocked:** none.
 <!-- STATUS:A:END -->
 
 
