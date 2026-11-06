@@ -103,3 +103,36 @@ def test_require_decision_must_be_reserved() -> None:
 def test_schema_errors(old: str, new: str) -> None:
     with pytest.raises(ValidationError):
         parse_definition(TOY.replace(old, new, 1))
+
+
+@pytest.mark.db
+def test_concurrent_registration_does_not_race(db_engine) -> None:  # type: ignore[no-untyped-def]
+    """An API and workers starting together all register definitions/workflows (#58 review)."""
+    import threading
+
+    from sqlalchemy.orm import sessionmaker
+
+    from relay.core.policy import PolicyService
+    from relay.core.registry.store import DefinitionStore
+
+    sessions = sessionmaker(bind=db_engine)
+    errors: list[BaseException] = []
+
+    def register() -> None:
+        try:
+            with sessions.begin() as s:
+                DefinitionStore().register(
+                    s, TOY_RACE, policies=PolicyService().policies(s), deps=None, actor="race"
+                )
+        except BaseException as exc:
+            errors.append(exc)
+
+    threads = [threading.Thread(target=register) for _ in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert errors == []
+
+
+TOY_RACE = TOY.replace("name: toy_onboarding", "name: toy_race")
