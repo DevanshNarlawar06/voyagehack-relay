@@ -137,6 +137,7 @@ class DecideIn(BaseModel):
 
     option: str
     reason: str = ""
+    output: dict[str, Any] = Field(default_factory=dict)  # what an override supplies
 
 
 class PolicySummaryOut(BaseModel):
@@ -285,7 +286,14 @@ class EventIn(BaseModel):
     """A domain event, for example `candidate.offer_accepted`."""
 
     event: str = Field(min_length=1)
+    subject_id: str = Field(min_length=1)
     payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class CancelIn(BaseModel):
+    """Why a run is being cancelled."""
+
+    reason: str = "Cancelled from the console"
 
 
 class EventOut(BaseModel):

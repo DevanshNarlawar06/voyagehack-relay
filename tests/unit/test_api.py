@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -47,15 +47,18 @@ ROLES = [
 GRAPH_YAML = """
 name: onboarding
 version: 1
+subject: employee
+trigger: { event: test.graph }
 steps:
-  - { id: a, kind: rule, action: x.a }
+  - { id: a, kind: rule, uses: rules.a, action: x.a }
   - parallel:
       id: group
       needs: [a]
       branches:
-        - [{ id: b, kind: rule, action: x.b }, { id: c, kind: rule, action: x.c, needs: [b] }]
-        - [{ id: d, kind: rule, action: x.d }]
-  - { id: e, kind: rule, action: x.e, needs: [group] }
+        - - { id: b, kind: rule, uses: rules.b, action: x.b }
+          - { id: c, kind: rule, uses: rules.c, action: x.c }
+        - - { id: d, kind: rule, uses: rules.d, action: x.d }
+  - { id: e, kind: rule, uses: rules.e, action: x.e, needs: [group] }
 """
 
 
@@ -67,17 +70,25 @@ class FakeEngine:
     cancelled: list[UUID] = field(default_factory=list)
     decided: list[UUID] = field(default_factory=list)
 
-    def start_event(
-        self, session: Session, event: str, payload: dict[str, Any], actor: str
+    def handle_event(
+        self, event: str, payload: Mapping[str, Any], *, actor: str, subject_id: str
     ) -> list[UUID]:
-        self.started.append((event, payload))
+        self.started.append((event, dict(payload)))
         return [uuid.uuid4()]
 
-    def cancel_run(self, session: Session, run_id: UUID, actor: str) -> None:
+    def cancel_run(self, run_id: UUID, *, actor: str, reason: str) -> None:
         self.cancelled.append(run_id)
 
-    def task_decided(self, session: Session, task: m.HumanTask) -> None:
-        self.decided.append(task.id)
+    def decide_task(
+        self,
+        task_id: UUID,
+        *,
+        user_id: UUID,
+        option: str,
+        reason: str | None = None,
+        output: Mapping[str, Any] | None = None,
+    ) -> None:
+        self.decided.append(task_id)
 
 
 class Api:
@@ -159,7 +170,12 @@ MATRIX: list[tuple[str, str, dict[str, Any] | None, set[str]]] = [
     ("GET", "/runs", None, {"hr_admin", "hr_ops", "manager", "auditor", "developer"}),
     ("GET", f"/runs/{FIXED_ID}", None, {"hr_admin", "hr_ops", "manager", "auditor", "developer"}),
     ("POST", f"/runs/{FIXED_ID}/cancel", None, {"hr_admin"}),
-    ("POST", "/events", {"event": "candidate.offer_accepted"}, {"hr_admin", "hr_ops"}),
+    (
+        "POST",
+        "/events",
+        {"event": "candidate.offer_accepted", "subject_id": "c1"},
+        {"hr_admin", "hr_ops"},
+    ),
     (
         "GET",
         "/tasks",
@@ -416,7 +432,7 @@ def test_decide_records_audits_and_resumes(api: Api) -> None:
     assert response.json()["status"] == "decided"
     assert response.json()["decision"] == "accept"
     assert api.engine is not None
-    assert api.engine.decided == [task.id]
+    assert api.engine.decided == []  # no run, so nothing to resume
     event = api.session.scalars(
         select(m.AuditEvent).order_by(m.AuditEvent.seq.desc()).limit(1)
     ).one()
@@ -452,8 +468,31 @@ def test_deciding_twice_is_a_conflict_and_resumes_once(api: Api) -> None:
     path = f"/api/v1/tasks/{task.id}/decide"
     assert client.post(path, json={"option": "accept"}).status_code == 200
     assert client.post(path, json={"option": "accept"}).status_code == 409
+
+
+def test_a_task_on_a_run_goes_to_the_engine(api: Api) -> None:
+    run = api.run()
+    step = m.StepRun(
+        run_id=run.id, step_id="s", kind=m.StepKind.RULE, status=m.StepStatus.WAITING_HUMAN
+    )
+    api.session.add(step)
+    api.session.flush()
+    task = api.task(run_id=run.id, step_run_id=step.id)
+    client = api.client("hr_ops")
+    client.post(f"/api/v1/tasks/{task.id}/decide", json={"option": "accept"})
     assert api.engine is not None
     assert api.engine.decided == [task.id]
+
+
+def test_the_api_checks_still_run_before_the_engine(api: Api) -> None:
+    run = api.run()
+    task = api.task(run_id=run.id, assignee_role="manager")
+    client = api.client("hr_ops")
+    assert (
+        client.post(f"/api/v1/tasks/{task.id}/decide", json={"option": "accept"}).status_code == 403
+    )
+    assert api.engine is not None
+    assert api.engine.decided == []
 
 
 def test_another_role_cannot_decide(api: Api) -> None:
@@ -867,7 +906,11 @@ def test_event_starts_runs_through_the_engine(api: Api) -> None:
     client = api.client("hr_ops")
     response = client.post(
         "/api/v1/events",
-        json={"event": "candidate.offer_accepted", "payload": {"candidate_id": "c1"}},
+        json={
+            "event": "candidate.offer_accepted",
+            "subject_id": "c1",
+            "payload": {"candidate_id": "c1"},
+        },
     )
     assert response.status_code == 202
     assert api.engine is not None
@@ -884,7 +927,7 @@ def test_cancel_goes_through_the_engine(api: Api) -> None:
 def test_engine_routes_say_when_it_is_not_running(db_session: Session) -> None:
     api = Api(db_session, None)
     client = api.client("hr_admin")
-    assert client.post("/api/v1/events", json={"event": "x"}).status_code == 503
+    assert client.post("/api/v1/events", json={"event": "x", "subject_id": "c1"}).status_code == 503
     run = api.run()
     assert client.post(f"/api/v1/runs/{run.id}/cancel").status_code == 503
 

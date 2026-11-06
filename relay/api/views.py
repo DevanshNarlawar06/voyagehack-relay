@@ -20,6 +20,7 @@ from relay.api.schemas import (
     TaskOut,
     TimelineEventOut,
 )
+from relay.core.dsl.model import parse_definition
 from relay.db import models as m
 
 _MAX_RUNS = 200
@@ -35,50 +36,17 @@ class GraphNode:
 
 
 def definition_graph(text: str | None) -> dict[str, GraphNode]:
-    """Read each step's `needs` and `action` from a definition's YAML.
+    """Read each step's `needs` and `action` through the engine's own DSL, so the two cannot differ.
 
-    A `parallel` block's id stands for all its steps, and its `needs` pass to each branch's first
-    step. Anything unreadable gives an empty graph: the steps still show, without their edges.
+    Anything unreadable gives an empty graph: the steps still show, without their edges.
     """
+    if not text:
+        return {}
     try:
-        document = yaml.safe_load(text) if text else None
-    except yaml.YAMLError:
+        definition = parse_definition(text)
+    except (ValueError, TypeError, AttributeError, yaml.YAMLError):
         return {}
-    if not isinstance(document, dict):
-        return {}
-    nodes: dict[str, GraphNode] = {}
-    groups: dict[str, list[str]] = {}
-
-    def add(step: dict[str, Any], inherited: list[str]) -> None:
-        own = [str(need) for need in step.get("needs") or []]
-        nodes[str(step["id"])] = GraphNode(own or inherited, step.get("action"))
-
-    for step in document.get("steps") or []:
-        if not isinstance(step, dict):
-            continue
-        block = step.get("parallel") if isinstance(step.get("parallel"), dict) else None
-        if block is None and step.get("kind") == "parallel":
-            block = step
-        if block is None:
-            if "id" in step:
-                add(step, [])
-            continue
-        inherited = [str(need) for need in block.get("needs") or []]
-        members: list[str] = []
-        for branch in block.get("branches") or []:
-            for inner in branch if isinstance(branch, list) else [branch]:
-                if isinstance(inner, dict) and "id" in inner:
-                    add(inner, inherited)
-                    members.append(str(inner["id"]))
-        groups[str(block.get("id"))] = members
-
-    # A step that needs a parallel block needs every step inside it.
-    return {
-        step_id: GraphNode(
-            [member for need in node.needs for member in groups.get(need, [need])], node.action
-        )
-        for step_id, node in nodes.items()
-    }
+    return {step.id: GraphNode(list(step.needs), step.action) for step in definition.flat_steps()}
 
 
 def subject_label(run: m.WorkflowRun) -> str:
