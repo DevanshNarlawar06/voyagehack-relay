@@ -1,0 +1,22 @@
+# Slack DM and email (PRD 15.2). Points at the offline mock until the Slack app exists (#9).
+connector: notify
+version: 1
+base_url: "${RELAY_NOTIFY_URL:-http://localhost:9000}"
+health_path: /notify/health
+ops:
+  slack_dm:
+    side_effect: true
+    method: POST
+    path: /notify/messages
+    idempotency_mode: header
+    inject_reference: true
+    defaults: { channel: slack }
+    reconcile: { path: /notify/messages }
+  email:
+    side_effect: true
+    method: POST
+    path: /notify/messages
+    idempotency_mode: header
+    inject_reference: true
+    defaults: { channel: email }
+    reconcile: { path: /notify/messages }

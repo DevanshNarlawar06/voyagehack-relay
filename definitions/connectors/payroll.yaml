@@ -1,0 +1,22 @@
+# TBO payroll setup (PRD 15.2). One record per employee_code; a repeat is a 409.
+connector: payroll
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /payroll/health
+ops:
+  setup_employee:
+    side_effect: true
+    method: POST
+    path: /payroll/employees
+    idempotency_mode: natural_key
+    inject_reference: true
+    reconcile: { path: /payroll/employees, by: employee_code }
+  notify_exit:
+    side_effect: true
+    method: POST
+    path: /payroll/employees/{external_id}/exit
+    idempotency_mode: natural_key  # setting a state twice is harmless
+  lookup:
+    side_effect: false
+    method: GET
+    path: /payroll/employees

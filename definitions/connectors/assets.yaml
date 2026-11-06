@@ -1,0 +1,22 @@
+# TBO asset system (PRD 15.2). Shapes follow mocks/; replace when TBO publishes its spec.
+connector: assets
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /assets/health
+ops:
+  allocate_laptop:
+    side_effect: true
+    method: POST
+    path: /assets/laptops
+    idempotency_mode: header
+    inject_reference: true
+    reconcile: { path: /assets/laptops }
+  recover_laptop:
+    side_effect: true
+    method: POST
+    path: /assets/laptops/{external_id}/recover
+    idempotency_mode: natural_key  # setting a state twice is harmless
+  lookup_by_reference:
+    side_effect: false
+    method: GET
+    path: /assets/laptops

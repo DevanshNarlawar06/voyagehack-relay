@@ -1,0 +1,22 @@
+# TBO ticketing, used for fulfilment handoffs and SLA tracking (PRD 15.2).
+connector: ticketing
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /ticketing/health
+ops:
+  create_ticket:
+    side_effect: true
+    method: POST
+    path: /ticketing/tickets
+    idempotency_mode: header
+    inject_reference: true
+    reconcile: { path: /ticketing/tickets }
+  get_ticket:
+    side_effect: false
+    method: GET
+    path: /ticketing/tickets/{external_id}
+  comment:
+    side_effect: true
+    method: POST
+    path: /ticketing/tickets/{external_id}/comments
+    idempotency_mode: header
