@@ -5,6 +5,11 @@ principal: run.subject
 allowed_actions: [comms.manager_brief, comms.welcome, comms.kt_plan]
 prompt_version: v1
 max_output_tokens: 150  # PRD 13.2 cap
+data_seen:
+  - "Names, role title, joining or last working date, as filled into a template"
+masking: "Names are masked as known values, and recognizers cover the rest. Dates and role title are sent as written."
+model_use: "To adjust wording, capped at 150 tokens. The template works without a model."
+retention: "Masked payloads are kept in model_payloads with the audit log. The mapping back to real values is in memory for the call only."
 output_schema:
   type: object
   properties:

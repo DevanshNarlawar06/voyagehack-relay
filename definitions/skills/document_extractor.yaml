@@ -6,6 +6,11 @@ allowed_actions: [documents.extract]
 prompt_version: v1
 threshold: 0.8  # from evals/threshold_report.md
 max_output_tokens: 200
+data_seen:
+  - "OCR text of a document whose validators failed, which can include name, date of birth, PAN, Aadhaar, account number and IFSC"
+masking: "Regex and checksum recognizers. **A name on the document is not masked** (see Known gap). Stored output has masked forms plus an encrypted blob, never raw identifiers."
+model_use: "Only when validators fail. Clean documents never reach a model."
+retention: "Masked payloads are kept in model_payloads with the audit log. The mapping back to real values is in memory for the call only."
 output_schema:
   type: object
   properties:

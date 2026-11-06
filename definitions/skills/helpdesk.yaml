@@ -6,6 +6,11 @@ allowed_actions: [chat.answer]
 prompt_version: v1
 threshold: 0.5  # similarity floor; see evals/threshold_report.md
 max_output_tokens: 200
+data_seen:
+  - "The question, as typed, and policy passages (not personal)"
+masking: "Regex and checksum recognizers. **A name typed into a question is not masked** (see Known gap)."
+model_use: "Only if a passage clears the similarity floor. Otherwise the question goes to HR with no model call. Without a model, the passage is quoted word for word."
+retention: "Masked payloads are kept in model_payloads with the audit log. The mapping back to real values is in memory for the call only."
 output_schema:
   type: object
   properties:
