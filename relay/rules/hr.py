@@ -17,7 +17,7 @@ from typing import Any
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from relay.core.engine.sealed import seal_value
+from relay.core.engine.sealed import is_sealed, seal_value
 from relay.core.errors import ConflictError, PermanentError
 from relay.db import models as m
 from relay.skills.document_extractor import open_sealed
@@ -46,6 +46,7 @@ class HrRules:
         """Name -> function, as workflows reference them in `uses`."""
         return {
             "rules.hr.create_prehire": self.create_prehire,
+            "rules.hr.collect_documents": self.collect_documents,
             "rules.hr.cross_check_identity": self.cross_check_identity,
             "rules.hr.allocate_employee_code": self.allocate_employee_code,
             "rules.hr.assign_buddy": self.assign_buddy,
@@ -111,6 +112,34 @@ class HrRules:
                 "ctc": seal_value(int(offer.ctc["annual_inr"])),
                 "ctc_matches_offer": True,
             }
+
+    # ------------------------------------------------------------ step 5 (input)
+
+    def collect_documents(self, documents: Any) -> dict[str, Any]:
+        """Gather what the joiner uploaded into one sealed bundle for `document_extractor`.
+
+        The upload page stores each file's text-layer sidecar encrypted in `documents.extracted`
+        and reports `[{id, category}]`; those rows are read here. An already sealed list is
+        passed through. The bundle stays sealed in ctx (PRD 10.1).
+        """
+        if is_sealed(documents):
+            return {"documents": documents, "count": None}
+        bundle: list[dict[str, Any]] = []
+        with self.sessions() as s:
+            for ref in documents:
+                row = s.get(m.Document, uuid.UUID(str(ref["id"])))
+                if row is None:
+                    raise PermanentError(f"no uploaded document {ref['id']}")
+                sidecar = dict(row.extracted or {})
+                confidence = float(sidecar.pop("ocr_confidence", 1.0))
+                bundle.append(
+                    {
+                        "category": row.category.value,
+                        "fields": sidecar,
+                        "ocr_confidence": confidence,
+                    }
+                )
+        return {"documents": seal_value(bundle), "count": len(bundle)}
 
     # ------------------------------------------------------------ step 6
 

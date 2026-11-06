@@ -54,12 +54,20 @@ steps:
       upload: "result"
       consented_purposes: "result.consented_purposes"
 
+  - id: collect_documents
+    kind: rule
+    uses: rules.hr.collect_documents
+    action: documents.collect
+    needs: [await_documents]
+    inputs: { documents: "ctx.upload.documents" }
+    outputs: { bundle: "result" }
+
   - id: extract_documents
     kind: skill
     uses: document_extractor
     action: documents.extract
-    needs: [await_documents]
-    inputs: { documents: "ctx.upload.documents" }
+    needs: [collect_documents]
+    inputs: { documents: "ctx.bundle.documents" }
     outputs: { extracted: "result" }
 
   - id: cross_check

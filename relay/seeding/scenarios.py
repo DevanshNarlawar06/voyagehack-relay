@@ -21,7 +21,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from relay.connectors.base import FaultControl
 from relay.core.engine.engine import Engine, TriggerRefused
-from relay.core.engine.sealed import seal_value
 from relay.db import models as m
 from relay.seeding.generate import Dataset
 
@@ -100,31 +99,40 @@ class SimulationReport:
         }  # fmt: skip
 
 
-def upload_payload(candidate: Mapping[str, Any]) -> dict[str, Any]:
-    """What the upload page sends for a seed candidate: sealed documents plus consent."""
+def sidecars(candidate: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """The text-layer sidecar per document type for a seed candidate (PRD 27.4)."""
     doc = candidate["documents"]
-    documents = [
-        {
-            "category": "pan",
-            "fields": {"pan": doc["pan"], "name": doc.get("pan_name", doc["full_name"]),
-                       "dob": doc["dob"]},
-            "ocr_confidence": doc["ocr_confidence"],
-        },
-        {
-            "category": "aadhaar",
-            "fields": {"aadhaar": doc["aadhaar"], "name": doc["full_name"], "dob": doc["dob"]},
-            "ocr_confidence": doc["ocr_confidence"],
-        },
-        {
-            "category": "bank_proof",
-            "fields": {"account": doc["bank_account"], "ifsc": doc["ifsc"]},
-            "ocr_confidence": doc["ocr_confidence"],
-        },
-    ]  # fmt: skip
+    conf = doc["ocr_confidence"]
     return {
-        "documents": seal_value(documents),
+        "pan": {"pan": doc["pan"], "name": doc.get("pan_name", doc["full_name"]),
+                "dob": doc["dob"], "ocr_confidence": conf},
+        "aadhaar": {"aadhaar": doc["aadhaar"], "name": doc["full_name"], "dob": doc["dob"],
+                    "ocr_confidence": conf},
+        "bank_proof": {"account": doc["bank_account"], "ifsc": doc["ifsc"], "ocr_confidence": conf},
+    }  # fmt: skip
+
+
+def upload(s: Session, candidate: Mapping[str, Any]) -> dict[str, Any]:
+    """Store the documents as the upload page does and return the subject-action payload."""
+    cand = s.scalar(
+        select(m.Candidate).where(m.Candidate.external_ref == candidate["candidate_ref"])
+    )
+    assert cand is not None
+    refs = []
+    for category, sidecar in sidecars(candidate).items():
+        row = m.Document(
+            person_id=cand.person_id,
+            category=m.DocumentCategory(category),
+            storage_ref=f"seed://{candidate['candidate_ref']}/{category}.pdf",
+            extracted=sidecar,  # encrypted column
+        )
+        s.add(row)
+        s.flush()
+        refs.append({"id": str(row.id), "category": category})
+    return {
+        "documents": refs,
         "consented_purposes": list(CONSENTED),
-        "joining_date": doc["joining_date"],
+        "joining_date": candidate["documents"]["joining_date"],
     }
 
 
@@ -248,8 +256,10 @@ class ScenarioPlayer:
                 self._decide(task, kinds)
             return Outcome(ref, scenario, self._run(run_id).status.value, run_id, kinds)
         self.clock.advance(hours=float(candidate["upload_after_hours"] or 1))
+        with self.sessions.begin() as s:
+            payload = upload(s, candidate)
         self.engine.record_subject_action(
-            run_id, "documents.uploaded", upload_payload(candidate), actor=f"subject:{ref}"
+            run_id, "documents.uploaded", payload, actor=f"subject:{ref}"
         )
         for _ in range(12):
             self._settle()
