@@ -123,8 +123,16 @@ def test_email() -> None:
 
 @pytest.mark.parametrize(
     "value",
-    ["14/03/1995", "14-03-1995", "14.03.1995", "1995-03-14", "14 March 1995", "14-Mar-1995"]
-    + ["March 14, 1995", "03/14/1995"],
+    [
+        "14/03/1995",
+        "14-03-1995",
+        "14.03.1995",
+        "1995-03-14",
+        "14 March 1995",
+        "14-Mar-1995",
+        "March 14, 1995",
+        "03/14/1995",
+    ],
 )
 def test_dob_with_context(value: str) -> None:
     assert found(f"Date of Birth: {value}") == [(Entity.DOB, value)]

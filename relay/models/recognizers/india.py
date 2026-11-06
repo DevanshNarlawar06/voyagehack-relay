@@ -95,7 +95,9 @@ def _dob_is_valid(value: str, text: str, start: int) -> bool:
 
 
 PAN = RegexRecognizer(
-    Entity.PAN, re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}[0-9]{4}[A-Z](?![A-Za-z0-9])", re.IGNORECASE), 0.95
+    Entity.PAN,
+    re.compile(r"(?<![A-Za-z0-9])[A-Z]{5}[0-9]{4}[A-Z](?![A-Za-z0-9])", re.IGNORECASE),
+    0.95,
 )
 AADHAAR = RegexRecognizer(
     Entity.AADHAAR,
