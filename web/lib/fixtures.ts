@@ -413,6 +413,7 @@ export function createFixtureApi(): RelayApi {
     },
   ];
 
+  const usedTokens = new Set<string>();
   let kills: KillSwitch[] = [];
   let faults: FaultRule[] = [];
   const connectors = [
@@ -552,6 +553,24 @@ export function createFixtureApi(): RelayApi {
     auditEvent: (id) => {
       const event = events.find((e) => e.id === id);
       return event ? wait(event) : Promise.reject(new Error("Event not found."));
+    },
+    chat: (text) => {
+      if (/probation/i.test(text)) {
+        return wait({
+          intent: "policy_question",
+          reply: "During probation you cannot use earned leave. Casual and sick leave can be used.",
+          citations: [{ id: "leave.probation", title: "Leave during probation", source: "TBO Leave Policy §1-4 (placeholder)" }],
+          routed_to_hr: false,
+        });
+      }
+      return wait({ intent: "unknown", reply: "I've passed this to HR, and someone will get back to you.", citations: [], routed_to_hr: true });
+    },
+    uploadDocuments: (token, files) => {
+      if (usedTokens.has(token)) {
+        return Promise.reject(new Error("This upload link is not valid. Please ask HR for a new one."));
+      }
+      usedTokens.add(token);
+      return wait({ documents: files.map((f, i) => ({ id: `doc-${i}`, category: f.category })), resumed: true });
     },
     verifyAudit: () => wait({ ok: true, checked: events.length, first_bad_seq: null, problem: null }),
     definitions: () => wait(definitions),

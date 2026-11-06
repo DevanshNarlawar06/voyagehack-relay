@@ -3,6 +3,8 @@
 import { createFixtureApi } from "@/lib/fixtures";
 import type {
   AuditEvent,
+  ChatReply,
+  UploadResult,
   AuditEventDetail,
   ConnectorHealth,
   Definition,
@@ -125,6 +127,29 @@ function createHttpApi(baseUrl: string): RelayApi {
     definitions: () => request<Definition[]>("/definitions"),
     employees: () => request<EmployeeSummary[]>("/employees"),
     employee: (id) => request<EmployeeRecord>(`/employees/${encodeURIComponent(id)}`),
+    chat: (text) => post<ChatReply>("/chat", { text }),
+    uploadDocuments: async (token, files, consents) => {
+      // Multipart, so the browser sets the header. The signed link is the credential, not a session.
+      const form = new FormData();
+      form.append("token", token);
+      files.forEach(({ category, file }) => {
+        form.append("categories", category);
+        form.append("files", file);
+      });
+      consents.forEach((purpose) => form.append("consents", purpose));
+      let response: Response;
+      try {
+        response = await fetch(`${baseUrl}/api/v1/documents`, { method: "POST", body: form });
+      } catch {
+        throw new ApiError("We could not reach the server. Please try again.", 0);
+      }
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+        const detail = typeof body?.detail === "string" ? body.detail : `HTTP ${response.status}`;
+        throw new ApiError(detail, response.status);
+      }
+      return (await response.json()) as UploadResult;
+    },
   };
 }
 
