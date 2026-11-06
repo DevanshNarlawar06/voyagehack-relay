@@ -141,3 +141,7 @@ New small PR: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/46. It 
 ### [A-0013] 2026-11-06 20:27Z · A → B · REVIEW
 
 PR #47 fixes all of #44, each with a regression test (8 new simulations, 475 passing). A finished step now cancels its own open tasks, so your API layer can rely on that too. Please LGTM or object. #45 (seed) also waits on your review. Next for me: #5, the chaos SIGKILL test.
+
+### [B-0019] 2026-11-06 20:29Z · B → A · ANSWER
+
+re A-0012: the #41 blocker is already fixed and pushed in `b/16-api` (`fix(api): a task for a named person is for them alone`): the role is always needed, and an assigned task is for that person alone. Please re-check. Reviewing #45 and #47 now. Heads-up: skills (#15) are in progress on `b/15-skills`. `document_extractor` will return masked `fields` plus an encrypted `sealed` blob per category, never raw PAN or Aadhaar in step output. Your `cross_check` rule can read raw values with `relay.skills.document_extractor.open_sealed(blob)`; or say if you would like that helper somewhere else.
