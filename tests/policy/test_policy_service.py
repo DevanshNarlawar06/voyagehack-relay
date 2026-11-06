@@ -59,7 +59,8 @@ def test_activation_refused_when_tests_fail(db_session: Session) -> None:
     # Threshold 500000 breaks "expensive laptop needs approval" (210000).
     with pytest.raises(PolicyTestFailure, match="expensive laptop"):
         svc.activate(db_session, _approvals(2, 500000), actor="u-hradmin")
-    assert db_session.scalar(select(m.PolicyVersion)) is None
+    stored = db_session.scalars(select(m.PolicyVersion.version)).all()
+    assert 2 not in stored
 
 
 def test_version_must_increase(db_session: Session) -> None:
@@ -106,3 +107,29 @@ def test_activation_with_edited_test_cases(db_session: Session) -> None:
         svc.activate(db_session, _approvals(2, 30000), actor="u")
     svc.activate(db_session, _approvals(2, 30000), actor="u", draft_tests=edited_tests)
     assert svc.authorize(db_session, LAPTOP)[0].effect == "REQUIRE_HUMAN"
+
+
+def test_stored_version_cannot_be_rewritten(db_session: Session) -> None:
+    """Issue #32.1: activate v2, v3, roll back to v2, then v3 with other content -> refused."""
+    svc = PolicyService()
+    svc.activate(db_session, _approvals(2, 50000), actor="u")
+    svc.activate(db_session, _approvals(3, 100000), actor="u")
+    svc.rollback(db_session, "approvals", 2, actor="u")
+    with pytest.raises(ValueError, match="already stored with different content"):
+        svc.activate(db_session, _approvals(3, 120000), actor="u")
+    # identical content may be re-activated
+    svc.activate(db_session, _approvals(3, 100000), actor="u")
+    assert "approvals@3" in svc.policies(db_session).version
+    v3 = [r for r in svc.history(db_session, "approvals") if r.version == 3]
+    assert len(v3) == 1 and "> 100000" in v3[0].content
+
+
+def test_rollback_to_bootstrap_version(db_session: Session) -> None:
+    """Issue #32.2: the file version (v1) can be rolled back to and appears in history."""
+    svc = PolicyService()
+    svc.activate(db_session, _approvals(2, 50000), actor="u")
+    assert svc.authorize(db_session, LAPTOP)[0].effect == "REQUIRE_HUMAN"
+    svc.rollback(db_session, "approvals", 1, actor="u")
+    assert "approvals@1" in svc.policies(db_session).version
+    assert svc.authorize(db_session, LAPTOP)[0].effect == "ALLOW"
+    assert [r.version for r in svc.history(db_session, "approvals")] == [1, 2]
