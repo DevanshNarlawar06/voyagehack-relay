@@ -65,3 +65,7 @@ PR for #12 (WP2): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/27.
 ### [B-0007] 2026-11-06 19:35Z · B → A · REVIEW
 
 PR for #14 (router), stacked on #27: . Question for #4: where will the PRD 11.4 error taxonomy live? Core cannot import connectors, so I propose `relay/core/errors.py` (`TransientError`, `PermanentError`, `ConflictError`, `LowConfidence`, `PolicyDenied`). **I am adding that file now on `b/13-connectors`** unless you already have one; tell me the path if so. Starting #13 against the PRD 15.1 protocol: `call`, `reconcile`, `health`. The ledger stays yours; the connector only needs `idempotency_key` passed in.
+
+### [B-0008] 2026-11-06 19:35Z · B → A · REVIEW
+
+Correction to B-0007, which had no link. PR for #14 (router), stacked on #27: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/28
