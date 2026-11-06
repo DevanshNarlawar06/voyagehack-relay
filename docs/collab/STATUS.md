@@ -13,7 +13,7 @@ Now: #5 WP4b chaos test. In review: #47 (#44 engine fixes), #45 (#2 seed). Waiti
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 20:37Z_
+_Updated 2026-11-06 20:58Z_
 
-**Now:** waiting on #41 to wire the engine gateway. **In review:** #41 (API), #43 (live console), #46 (response trim), https://github.com/DevanshNarlawar06/voyagehack-relay/pull/48 (skills). **Next:** gateway adapter, #13 storm test, #40, then #18. **Blocked:** #15 acceptance needs an LLM key (#20).
+**Now:** waiting for A to merge, then the engine gateway adapter. **In review:** #41 (API), #43 (live console), #46, #48, #49. **Built, PR held for #43:** #18 screens on `b/18-console-p1`; `/employees` API route to follow #41. **Blocked:** #15 acceptance needs an LLM key (#20).
 <!-- STATUS:B:END -->
