@@ -1,0 +1,97 @@
+pack: rbac
+version: 1
+owner: hr_admin
+description: >
+  Roles -> permitted action patterns, the action catalogue and DPDP purposes.
+  Agents get principal permissions ∩ skill allowlist. Reserved and route-only floors apply on top,
+  so a role listed here can still be sent to a human for a reserved action.
+roles:
+  system:   # the workflow engine, acting for the HR ops pool
+    - "employee.*"
+    - "hr.*"
+    - "documents.*"
+    - "directory.*"
+    - "assets.*"
+    - "access.*"
+    - "payroll.*"
+    - "statutory.*"
+    - "comms.*"
+    - "calendar.*"
+    - "notify.*"
+    - "ticketing.*"
+    - "sla.*"
+    - "hiring.*"
+    - "employment.*"
+    - "grievance.route"
+    - "posh.route"
+    - "whistleblower.route"
+  hr_ops:
+    - "runs.read"
+    - "tasks.*"
+    - "employee.*"
+    - "documents.*"
+    - "hr.*"
+    - "chat.*"
+  hr_admin: ["*"]
+  manager:
+    - "runs.read.team"
+    - "tasks.*"
+    - "employee.buddy.override"
+    - "employment.probation.confirm"
+    - "employment.resignation.accept"
+    - "employment.release_date.agree"
+    - "employment.notice_buyout.agree"
+    - "chat.*"
+  approver_offer: ["hiring.*", "tasks.*"]
+  approver_it_spend: ["assets.laptop.allocate", "assets.laptop.allocate.exception", "tasks.*"]
+  approver_finance: ["comp.*", "payroll.*", "statutory.*", "tasks.*"]
+  it_ops: ["tasks.*", "assets.*", "directory.*"]
+  admin_ops: ["tasks.*", "access.*"]
+  finance_ops: ["tasks.*", "payroll.*"]
+  new_joiner:
+    - "documents.upload"
+    - "consent.*"
+    - "policies.acknowledge"
+    - "onboarding.status.read"
+    - "chat.*"
+  employee:
+    - "chat.*"
+    - "employee.self.read"
+    - "data_request.*"
+    - "consent.*"
+    - "employment.resignation.submit"
+    - "grievance.route"
+    - "posh.route"
+    - "whistleblower.route"
+  auditor: ["audit.read", "audit.export", "runs.read"]
+  developer: ["definitions.*", "runs.read"]
+
+# Action catalogue (registry validation checks every workflow `action` is declared here).
+actions:
+  employee.create: { description: "Create pre-hire record" }
+  hr.terms.compute: { description: "Compute joining terms from labour rules" }
+  documents.request: { description: "Send upload link and consent notice" }
+  documents.extract: { description: "Extract fields from uploaded documents", purpose: onboarding_verification }
+  employee.verify: { description: "Cross-check identity fields", purpose: onboarding_verification }
+  employee.activate_code: { description: "Allocate employee code" }
+  directory.account.create: { description: "Create email/directory account", purpose: it_provisioning }
+  assets.laptop.select: { description: "Choose laptop spec from role/grade table" }
+  assets.laptop.allocate: { description: "Allocate a laptop", purpose: it_provisioning }
+  access.card.issue: { description: "Issue access card", purpose: it_provisioning }
+  payroll.employee.setup: { description: "Set up payroll with approved CTC", purpose: payroll_setup }
+  statutory.pf.register: { description: "Register PF/UAN", purpose: statutory_registration }
+  employee.buddy.assign: { description: "Assign onboarding buddy" }
+  comms.manager_brief: { description: "Draft manager/buddy welcome brief" }
+  calendar.events.create: { description: "Schedule day-one events" }
+  employee.activate: { description: "Readiness gate, move to active" }
+  employment.probation.confirm: { description: "Confirm/extend probation (reserved)" }
+  hiring.offer.approve: { description: "Approve offer (baseline reserved)" }
+
+purposes:   # documentation only; legitimate-use purposes skip the consent check
+  onboarding_verification: Verify identity and eligibility documents of a new joiner
+  payroll_setup: Pay salary into the employee's bank account
+  statutory_registration: Register for PF/ESI as required by law
+  it_provisioning: Provide accounts, devices and building access for work
+legitimate_use_purposes:
+  - statutory_registration   # DPDP Act 2023 s.7: compliance with law
+  - it_provisioning          # DPDP Act 2023 s.7(i): for the purposes of employment

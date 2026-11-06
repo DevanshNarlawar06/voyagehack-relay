@@ -1,0 +1,12 @@
+pack: approvals
+version: 1
+owner: hr_admin
+description: Thresholds that route an otherwise automatic action to a named approver.
+rules:
+  - id: laptop_high_spend
+    description: Laptops above ₹1.5L need IT spend approval
+    applies_to: ["assets.laptop.allocate"]
+    when: "attributes.amount_inr > 150000"
+    effect: REQUIRE_HUMAN
+    approver_role: approver_it_spend
+    source: "TBO IT Asset Policy §2.3 (placeholder until TBO sample policies arrive)"

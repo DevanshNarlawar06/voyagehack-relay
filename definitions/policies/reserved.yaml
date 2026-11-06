@@ -1,0 +1,15 @@
+pack: reserved
+version: 1
+owner: hr_admin
+description: >
+  HR-editable ADDITIONS to the immutable baseline in relay/core/policy/baseline.py.
+  Entries here cannot redefine or remove a baseline action (the loader rejects that).
+reserved:
+  - action: employment.probation.confirm
+    approver_role: manager
+  - action: assets.laptop.allocate.exception
+    approver_role: approver_it_spend
+route_only:
+  - "grievance.*"
+  - "posh.*"
+  - "whistleblower.*"
