@@ -1,0 +1,13 @@
+# Our mock extension: day-one calendar events (PRD 15.2). No idempotency support.
+connector: calendar
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /calendar/health
+ops:
+  create_events:
+    side_effect: true
+    method: POST
+    path: /calendar/events
+    idempotency_mode: reference_lookup
+    inject_reference: true
+    reconcile: { path: /calendar/events }

@@ -1,0 +1,22 @@
+# TBO access cards (PRD 15.2). No idempotency support, so reconcile before any retry.
+connector: access
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /access/health
+ops:
+  issue_card:
+    side_effect: true
+    method: POST
+    path: /access/cards
+    idempotency_mode: reference_lookup
+    inject_reference: true
+    reconcile: { path: /access/cards }
+  revoke_card:
+    side_effect: true
+    method: POST
+    path: /access/cards/{external_id}/revoke
+    idempotency_mode: natural_key  # setting a state twice is harmless
+  lookup:
+    side_effect: false
+    method: GET
+    path: /access/cards

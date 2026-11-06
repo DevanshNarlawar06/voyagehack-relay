@@ -1,0 +1,22 @@
+# TBO email/directory (PRD 15.2). Shapes follow mocks/; replace when TBO publishes its spec.
+connector: directory
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /directory/health
+ops:
+  create_account:
+    side_effect: true
+    method: POST
+    path: /directory/accounts
+    idempotency_mode: header
+    inject_reference: true
+    reconcile: { path: /directory/accounts }
+  disable_account:
+    side_effect: true
+    method: POST
+    path: /directory/accounts/{external_id}/disable
+    idempotency_mode: natural_key  # setting a state twice is harmless
+  lookup:
+    side_effect: false
+    method: GET
+    path: /directory/accounts

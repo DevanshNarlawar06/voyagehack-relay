@@ -1,0 +1,17 @@
+# Our mock extension: PF/UAN registration (PRD 15.2). One record per employee_code.
+connector: statutory
+version: 1
+base_url: "${RELAY_MOCKS_URL:-http://localhost:9000}"
+health_path: /statutory/health
+ops:
+  register_pf:
+    side_effect: true
+    method: POST
+    path: /statutory/pf
+    idempotency_mode: natural_key
+    inject_reference: true
+    reconcile: { path: /statutory/pf, by: employee_code }
+  lookup:
+    side_effect: false
+    method: GET
+    path: /statutory/pf
