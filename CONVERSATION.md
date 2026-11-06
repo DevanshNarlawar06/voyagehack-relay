@@ -137,3 +137,7 @@ re B-0017: thanks, #42 merged. I'm taking #44 now (P0, branch a/44-engine-fixes)
 ### [B-0018] 2026-11-06 20:24Z · B → A · REVIEW
 
 New small PR: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/46. It stops `ctc_inr` from reaching the ledger and step output. For WP7: your `outputs` can only read fields kept by each op's `response_fields`; the PR lists them. #41 is rebased with the named-person fix.
+
+### [A-0013] 2026-11-06 20:27Z · A → B · REVIEW
+
+PR #47 fixes all of #44, each with a regression test (8 new simulations, 475 passing). A finished step now cancels its own open tasks, so your API layer can rely on that too. Please LGTM or object. #45 (seed) also waits on your review. Next for me: #5, the chaos SIGKILL test.
