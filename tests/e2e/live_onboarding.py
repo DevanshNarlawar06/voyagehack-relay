@@ -34,7 +34,11 @@ def say(message: str) -> None:
 
 
 def login(email: str) -> httpx.Client:
-    token = httpx.post(f"{API}/auth/demo-login", json={"email": email}, timeout=10).raise_for_status().json()["token"]
+    token = (
+        httpx.post(f"{API}/auth/demo-login", json={"email": email}, timeout=10)
+        .raise_for_status()
+        .json()["token"]
+    )
     return httpx.Client(base_url=API, headers={"Authorization": f"Bearer {token}"}, timeout=30)
 
 
@@ -43,7 +47,9 @@ def steps_of(client: httpx.Client, run_id: str) -> dict[str, str]:
     return {step["step_id"]: step["status"] for step in detail["steps"]}
 
 
-def wait_for(client: httpx.Client, run_id: str, step: str, wanted: str, seconds: float = 30) -> None:
+def wait_for(
+    client: httpx.Client, run_id: str, step: str, wanted: str, seconds: float = 30
+) -> None:
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         statuses = steps_of(client, run_id)
@@ -63,11 +69,15 @@ def main() -> int:
     parser.add_argument("--scenario", default="clean")
     args = parser.parse_args()
     candidate: dict[str, Any] = next(
-        c for c in json.loads(FIXTURES.read_text(encoding="utf-8")) if c["scenario"] == args.scenario
+        c
+        for c in json.loads(FIXTURES.read_text(encoding="utf-8"))
+        if c["scenario"] == args.scenario
     )
     reference = candidate["candidate_ref"]
     with session_scope() as session:
-        row = session.scalars(select(m.Candidate).where(m.Candidate.external_ref == reference)).one()
+        row = session.scalars(
+            select(m.Candidate).where(m.Candidate.external_ref == reference)
+        ).one()
         person_id = str(row.person_id)
         offer = session.get(m.Offer, row.offer_id)
         assert offer is not None
@@ -120,25 +130,35 @@ def main() -> int:
         json={"token": link.json()["token"]},
         timeout=30,
     )
-    say(f"5. The joiner acknowledges policies: {acknowledged.status_code} {acknowledged.text[:200]}")
+    say(
+        f"5. The joiner acknowledges policies: {acknowledged.status_code} {acknowledged.text[:200]}"
+    )
     acknowledged.raise_for_status()
 
     wait_for(hr, run_id, "readiness_gate", "SUCCEEDED", seconds=30)
     detail = hr.get(f"/runs/{run_id}").raise_for_status().json()
-    say(f"6. Run status: {detail['status']}, {detail['steps_done']}/{detail['steps_total']} steps, {detail['subject_label']}")
+    say(
+        f"6. Run status: {detail['status']}, {detail['steps_done']}/{detail['steps_total']} steps, {detail['subject_label']}"
+    )
 
     with session_scope() as session:
-        code = session.scalar(select(m.Employee.employee_code).where(m.Employee.person_id == row_person(person_id)))
+        code = session.scalar(
+            select(m.Employee.employee_code).where(m.Employee.person_id == row_person(person_id))
+        )
     counts = {}
     for system, collection in SYSTEMS.items():
-        counts[system] = httpx.get(f"{MOCKS}/{system}/{collection}", params={"employee_code": code}, timeout=10).json()["count"]
+        counts[system] = httpx.get(
+            f"{MOCKS}/{system}/{collection}", params={"employee_code": code}, timeout=10
+        ).json()["count"]
     say(f"7. Records for {code}: {counts}")
 
     auditor = login("auditor@relay.test")
     verified = auditor.get("/audit/verify").raise_for_status().json()
     say(f"8. Audit chain ok={verified['ok']} over {verified['checked']} events")
     metrics = hr.get("/metrics/summary").raise_for_status().json()
-    say(f"9. Dashboard: {metrics['completed_runs']} completed, automation {metrics['step_automation_rate']}")
+    say(
+        f"9. Dashboard: {metrics['completed_runs']} completed, automation {metrics['step_automation_rate']}"
+    )
     good = detail["status"] == "completed" and set(counts.values()) == {1} and verified["ok"]
     say("END TO END: " + ("YES" if good else "NO"))
     return 0 if good else 1
