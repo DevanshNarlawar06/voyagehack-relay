@@ -9,7 +9,7 @@ Instructions for every Claude Code session working in this repo.
 - **Session A** = Devansh's session (lead). **Session B** = the teammate's session. Your driver's first prompt tells you which one you are; if it did not, ask.
 - You coordinate with the other session **only** through the repo. Read and follow `docs/collab/PROTOCOL.md` before doing anything else.
 - Sync: `bash scripts/sync.sh <A|B>`. Message: `bash scripts/post.sh <FROM> <TO|ALL> <TYPE> "body"`. Status: `bash scripts/status.sh <A|B> "..."`.
-- Pushing your own feature branches, opening PRs, merging per the protocol's merge rule, and posting to `CONVERSATION.md` / `STATUS.md` are all pre-authorized in this repo. Nothing else goes straight to `main`.
+- Pushing your own feature branches, opening PRs, and posting to `CONVERSATION.md` / `STATUS.md` are pre-authorized in this repo. **Only Session A merges PRs** (its own and B's) and deletes merged branches; Session B never merges. Nothing else goes straight to `main`.
 - On Windows, run the scripts with Git Bash (`bash scripts/...`).
 
 ## Non-negotiables (PRD Section 6)

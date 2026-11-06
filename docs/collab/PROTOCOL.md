@@ -8,8 +8,8 @@ Start-up and loop prompts for each session: `docs/collab/SESSION_PROMPTS.md`.
 
 | Session | Driven by | Role |
 |---|---|---|
-| **A** | Devansh (`DevanshNarlawar06`) | **Lead.** Creates and assigns most issues, final say on disputes, reviews B's PRs, owns the spine (WP1, WP3, WP4, WP7, WP9, WP11). |
-| **B** | Sarthak (`sarthakviche`) | **Builder.** Works `session:B` issues (WP2, WP5, WP6, WP8, WP10), may open issues for A, may open polls, reviews A's PRs. |
+| **A** | Devansh (`DevanshNarlawar06`) | **Lead and sole merger.** Creates and assigns most issues, final say on disputes, reviews and **merges every PR** (A's and B's), owns the spine (WP1, WP3, WP4, WP7, WP9, WP11). |
+| **B** | Sarthak (`sarthakviche`) | **Builder.** Works `session:B` issues (WP2, WP5, WP6, WP8, WP10), may open issues for A, may open polls, reviews A's PRs. **Does not merge** any PR. |
 
 Both share WP12 (docs) and, once P0 + P1 are done, UI and feature enhancements.
 
@@ -79,7 +79,9 @@ Reply with a `VOTE` message (`P-3: (b), because ...`). Session A posts the `DECI
 
 - Title in conventional-commit style; body: `Closes #N`, what changed, how it was tested, anything the other session must know.
 - After opening, post a `REVIEW` message to the other session with the PR link.
-- **Merge rule:** CI green **and** either the other session approved/commented "LGTM", **or** 45 minutes have passed since the `REVIEW` message with no objection. Merge with `gh pr merge <N> --merge --delete-branch` (merge commit, keeps individual history).
+- **Only Session A merges** (decision A-0007, by Devansh). Session B never runs `gh pr merge`, not even on its own PRs.
+- **Merge rule (applied by A):** CI green **and** reviewed: for B's PRs, A's own review; for A's PRs, B approved/commented "LGTM", **or** 45 minutes have passed since A's `REVIEW` message with no objection. A merges with `gh pr merge <N> --merge --delete-branch` (merge commit, keeps individual history) and resolves conflicts on `main` when needed.
+- Stacked PRs: when A merges a base PR, A retargets or reopens the PRs stacked on it.
 - The reviewer checks: PRD invariants (Section 6), tests exist, no secrets or real PII, no edits in the other session's area without a prior message.
 
 ## 8. Ownership and shared files
@@ -91,7 +93,7 @@ Reply with a `VOTE` message (`P-3: (b), because ...`). Session A posts the `DECI
 | `docs/`, `seed/`, `tests/` (each tests its own code), `README.md` | shared |
 
 - Small additive edits to shared files (a dependency in `pyproject.toml`, a service in `docker-compose.yml`, a new table in models) are fine; mention them in the PR body.
-- Alembic migrations: one per WP, name it `NNNN_wpX_<slug>.py`; if two heads appear, whoever merges second adds the merge migration.
+- Alembic migrations: one per WP, name it `NNNN_wpX_<slug>.py`; if two heads appear, Session A adds the merge migration when merging.
 - Need to change the other session's area? Post a `QUESTION` or `TASK` first, or open an issue for them.
 
 ## 9. Blocked, conflicts, disagreements
@@ -106,7 +108,7 @@ Each session runs on a self-paced loop. Every tick:
 1. `bash scripts/sync.sh <ME>` and reply to messages addressed to you.
 2. Continue the current issue, or claim the next open issue for your session in priority order (P0 → P1 → P2, lower WP first).
 3. Commit small, push your branch, open a PR when the acceptance criteria in PRD Section 23 are met, post `REVIEW`.
-4. Merge PRs that satisfy the merge rule (yours or the other session's).
+4. **Session A only:** merge every PR that satisfies the merge rule. Session B: post `REVIEW` for each ready PR and leave merging to A.
 5. `bash scripts/status.sh <ME> "..."` with now / next / blocked / branch.
 
 Never, in any mode: force-push `main`; delete branches that are not your own merged ones; change repo settings or secrets; commit `.env`, keys or real personal data; disable tests or CI to get green; weaken a PRD Section 6 invariant.
