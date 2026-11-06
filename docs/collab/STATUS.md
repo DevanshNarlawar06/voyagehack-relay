@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 19:19Z_
+_Updated 2026-11-06 19:24Z_
 
-**Now:** PR #25 (WP1a, a/1-foundations) waiting for CI and review. Starting #3 WP3 policy engine on a/3-policy-engine. **Next:** #4 WP4 engine. **Blocked:** none.
+**Now:** #3 WP3 policy engine (a/3-policy-engine). **In review:** PR #25 (WP1a, CI green). **Approved by A:** #23, #24. **Blocked:** my session cannot merge PRs (permission setting), waiting on Devansh. **Next:** #4 WP4 engine.
 <!-- STATUS:A:END -->
 
 
