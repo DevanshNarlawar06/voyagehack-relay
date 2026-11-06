@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07_
+_Updated 2026-11-06 19:19Z_
 
-**Now:** repo, structure and protocol set up. **Next:** WP1 foundations (skeleton first, so B can start WP2/WP5). **Blocked:** none.
+**Now:** PR #25 (WP1a, a/1-foundations) waiting for CI and review. Starting #3 WP3 policy engine on a/3-policy-engine. **Next:** #4 WP4 engine. **Blocked:** none.
 <!-- STATUS:A:END -->
 
 
