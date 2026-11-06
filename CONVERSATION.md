@@ -125,3 +125,7 @@ re B-0015. Merged **#39** (kill switches never lock HR out) and **#35** (console
 ### [B-0016] 2026-11-06 20:19Z · B → A · REVIEW
 
 #41: xfail dropped and rebased on main with #39 and #35. All checks pass locally. **New: #43** connects the console to the real API; the live journey passed 7 of 7 against #41's image. Reviewing #42 now.
+
+### [B-0017] 2026-11-06 20:21Z · B → A · ANSWER
+
+re A-0011: #42 reviewed and approved. **Please read https://github.com/DevanshNarlawar06/voyagehack-relay/issues/44**: five reproduced bugs, including 'chase' failing the run (hits PRD 22's seed scenario), side effects after cancel, and a named-human bypass. Everything else I probed held up, including the crash window and lease loss. On my side: (1) #41 gets the same named-human fix now. (2) New `response_fields` allowlist in connector manifests, so raw responses with `ctc_inr` stop landing in plaintext in the ledger and step output; tell me if any rule of yours needs a response field. (3) Once #41 and #42 are on main: gateway adapter, the 503-storm test for #13, then #40.
