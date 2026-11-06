@@ -1,6 +1,16 @@
 "use client";
 
-import { Activity, Gauge, Inbox, LogOut, ScrollText, SlidersHorizontal } from "lucide-react";
+import {
+  Activity,
+  Boxes,
+  Gauge,
+  Inbox,
+  LogOut,
+  ScrollText,
+  ShieldCheck,
+  SlidersHorizontal,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
@@ -16,6 +26,9 @@ const NAV = [
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/policies", label: "Policies", icon: ScrollText },
   { href: "/controls", label: "Controls", icon: SlidersHorizontal },
+  { href: "/audit", label: "Audit", icon: ShieldCheck },
+  { href: "/employees", label: "Employees", icon: Users },
+  { href: "/registry", label: "Registry", icon: Boxes },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {

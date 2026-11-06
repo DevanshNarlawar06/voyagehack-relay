@@ -1,7 +1,12 @@
 // Invented data for building the screens before the API exists. Nothing here is measured, and the
 // shell labels it as such. All people and identifiers are synthetic.
 import type {
+  AuditEvent,
+  AuditEventDetail,
   ConnectorHealth,
+  Definition,
+  EmployeeRecord,
+  EmployeeSummary,
   FaultRule,
   HumanTask,
   KillSwitch,
@@ -304,6 +309,110 @@ export function createFixtureApi(): RelayApi {
     ]),
   );
 
+  const events: AuditEventDetail[] = [
+    {
+      id: "evt-3",
+      seq: 3,
+      ts: minutesAgo(5),
+      actor_type: "agent",
+      actor_id: "agent:document_extractor",
+      on_behalf_of: "run.subject",
+      action: "documents.extract",
+      run_id: "run-0029",
+      effect: "ALLOW",
+      workflow_def_version: "onboarding@1",
+      policy_version: "approvals@1,rbac@1,reserved@1",
+      skill_version: "1",
+      prompt_version: "v1",
+      model_id: "mock/deterministic",
+      input_hash: "9f2c41ab77d0",
+      reasoning: "Validators failed on one field, so the model was asked.",
+      prev_hash: "7bd2",
+      hash: "c019",
+      payload: {
+        id: "pay-1",
+        direction: "out",
+        masked_text: "Document type: pan\nName: <PERSON_1>\nPAN: <PAN_1>\nDOB: <DOB_1>",
+        provider: "mock",
+        model_id: "mock/deterministic",
+        region: "local",
+        token_count: 18,
+      },
+    },
+    {
+      id: "evt-2",
+      seq: 2,
+      ts: minutesAgo(12),
+      actor_type: "system",
+      actor_id: "engine",
+      on_behalf_of: "pool:hr_ops",
+      action: "policy.authorize:assets.laptop.allocate",
+      run_id: "run-0030",
+      effect: "REQUIRE_HUMAN",
+      workflow_def_version: "onboarding@1",
+      policy_version: "approvals@1,rbac@1,reserved@1",
+      skill_version: null,
+      prompt_version: null,
+      model_id: null,
+      input_hash: null,
+      reasoning: "Laptops above ₹1.5L need IT spend approval",
+      prev_hash: "00aa",
+      hash: "7bd2",
+      payload: null,
+    },
+    {
+      id: "evt-1",
+      seq: 1,
+      ts: minutesAgo(20),
+      actor_type: "human",
+      actor_id: "human:hr.admin@tbo-demo.test",
+      on_behalf_of: null,
+      action: "policy.authorize:audit.read",
+      run_id: null,
+      effect: "DENY",
+      workflow_def_version: null,
+      policy_version: "rbac@1",
+      skill_version: null,
+      prompt_version: null,
+      model_id: null,
+      input_hash: null,
+      reasoning: "roles do not permit audit.read",
+      prev_hash: "0000",
+      hash: "00aa",
+      payload: null,
+    },
+  ];
+  const definitions: Definition[] = [
+    { name: "onboarding", version: 1, status: "active", content_hash: "4e1f9a7c22b0d1", activated_by: "hr.admin@tbo-demo.test", activated_at: minutesAgo(4000) },
+    { name: "exit", version: 1, status: "draft", content_hash: "b7700ce1a3f9e2", activated_by: null, activated_at: null },
+  ];
+  const employees: EmployeeRecord[] = [
+    {
+      id: "emp-1",
+      full_name: "Aarav Mehta",
+      employee_code: "TBO1042",
+      state: "onboarding",
+      role_title: "Senior Engineer",
+      department: "Engineering",
+      lifecycle: [{ id: "l1", event_type: "pre_hire_created", at: minutesAgo(95) }],
+      documents: [{ id: "d1", category: "pan", retention_until: "2034-01-01" }],
+      consents: [{ purpose_id: "onboarding_verification", notice_version: "v1", withdrawn_at: null }],
+      data_requests: [],
+    },
+    {
+      id: "emp-2",
+      full_name: "Neha Gupta",
+      employee_code: "TBO0981",
+      state: "active",
+      role_title: "Analyst",
+      department: "Finance",
+      lifecycle: [],
+      documents: [],
+      consents: [],
+      data_requests: [{ id: "r1", type: "access", status: "open" }],
+    },
+  ];
+
   let kills: KillSwitch[] = [];
   let faults: FaultRule[] = [];
   const connectors = [
@@ -426,6 +535,30 @@ export function createFixtureApi(): RelayApi {
     clearFaults: () => {
       faults = [];
       return wait(undefined);
+    },
+    auditEvents: (filters) =>
+      wait(
+        events
+          .filter(
+            (e) =>
+              (!filters.actor || e.actor_id === filters.actor) &&
+              (!filters.action || e.action.includes(filters.action)) &&
+              (!filters.run_id || e.run_id === filters.run_id) &&
+              (!filters.effect || e.effect === filters.effect) &&
+              (filters.before_seq === undefined || e.seq < filters.before_seq),
+          )
+          .map((e): AuditEvent => e),
+      ),
+    auditEvent: (id) => {
+      const event = events.find((e) => e.id === id);
+      return event ? wait(event) : Promise.reject(new Error("Event not found."));
+    },
+    verifyAudit: () => wait({ ok: true, checked: events.length, first_bad_seq: null, problem: null }),
+    definitions: () => wait(definitions),
+    employees: () => wait(employees.map((e): EmployeeSummary => e)),
+    employee: (id) => {
+      const employee = employees.find((e) => e.id === id);
+      return employee ? wait(employee) : Promise.reject(new Error("Employee not found."));
     },
   };
 }

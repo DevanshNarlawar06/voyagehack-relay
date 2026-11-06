@@ -200,6 +200,8 @@ MATRIX: list[tuple[str, str, dict[str, Any] | None, set[str]]] = [
     ("GET", f"/audit/{FIXED_ID}", None, {"hr_admin", "auditor"}),
     ("GET", "/definitions", None, {"hr_admin", "developer"}),
     ("POST", "/data-requests", {"type": "access"}, {"hr_admin", "employee"}),
+    ("GET", "/employees", None, {"hr_admin", "hr_ops", "auditor"}),
+    ("GET", f"/employees/{FIXED_ID}", None, {"hr_admin", "hr_ops", "auditor"}),
 ]
 
 
@@ -954,6 +956,64 @@ def test_data_request_without_a_person_is_a_conflict(api: Api) -> None:
         api.client("employee").post("/api/v1/data-requests", json={"type": "nope"}).status_code
         == 422
     )
+
+
+def test_employee_record_shows_no_sensitive_values(api: Api) -> None:
+    person = m.Person(
+        full_name="Test Person",
+        pan="ABCPK1234L",
+        phone="9876543210",
+        dob="1995-03-14",
+        bank_account="50100123456789",
+    )
+    api.session.add(person)
+    api.session.flush()
+    employee = m.Employee(
+        person_id=person.id,
+        employee_code="TBO-T1",
+        role_title="Engineer",
+        ctc_approved={"annual_inr": 123456},
+    )
+    api.session.add(employee)
+    api.session.flush()
+    api.session.add(
+        m.Document(
+            person_id=person.id,
+            category=m.DocumentCategory.PAN,
+            storage_ref="vault/secret-path",
+            extracted={"pan": "ABCPK1234L"},
+        )
+    )
+    api.session.add(
+        m.Consent(
+            person_id=person.id, purpose_id="payroll_setup", notice_version="v1", channel="web"
+        )
+    )
+    api.session.add(m.DataRequest(person_id=person.id, type=m.DataRequestType.ACCESS))
+    api.session.add(m.LifecycleEvent(employee_id=employee.id, event_type="pre_hire_created"))
+    api.session.flush()
+    client = api.client("hr_ops")
+    assert "Test Person" in {e["full_name"] for e in client.get("/api/v1/employees").json()}
+    response = client.get(f"/api/v1/employees/{employee.id}")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["documents"][0]["category"] == "pan"
+    assert body["consents"][0]["purpose_id"] == "payroll_setup"
+    assert body["lifecycle"][0]["event_type"] == "pre_hire_created"
+    assert body["data_requests"][0]["type"] == "access"
+    for secret in (
+        "ABCPK1234L",
+        "9876543210",
+        "1995-03-14",
+        "50100123456789",
+        "123456",
+        "secret-path",
+    ):
+        assert secret not in response.text
+
+
+def test_employee_not_found(api: Api) -> None:
+    assert api.client("hr_ops").get(f"/api/v1/employees/{uuid.uuid4()}").status_code == 404
 
 
 def test_health_is_public(api: Api) -> None:

@@ -68,7 +68,7 @@ roles:
     - "grievance.route"
     - "posh.route"
     - "whistleblower.route"
-  auditor: ["audit.read", "audit.export", "runs.read", "metrics.read", "policy.read", "kill_switch.read", "connectors.read"]
+  auditor: ["audit.read", "audit.export", "runs.read", "metrics.read", "policy.read", "kill_switch.read", "connectors.read", "employee.read"]
   developer: ["definitions.*", "runs.read"]
   # hr_admin holds "*", which is how it gets policy.edit, policy.activate, kill_switch.set,
   # controls.fault and runs.cancel.

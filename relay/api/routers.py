@@ -24,7 +24,7 @@ from relay.core.audit.writer import AuditEntry, append_event
 from relay.core.cost.metrics import MetricsSummary, compute_metrics
 from relay.core.engine.engine import TriggerRefused
 from relay.core.errors import TransientError
-from relay.core.policy import PolicyTestFailure
+from relay.core.policy import PolicyTestFailure, SubjectRef
 from relay.core.policy.packs import PACK_NAMES, parse_pack
 from relay.db import models as m
 
@@ -530,6 +530,26 @@ def list_definitions(auth: Auth, session: Db) -> list[s.DefinitionOut]:
         )
     )
     return [s.DefinitionOut.model_validate(row) for row in rows]
+
+
+# ---------------------------------------------------------------- employees
+
+
+@router.get("/employees", tags=["employees"])
+def list_employees(auth: Auth, session: Db) -> list[s.EmployeeOut]:
+    """List employees."""
+    auth.require("employee.read")
+    return views.list_employees(session)
+
+
+@router.get("/employees/{employee_id}", tags=["employees"])
+def get_employee(employee_id: UUID, auth: Auth, session: Db) -> s.EmployeeDetailOut:
+    """Return an employee's record: lifecycle, documents (redacted), consents, data requests."""
+    auth.require("employee.read", subject=SubjectRef(type="employee", id=str(employee_id)))
+    employee = session.get(m.Employee, employee_id)
+    if employee is None:
+        raise _not_found("This employee")
+    return views.employee_detail(session, employee)
 
 
 # ---------------------------------------------------------------- DPDP
