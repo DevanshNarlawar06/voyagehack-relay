@@ -13,7 +13,7 @@ _Updated 2026-11-06 19:49Z_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 19:43Z_
+_Updated 2026-11-06 19:56Z_
 
-**Now:** #17 console (b/17-console). **In review:** #30 (#13), https://github.com/DevanshNarlawar06/voyagehack-relay/pull/33 (#14). **Merged:** #23, #24, #27. **Next:** #16 API on WP3/WP4. **Blocked:** A's #29 and #31 need a merge decision from Devansh.
+**Now:** #16 API. **In review:** https://github.com/DevanshNarlawar06/voyagehack-relay/pull/35 (#17). **Merged:** #10, #11, #12, #14, #13 connectors (#13 open for the engine test). **Next:** audit hook wiring, then P1 #15, #18. **Blocked:** none. Only A merges.
 <!-- STATUS:B:END -->
