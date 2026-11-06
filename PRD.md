@@ -856,7 +856,7 @@ Two Claude Code sessions build in parallel, each driven by one team member. They
 | Session | Driver | Role | Owns |
 |---|---|---|---|
 | **A** | Devansh | Lead: creates and assigns issues, final call on disputes, keeps `docs/collab/STATUS.md` pinned state | WP1, WP3, WP4, WP7, WP9, WP11 (the engine and governance spine) |
-| **B** | Teammate | Builder: picks up `session:B` issues, can open issues and polls | WP2, WP5, WP6, WP8, WP10 (audit/cost, integrations, AI, API, console) |
+| **B** | Sarthak (`sarthakviche`) | Builder: picks up `session:B` issues, can open issues and polls | WP2, WP5, WP6, WP8, WP10 (audit/cost, integrations, AI, API, console) |
 | Both | | | WP12 docs; UI and feature enhancements once P0+P1 are done |
 
 The split follows the Section 23 dependency graph so neither session waits long: A lands a thin WP1 skeleton first (DB models, config loader, Compose), then B starts WP2 and WP5 against it while A builds WP3 → WP4.

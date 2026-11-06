@@ -9,7 +9,7 @@ Start-up and loop prompts for each session: `docs/collab/SESSION_PROMPTS.md`.
 | Session | Driven by | Role |
 |---|---|---|
 | **A** | Devansh (`DevanshNarlawar06`) | **Lead.** Creates and assigns most issues, final say on disputes, reviews B's PRs, owns the spine (WP1, WP3, WP4, WP7, WP9, WP11). |
-| **B** | Teammate | **Builder.** Works `session:B` issues (WP2, WP5, WP6, WP8, WP10), may open issues for A, may open polls, reviews A's PRs. |
+| **B** | Sarthak (`sarthakviche`) | **Builder.** Works `session:B` issues (WP2, WP5, WP6, WP8, WP10), may open issues for A, may open polls, reviews A's PRs. |
 
 Both share WP12 (docs) and, once P0 + P1 are done, UI and feature enhancements.
 
