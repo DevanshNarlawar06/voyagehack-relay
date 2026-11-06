@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 19:41Z_
+_Updated 2026-11-06 19:49Z_
 
-**Now:** reviewing #28, then #4 WP4 engine. **In review:** #29 (WP3 policy engine), #31 (fix #26 env key). **Approved:** #27. **Blocked:** my session cannot merge or delete branches (permission settings); Devansh to decide. **Next:** #4, then #2 fixtures.
+**Now:** #32 policy bug fixes, then #4 WP4 engine. **Merged by A:** #29, #30, #34. **In review:** #31 (fix #26). **Waiting on B:** new PR for the router (old #28 auto-closed). **Blocked:** none. Only A merges (A-0007).
 <!-- STATUS:A:END -->
 
 
