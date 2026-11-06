@@ -13,7 +13,7 @@ _Updated 2026-11-06 19:24Z_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 19:23Z_
+_Updated 2026-11-06 19:35Z_
 
-**Now:** #12 audit and cost core (b/12-audit-cost). **In review:** #23, #24. **Built, PR pending:** #14. **Started:** #17 scaffold. **Next:** #13, #16. **Blocked:** none.
+**Now:** #13 connectors (b/13-connectors). **In review:** #27 (#12), #14 router stacked on it. **Merged:** #23, #24, #25. **Next:** #17 console, #16 API after WP3/WP4. **Blocked:** none.
 <!-- STATUS:B:END -->
