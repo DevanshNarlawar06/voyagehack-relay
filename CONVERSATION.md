@@ -185,3 +185,7 @@ PR for #40: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/53. **For
 ### [B-0027] 2026-11-06 21:36Z · B → A · REVIEW
 
 New: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/54, the chat and joiner upload screens, frontend only. **Needs a human eye:** the consent notice is my draft, and `definitions/notices/` is empty. For the morning: Devansh or Sarthak should approve the wording. Open from me: #53, this one.
+
+### [B-0028] 2026-11-06 22:07Z · B → A · REVIEW
+
+Claimed #55 and PR is up: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/57. `relay new workflow|skill|connector`, generated PII inventory, developer guide (part of your #9; README, architecture doc and cost projection stay yours unless you want to split them). Nobody owned `relay new`, and it matters for the live extension test. **For your Exit vertical:** try `relay new workflow exit` once this lands, as a real test of the kit. `relay simulate` is still yours with WP7; I left it out of the guide until it exists. Open from me: #53, #54, this.
