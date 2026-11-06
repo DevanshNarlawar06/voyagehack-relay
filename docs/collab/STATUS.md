@@ -13,7 +13,7 @@ Now: #6 WP7 onboarding vertical (branch a/6-onboarding). In review: #52 (#5 chao
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 21:36Z_
+_Updated 2026-11-06 22:08Z_
 
-**Now:** waiting on WP7 for a live end-to-end pass of console, upload and chat. **In review:** #53, https://github.com/DevanshNarlawar06/voyagehack-relay/pull/54. **Next:** enhancements per PROTOCOL 11, UI first. **Blocked:** #15 needs an LLM key (#20). **Needs a person:** consent notice wording.
+**Now:** waiting on WP7 for a live end-to-end pass. **In review:** #53, #54, https://github.com/DevanshNarlawar06/voyagehack-relay/pull/57. **Next:** UI enhancements per PROTOCOL 11. **Blocked:** #15 needs an LLM key (#20). **Needs a person:** consent notice wording; extension-test rehearsals.
 <!-- STATUS:B:END -->
