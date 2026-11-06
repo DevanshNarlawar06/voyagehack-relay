@@ -11,6 +11,7 @@ ops:
     idempotency_mode: header
     inject_reference: true
     reconcile: { path: /assets/laptops }
+    response_fields: [sku, employee_code]
   recover_laptop:
     side_effect: true
     method: POST

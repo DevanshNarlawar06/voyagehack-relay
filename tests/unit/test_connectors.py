@@ -442,3 +442,42 @@ def test_unknown_manifest_fields_are_rejected() -> None:
 def test_a_side_effect_without_an_idempotency_mode_is_rejected() -> None:
     with pytest.raises(ValueError, match="idempotency_mode"):
         _manifest(idempotency_mode=None)
+
+
+def test_salary_echoed_by_payroll_never_leaves_the_connector(world: World) -> None:
+    """The ledger and step output are not encrypted, so a 🔒 field must not reach them (PRD 10)."""
+    payload = CREATES[("payroll", "setup_employee")]
+    connector = world.connectors["payroll"]
+    created = run(connector.call("setup_employee", payload, idempotency_key=KEY))
+    assert "ctc_inr" not in created.response
+    assert created.response["employee_code"] == "E1"
+    found = run(connector.reconcile("setup_employee", KEY, payload))
+    assert found is not None
+    assert "ctc_inr" not in found.response
+    # A retry adopts the record through the 409 path, which must be trimmed too.
+    assert (
+        "ctc_inr"
+        not in run(connector.call("setup_employee", payload, idempotency_key=KEY)).response
+    )
+    listed = run(connector.call("lookup", {"client_reference": KEY}, idempotency_key="r"))
+    assert listed.response["count"] == 1
+    assert "ctc_inr" not in listed.response["items"][0]
+    assert listed.response["items"][0]["id"] == created.external_id
+
+
+def test_every_manifest_keeps_sensitive_fields_out() -> None:
+    sensitive = {"ctc_inr", "pan", "bank_account", "aadhaar", "phone", "dob", "photo_ref"}
+    for manifest in load_manifests().values():
+        for name, spec in manifest.ops.items():
+            assert not sensitive & set(spec.response_fields), f"{manifest.connector}.{name}"
+
+
+def test_unlisted_fields_are_dropped_and_listed_ones_kept() -> None:
+    transport = httpx.MockTransport(
+        lambda _r: httpx.Response(
+            201, json={"id": 1, "status": "active", "secret": "x", "keep": "y"}
+        )
+    )
+    connector = HttpConnector(_manifest(response_fields=("keep",)), transport)
+    response = run(connector.call("go", {}, idempotency_key="k")).response
+    assert response == {"id": 1, "status": "active", "keep": "y"}

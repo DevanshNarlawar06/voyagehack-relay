@@ -11,6 +11,7 @@ ops:
     idempotency_mode: header
     inject_reference: true
     reconcile: { path: /directory/accounts }
+    response_fields: [email, employee_code]
   disable_account:
     side_effect: true
     method: POST

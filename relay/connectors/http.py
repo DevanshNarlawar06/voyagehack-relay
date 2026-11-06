@@ -13,6 +13,7 @@ import httpx
 from relay.connectors.base import ConnectorResult, HealthStatus
 from relay.connectors.manifest import (
     DEFINITIONS_DIR,
+    RESPONSE_BASE_FIELDS,
     ConnectorManifest,
     ErrorKind,
     OpSpec,
@@ -38,6 +39,15 @@ def _classify(status: int, spec: OpSpec) -> ErrorKind:
     if status == 409:
         return "conflict"
     return "permanent"
+
+
+def _trim(body: dict[str, Any], spec: OpSpec) -> dict[str, Any]:
+    """Keep only the allowed fields, including inside a lookup's `items`."""
+    allowed = {*RESPONSE_BASE_FIELDS, *spec.response_fields}
+    kept = {key: value for key, value in body.items() if key in allowed}
+    if isinstance(kept.get("items"), list):
+        kept["items"] = [_trim(item, spec) for item in kept["items"]]
+    return kept
 
 
 class HttpConnector:
@@ -112,7 +122,7 @@ class HttpConnector:
             )
         return ConnectorResult(
             external_id=str(ours[0]["id"]),
-            response=ours[0],
+            response=_trim(ours[0], spec),
             reconciled=True,
             duplicates=len(ours) - 1,
             cost_inr=spec.cost_inr,
@@ -173,7 +183,7 @@ class HttpConnector:
         identifier = body.get("id")
         return ConnectorResult(
             external_id=str(identifier) if identifier is not None else None,
-            response=body,
+            response=_trim(body, spec),
             replayed=response.headers.get(_REPLAY_HEADER) == "true",
             cost_inr=spec.cost_inr,
         )

@@ -17,6 +17,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 DEFINITIONS_DIR = Path(__file__).resolve().parents[2] / "definitions" / "connectors"
 _ENV_REFERENCE = re.compile(r"\$\{(\w+)(?::-([^}]*))?\}")
 
+# Responses end up unencrypted in the ledger and in step output, so only these are kept unless
+# a manifest names more. An echoed salary or PAN never gets that far (PRD 10).
+RESPONSE_BASE_FIELDS = ("id", "status", "client_reference", "created_at", "items", "count")
+
 ErrorKind = Literal["transient", "permanent", "conflict"]
 IdempotencyMode = Literal["header", "reference_lookup", "natural_key"]
 
@@ -45,6 +49,8 @@ class OpSpec(_Strict):
     reconcile: ReconcileSpec | None = None  # None means the op is safe to simply repeat
     error_map: dict[int, ErrorKind] = Field(default_factory=dict)  # overrides the default mapping
     cost_inr: Decimal = Decimal(0)
+    # Extra response fields to keep, on top of RESPONSE_BASE_FIELDS. The rest are dropped.
+    response_fields: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def _side_effects_declare_a_mode(self) -> OpSpec:
