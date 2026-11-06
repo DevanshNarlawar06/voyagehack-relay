@@ -15,5 +15,17 @@ services:
   mocks:
     build: ./mocks
     ports: ["9000:9000"]
+  api:
+    build: .
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgresql+psycopg://relay:relay@postgres:5432/relay
+      RELAY_MOCKS_URL: http://mocks:9000
+      RELAY_NOTIFY_URL: http://mocks:9000
+      RELAY_CONSOLE_ORIGIN: "${RELAY_CONSOLE_ORIGIN:-http://localhost:3000}"
+      RELAY_ENCRYPTION_KEY: "${RELAY_ENCRYPTION_KEY:-}"
+      RELAY_JWT_SECRET: "${RELAY_JWT_SECRET:-dev-only-secret}"
+    ports: ["8000:8000"]
 volumes:
   pgdata:
