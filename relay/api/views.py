@@ -286,7 +286,8 @@ def list_tasks(session: Session, user: m.User) -> list[TaskOut]:
         .outerjoin(m.StepRun, m.HumanTask.step_run_id == m.StepRun.id)
         .where(
             m.HumanTask.status.in_((m.HumanTaskStatus.OPEN, m.HumanTaskStatus.CLAIMED)),
-            m.HumanTask.assignee_role.in_(user.roles) | (m.HumanTask.assignee_user_id == user.id),
+            m.HumanTask.assignee_role.in_(user.roles),
+            m.HumanTask.assignee_user_id.is_(None) | (m.HumanTask.assignee_user_id == user.id),
         )
         .order_by(case((m.HumanTask.sla_due_at.is_(None), 1), else_=0), m.HumanTask.sla_due_at)
     )

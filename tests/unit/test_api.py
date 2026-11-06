@@ -528,6 +528,46 @@ def test_an_approval_needs_the_approver(api: Api) -> None:
     )
 
 
+def test_a_task_for_a_named_person_is_for_them_alone(api: Api) -> None:
+    """PRD 2: reserved decisions go to a named human, not to anyone sharing the role."""
+    named = api.client("manager", email="named@test.example")
+    other = api.client("manager", email="other@test.example")
+    task = api.task(
+        kind=m.HumanTaskKind.RESERVED_DECISION,
+        action="employment.resignation.accept",
+        assignee_role="manager",
+        assignee_user_id=api.users["named@test.example"].id,
+    )
+    assert str(task.id) not in {t["id"] for t in other.get("/api/v1/tasks").json()}
+    assert str(task.id) in {t["id"] for t in named.get("/api/v1/tasks").json()}
+    path = f"/api/v1/tasks/{task.id}/decide"
+    assert other.post(path, json={"option": "accept"}).status_code == 403
+    assert named.post(path, json={"option": "accept"}).status_code == 200
+
+
+def test_being_named_does_not_replace_holding_the_role(api: Api) -> None:
+    named = api.client("hr_ops", email="wrong-role@test.example")
+    task = api.task(
+        assignee_role="manager", assignee_user_id=api.users["wrong-role@test.example"].id
+    )
+    assert (
+        named.post(f"/api/v1/tasks/{task.id}/decide", json={"option": "accept"}).status_code == 403
+    )
+
+
+def test_a_claimed_task_is_closed_to_others_in_the_role(api: Api) -> None:
+    task = api.task()
+    first = api.client("hr_ops", email="first@test.example")
+    second = api.client("hr_ops", email="second@test.example")
+    assert first.post(f"/api/v1/tasks/{task.id}/claim").status_code == 200
+    assert (
+        second.post(f"/api/v1/tasks/{task.id}/decide", json={"option": "accept"}).status_code == 403
+    )
+    assert (
+        first.post(f"/api/v1/tasks/{task.id}/decide", json={"option": "accept"}).status_code == 200
+    )
+
+
 def test_claim_then_decide(api: Api) -> None:
     task = api.task()
     client = api.client("hr_ops")

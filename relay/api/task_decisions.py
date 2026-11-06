@@ -51,7 +51,9 @@ def _load_for_update(session: Session, task_id: UUID) -> m.HumanTask:
 
 
 def _may_act(task: m.HumanTask, user: m.User) -> bool:
-    return task.assignee_role in user.roles or task.assignee_user_id == user.id
+    """The routed role is always needed; a task assigned to a named person is for them alone."""
+    named = task.assignee_user_id is None or task.assignee_user_id == user.id
+    return task.assignee_role in user.roles and named
 
 
 def claim_task(session: Session, task_id: UUID, user: m.User) -> m.HumanTask:
