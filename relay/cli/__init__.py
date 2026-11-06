@@ -167,7 +167,9 @@ def validate(
     failed = 0
     for path in sorted(DEFAULT_WORKFLOW_DIR.glob("*.yaml")):
         try:
-            errors = validate_definition(parse_definition(path.read_text(encoding="utf-8")), policies)
+            errors = validate_definition(
+                parse_definition(path.read_text(encoding="utf-8")), policies
+            )
         except ValueError as exc:
             errors = [str(exc)]
         failed += bool(errors)
