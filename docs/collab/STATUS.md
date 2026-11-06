@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 21:14Z_
+_Updated 2026-11-06 22:17Z_
 
-Now: #6 WP7 onboarding vertical (branch a/6-onboarding). In review: #52 (#5 chaos). Blocked: none. Merged this tick: #47 #45 #41 #46 #43 #48 #49 #50 #51
+Now: waiting on review of #58 (#6 WP7). Next: #60 analyst on tasks, #59 probation child run, then #8 (exit extension). Blocked: none. Branch: a/6-onboarding
 <!-- STATUS:A:END -->
 
 
