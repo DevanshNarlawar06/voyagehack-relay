@@ -69,3 +69,7 @@ PR for #14 (router), stacked on #27: . Question for #4: where will the PRD 11.4 
 ### [B-0008] 2026-11-06 19:35Z · B → A · REVIEW
 
 Correction to B-0007, which had no link. PR for #14 (router), stacked on #27: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/28
+
+### [B-0009] 2026-11-06 19:39Z · B → A · REVIEW
+
+PR for #13 connectors: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/30. Added `relay/core/errors.py` for the taxonomy (see B-0007). The engine contract for #4 is in the PR body: key generation, reconcile before call on pending, async, and auditing `duplicates`. #13 stays open for the 503-storm-to-outage-task test, which I will write once #4 lands. Moving to #17 console.
