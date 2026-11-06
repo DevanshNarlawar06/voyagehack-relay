@@ -13,6 +13,7 @@ function Editor({ pack }: { pack: PolicyPack }) {
   const client = useQueryClient();
   const { hasRole } = useAuth();
   const [text, setText] = useState(pack.draft ?? pack.content);
+  const [tests, setTests] = useState(pack.draft_tests ?? "");
   const [results, setResults] = useState<PolicyTestResult[] | null>(null);
   const [activated, setActivated] = useState<number | null>(null);
   const canEdit = hasRole("hr_admin");
@@ -21,12 +22,13 @@ function Editor({ pack }: { pack: PolicyPack }) {
 
   useEffect(() => {
     setText(pack.draft ?? pack.content);
+    setTests(pack.draft_tests ?? "");
     setResults(null);
-  }, [pack.pack, pack.version, pack.content, pack.draft]);
+  }, [pack.pack, pack.version, pack.content, pack.draft, pack.draft_tests]);
 
   const runTests = useMutation({
     mutationFn: async () => {
-      await api.saveDraft(pack.pack, text);
+      await api.saveDraft(pack.pack, text, tests);
       return api.testPolicy(pack.pack);
     },
     onSuccess: (data) => {
@@ -85,6 +87,27 @@ function Editor({ pack }: { pack: PolicyPack }) {
           }}
           className="mt-3 w-full rounded-md border border-border bg-background p-3 font-mono text-xs leading-relaxed"
         />
+        {canEdit && dirty && (
+          <div className="mt-3">
+            <label htmlFor="policy-tests" className="text-sm">
+              Replacement test cases (optional)
+            </label>
+            <p className="text-xs text-muted-foreground">
+              A rule change can make an existing test out of date. Paste this pack&apos;s full test file with the new expectations.
+            </p>
+            <textarea
+              id="policy-tests"
+              value={tests}
+              spellCheck={false}
+              rows={tests ? 8 : 2}
+              onChange={(event) => {
+                setTests(event.target.value);
+                setResults(null);
+              }}
+              className="mt-1 w-full rounded-md border border-border bg-background p-3 font-mono text-xs leading-relaxed"
+            />
+          </div>
+        )}
         {!canEdit && <p className="mt-2 text-sm text-muted-foreground">Only HR admins can edit and activate policies.</p>}
         <p className="mt-2 text-xs text-muted-foreground">
           The baseline reserved list is compiled in, so a pack can add to it but never remove from it. Tests must pass before activation.
@@ -112,11 +135,11 @@ function Editor({ pack }: { pack: PolicyPack }) {
             Test results: {results.filter((r) => r.passed).length} of {results.length} passed
           </h3>
           <ul className="mt-2 space-y-1.5 text-sm">
-            {results.map((result) => (
+            {[...results].sort((a, b) => Number(a.passed) - Number(b.passed)).map((result) => (
               <li key={result.name} className="flex flex-wrap items-center gap-2">
                 <Badge tone={result.passed ? "good" : "bad"}>{result.passed ? "Pass" : "Fail"}</Badge>
                 {result.name}
-                {result.detail && <span className="text-muted-foreground">{result.detail}</span>}
+                {!result.passed && result.detail && <span className="text-muted-foreground">{result.detail}</span>}
               </li>
             ))}
           </ul>
