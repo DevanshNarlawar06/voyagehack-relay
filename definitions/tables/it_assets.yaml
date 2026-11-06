@@ -1,0 +1,12 @@
+# Laptop spec by grade (PRD 5.1 step 9). Read by relay/rules/it.py. Prices are list prices in INR;
+# the approvals pack, not this table, decides when a price needs an approver.
+table: laptop_by_grade
+version: 1
+source: "TBO IT Asset Policy §2.1 (placeholder until TBO sample policies arrive, issue #19)"
+rows:
+  G1: { sku: LAT-14-STD, price_inr: 72000 }
+  G2: { sku: LAT-14-STD, price_inr: 72000 }
+  G3: { sku: LAT-14-PLUS, price_inr: 98000 }
+  G4: { sku: LAT-16-PRO, price_inr: 135000 }
+  G5: { sku: LAT-16-MAX, price_inr: 210000 }
+  default: { sku: LAT-14-STD, price_inr: 72000 }
