@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+# Append-only coordination log: keep both sides on merge/rebase instead of conflicting
+CONVERSATION.md merge=union

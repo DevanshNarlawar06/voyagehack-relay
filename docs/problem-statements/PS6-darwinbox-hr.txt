@@ -1,0 +1,217 @@
+
+TBO Hackathon: AI-Native HR Services
+Platform(DarwinBox)
+
+The challenge
+
+Design and build an agent-first HR services platform that could replace a conventional
+HRMS. Agents do the routine work end to end, humans make the decisions that matter,
+and the platform runs at a low, measured cost per task.
+
+Today, an HRMS records events but people still move the work. When a new hire is
+added, HR still emails IT for a laptop, Admin for an access card and Finance for payroll
+setup, then chases each one. Your platform should close those loops on its own.
+
+You may demonstrate one HR service line in depth, such as talent acquisition,
+onboarding, leave, employee helpdesk or exits. The product itself must be a platform
+that TBO's in-house developers can extend to new service lines once HR identifies and
+approves a need.
+
+Objectives
+
+Your submission must show all eight objectives. Depth on one service line beats
+shallow coverage of many.
+
+    1. Automate end to end. Agents trigger and complete cross-team work (IT, Admin,
+         Finance, the hiring manager) without manual emails or follow-ups. Report what
+         share of your chosen journey's steps finish with no human touch.
+
+    2. Build a platform, not a point solution. A TBO developer must be able to add a
+         new service line, agent, workflow or integration without changing the core. Show
+         a documented extension model: workflow definitions, an agent or skill registry,
+         and API-first integrations.
+
+    3. Keep humans on the decisions that matter. Reserved decisions are routed to a
+         named human approver and cannot be completed by an agent. The list of
+         reserved decisions is configuration that HR can change, not hard-coded logic
+         (see Guardrails).
+
+    4. Comply by design. Legal and policy rules sit in a governed layer that is
+         versioned, testable and auditable, not buried in prompts.
+
+    5. Keep a clean system of record. Hold the employee lifecycle from hire to exit in a
+         sound data model, with role-based access and a full audit trail of every change
+         and who or what made it.
+
+    6. Fail safely. When an agent is unsure, a system is down or data conflicts, the
+         work goes to a human queue with context attached. Retries must not duplicate
+         actions, for example ordering two laptops.
+
+    7. Serve people where they work. Employees and managers should be able to ask
+         and act through a conversational interface (web, Teams or Slack), not only
+         through forms.
+
+    8. Prove cost and impact with numbers. Show cost per completed workflow,
+         automation rate, cycle time and human-escalation rate on a simple dashboard
+         (see Cost and model rule).
+
+Guardrails (non-negotiable)
+
+Automation stops at decisions that carry legal, financial or human consequences. A
+submission that lets an agent complete any of these on its own is disqualified from the
+top scores.
+governed action flow · 7 steps, 1 decision
+
+Every agent action passes a policy check. Reserved or low-confidence actions wait for a
+named human, and every outcome is logged.
+
+Reserved for a human (minimum set; HR can add to it):
+
+    · Accepting a resignation, and agreeing a release date or notice-period buyout
+    · Final hiring decisions, offer approval and compensation
+    · Termination, disciplinary action and performance improvement plans
+    · Salary, grade or role changes, and any exception to policy
+    · Anything involving POSH, grievance or whistleblower complaints: route only,
+
+         never decide
+    · Sign-off on statutory filings and payroll runs
+
+Must be designed in:
+
+    · Data protection: comply with India's DPDP Act, 2023 and its Rules. That means
+         purpose limitation, consent where needed, retention limits, and support for
+         access and correction requests.
+
+    · PII handling: show exactly what personal data reaches a model and where it is
+         hosted. Mask or minimise it before any external model call.
+
+    · Fair hiring: no automated rejection of a candidate without human review.
+         Explain why each candidate was ranked where they were.
+
+    · Explainability: every agent action records its inputs, the rule or prompt version,
+         the model used and its reasoning.
+
+    · Access control: role-based permissions, so an agent can never do more than
+         the person it acts for.
+
+    · Kill switch: HR can pause any agent or workflow instantly without a code
+         change.
+
+    · Labour law: statutory obligations (notice periods, final settlement timelines, PF,
+         gratuity, leave rules) are encoded as rules, not left to the model to remember.
+Cost and model rule
+
+You can use any model from any vendor, but you are judged on measured cost per
+completed workflow, so choose the cheapest model that does each job well. HR
+services is not a frontier problem. A design that sends routine work to a large frontier
+model will score poorly on cost.
+
+    · Measure, don't estimate. Report cost in INR per completed workflow from real
+         runs on the synthetic dataset, and project a monthly run cost at TBO's volumes
+         (TBO will share assumed headcount and transaction volumes).
+
+    · Use the right tool for each step. Rule-based steps (eligibility checks, date
+         calculations, routing) belong in code. Using an LLM where a rule would do
+         counts against you.
+
+    · Route between models. Small or open-weight models handle the default path.
+         A larger model is used only when a measured confidence or complexity
+         threshold calls for it, and you must justify that threshold.
+
+    · Avoid lock-in. Changing the model provider must be a configuration change, not
+         a rewrite.
+
+    · Count everything. Include hosting, GPU and inference-provider costs, not only
+         token prices. A self-hosted model is not free.
+
+What TBO provides
+
+Every team gets the same starter kit, so results can be compared fairly. No real
+employee or candidate data will be shared.
+
+Resource                 What it contains
+Synthetic HR dataset
+                         Fictional employees, org chart, candidates, leave balances and
+                         exits
+
+Mock IT and Admin APIs   Stubbed ticketing, asset (laptop) allocation, access cards, email
+                         and directory, and payroll setup
+
+Sample HR policies       Onboarding, leave, notice period, exit and final settlement
+                         rules for your agents to reason over
+
+You can extend the mocks, but your demo must run on the provided interfaces so that
+judges can compare teams.
+
+Rounds and deliverables
+
+There are three rounds, and each one gates the next. Dates and team sizes will be
+confirmed by TBO.
+Round                           You submit                                        How teams
+                                                                                  advance
+
+1. Concept and architecture     An architecture document of up to 6 pages         Shortlisted on
+                                covering the chosen service line, the agent       soundness of
+                                design, the governance model, the model choice    design,
+                                with an estimated cost per workflow, and the      governance
+                                extension model. Add a 5-minute video             and cost logic
+                                walkthrough.
+
+2. Build                        A working demo on the synthetic dataset, a code   Finalists
+                                repository with a README and setup steps,         chosen on
+                                measured cost and automation figures, and a       working
+                                developer guide on how to add a new workflow      software and
+                                                                                  measured
+                                                                                  results
+
+3. Finale                       A live demo and Q&A with the TBO panel, plus a    Winners
+                                live extension test: the panel gives a new HR     decided on the
+                                requirement on the day and your team adds it to   evaluation
+                                the platform within a set time                    criteria below
+
+The live extension test is the hardest proof of objective 2. If adding a workflow means
+rewriting your core, it will show.
+
+Evaluation criteria
+
+Governance and extensibility together carry 40% of the score, as much as automation
+and cost combined. A clever demo that an HR team could not safely run, or that TBO
+developers could not extend, will not win.
+
+Criterion                       Weight      What judges look for
+Governance and compliance       20%
+Extensibility and architecture  20%         Reserved decisions enforced, policy as configuration,
+Automation depth                20%         audit trail, data protection
+
+                                            Clean extension model, passing the live extension
+                                            test, clear developer guide
+
+                                            Share of steps completed without a human, cross-
+                                            team loops closed, safe failure handling
+
+Cost efficiency                 15%         Measured cost per workflow, sensible model routing,
+Engineering quality
+                                            realistic monthly projection
+
+                                15%         Code quality, tests, security, no duplicate actions on
+
+                                            retry
+
+Experience and demo             10%         How easy it is for employees, managers and HR to
+
+                                            use, and how clearly it is presented
+Rules
+
+    · Data: use only the synthetic dataset and mock APIs. Never put real personal
+         data into any tool or model.
+
+    · Open source: any library or model you use must have a licence that allows
+         commercial use. List each one in your README.
+
+    · AI coding assistants: allowed. Say which ones you used and for what.
+    · Individual contribution: keep a clean commit history. Finalists will be asked
+
+         individually about the parts they built.
+    · Intellectual property: ownership and licensing of submissions will be set out in
+
+         the participation terms. (TBO to confirm before launch.)

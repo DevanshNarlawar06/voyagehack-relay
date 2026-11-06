@@ -1,0 +1,8 @@
+# PRD 11, 27.4
+engine: { lease_seconds: 30, poll_interval_seconds: 1, workers: 2 }
+sla_defaults: { remind_at: [24h, 48h], escalate_after: 72h }
+ocr: { engine: sidecar }          # sidecar | paddle
+pii: { engine: regex }            # regex | presidio
+chat: { web: true, slack: false }
+costs: { c_human_inr: 0, c_error_inr: 0 }   # used by evals threshold selection
+demo_mode: true                   # enables fault injection controls

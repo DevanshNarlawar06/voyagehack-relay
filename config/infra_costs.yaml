@@ -1,0 +1,8 @@
+# PRD 17. Monthly fixed infra in INR, allocated per run.
+currency: INR
+monthly:
+  vm: 0
+  postgres: 0
+  storage: 0
+  egress: 0
+  gpu: 0

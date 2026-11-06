@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install
+        run: uv pip install --system -e . pytest ruff
+      - name: Lint
+        run: ruff check relay tests
+      - name: Tests
+        run: |
+          if find tests -name 'test_*.py' | grep -q .; then pytest -q; else echo "no tests yet"; fi
+
+  # PRD 5.2: extension PRs (label `extension`, or a branch with "exit" in its name) must not touch relay/core/
+  core-frozen:
+    if: github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'extension') || contains(github.head_ref, 'exit'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Assert zero diff under relay/core/
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- relay/core/)
+          if [ -n "$CHANGED" ]; then echo "core changed:"; echo "$CHANGED"; exit 1; fi
+          echo "relay/core/ untouched"

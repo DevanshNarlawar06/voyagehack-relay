@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+# Node
+node_modules/
+.next/
+web/out/
+# Env and secrets
+.env
+*.pem
+# Local data
+data/
+storage/
+*.sqlite
+# Collaboration worktree used by scripts/post.sh
+.comms/
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

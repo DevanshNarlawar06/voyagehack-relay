@@ -1,0 +1,10 @@
+# PRD 13.3. Provider change = edit this file only.
+providers:
+  mock:    { litellm_model: "mock/deterministic", price_inr: { in_per_1k: 0.01, out_per_1k: 0.03 } }
+  primary: { litellm_model: "<provider>/<small-model>", price_inr: { in_per_1k: 0.0, out_per_1k: 0.0 } }  # fill from eval
+  large:   { litellm_model: "<provider>/<large-model>", price_inr: { in_per_1k: 0.0, out_per_1k: 0.0 } }
+tiers:
+  tier1: mock     # switch to primary once evals pick a model
+  tier2: mock     # switch to large
+defaults: { max_output_tokens: 400, temperature: 0, json_mode: true }
+thresholds: {}    # per skill, written from evals/threshold_report.md
