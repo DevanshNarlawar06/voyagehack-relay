@@ -48,7 +48,7 @@ awk -v last="$LAST" -v me="$ME" '
     if (id==last) { seen=1; show=0 }
     if (show) {
       hdr=$0
-      if (hdr ~ ("→ " me " ") || hdr ~ "→ ALL ") print "\n>>> FOR YOU >>>"
+      if (hdr !~ ("· " me " →") && (hdr ~ ("→ " me " ") || hdr ~ "→ ALL ")) print "\n>>> FOR YOU >>>"
       print hdr; inmsg=1; next
     }
     inmsg=0; next

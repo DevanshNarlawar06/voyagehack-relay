@@ -2,6 +2,8 @@
 
 Two Claude Code sessions build Relay in parallel. They never talk directly; everything goes through this repo. This file is the contract. `CLAUDE.md` points every session here.
 
+Start-up and loop prompts for each session: `docs/collab/SESSION_PROMPTS.md`.
+
 ## 1. Who is who
 
 | Session | Driven by | Role |
