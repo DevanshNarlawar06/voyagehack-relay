@@ -8,18 +8,35 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: relay
+          POSTGRES_PASSWORD: relay
+          POSTGRES_DB: relay
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U relay" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://relay:relay@localhost:5432/relay
+      RELAY_REQUIRE_DB: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Install
-        run: uv pip install --system -e . pytest ruff
-      - name: Lint
-        run: ruff check relay tests
+        run: uv sync --frozen
+      - name: Lint and format
+        run: uv run ruff check relay tests && uv run ruff format --check relay tests
+      - name: Types (mypy strict)
+        run: uv run mypy relay
+      - name: Architecture contracts (import-linter)
+        run: uv run lint-imports
+      - name: Migrations apply
+        run: uv run relay db upgrade
       - name: Tests
-        run: |
-          if find tests -name 'test_*.py' | grep -q .; then pytest -q; else echo "no tests yet"; fi
+        run: uv run pytest -q
 
   # PRD 5.2: extension PRs (label `extension`, or a branch with "exit" in its name) must not touch relay/core/
   core-frozen:

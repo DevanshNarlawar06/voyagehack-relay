@@ -35,7 +35,18 @@ scripts/       sync.sh, post.sh, status.sh (session coordination)
 
 ## Quick start
 
-Filled in by WP1 / WP12. Target: fresh clone to running demo in 10 minutes or less.
+Needs Python 3.12, [uv](https://docs.astral.sh/uv/), Docker. Target: fresh clone to running demo in 10 minutes or less (the full demo arrives with later work packages).
+
+```bash
+cp .env.example .env              # then set RELAY_ENCRYPTION_KEY: uv run relay config gen-key
+docker compose up -d postgres     # Postgres 16 + pgvector on host port 55432
+uv sync                           # install dependencies (incl. dev tools)
+uv run relay config check         # validate config/*.yaml
+uv run relay db upgrade           # apply migrations
+uv run pytest -q                  # tests (DB tests skip if Postgres is not running)
+```
+
+Quality gate (same as CI): `uv run ruff check relay tests && uv run ruff format --check relay tests && uv run mypy relay && uv run lint-imports && uv run pytest -q`.
 
 ## Team and AI tools
 
