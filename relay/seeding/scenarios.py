@@ -10,6 +10,7 @@ audited like a real click.
 from __future__ import annotations
 
 import asyncio
+import json
 import uuid
 from collections import Counter
 from collections.abc import Callable, Mapping
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from relay.connectors.base import FaultControl
 from relay.core.engine.engine import Engine, TriggerRefused
+from relay.core.engine.sealed import unseal
 from relay.db import models as m
 from relay.seeding.generate import Dataset
 
@@ -99,8 +101,18 @@ class SimulationReport:
         }  # fmt: skip
 
 
+PDF = b"%PDF-1.4" + bytes([10]) + b"% synthetic seed document" + bytes([10]) + b"%%EOF"
+
+
+class ApiClient(Protocol):
+    """The slice of an HTTP client the player needs (httpx.Client or FastAPI's TestClient)."""
+
+    def post(self, url: str, **kwargs: Any) -> Any:
+        """POST and return a response with `status_code` and `text`."""
+
+
 def sidecars(candidate: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
-    """The text-layer sidecar per document type for a seed candidate (PRD 27.4)."""
+    """Text-layer sidecars per document (PRD 27.4), plus the signed acceptance form ("other")."""
     doc = candidate["documents"]
     conf = doc["ocr_confidence"]
     return {
@@ -109,31 +121,25 @@ def sidecars(candidate: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         "aadhaar": {"aadhaar": doc["aadhaar"], "name": doc["full_name"], "dob": doc["dob"],
                     "ocr_confidence": conf},
         "bank_proof": {"account": doc["bank_account"], "ifsc": doc["ifsc"], "ocr_confidence": conf},
+        "other": {"joining_date": doc["joining_date"]},
     }  # fmt: skip
 
 
-def upload(s: Session, candidate: Mapping[str, Any]) -> dict[str, Any]:
-    """Store the documents as the upload page does and return the subject-action payload."""
-    cand = s.scalar(
-        select(m.Candidate).where(m.Candidate.external_ref == candidate["candidate_ref"])
+def upload_via_api(api: ApiClient, token: str, candidate: Mapping[str, Any]) -> None:
+    """Upload exactly as the joiner's page does: the real route, the signed one-time link."""
+    cards = sidecars(candidate)
+    response = api.post(
+        "/api/v1/documents",
+        data={
+            "token": token,
+            "categories": list(cards),
+            "consents": list(CONSENTED),
+            "sidecars": json.dumps(cards),
+        },
+        files=[("files", (f"{category}.pdf", PDF, "application/pdf")) for category in cards],
     )
-    assert cand is not None
-    refs = []
-    for category, sidecar in sidecars(candidate).items():
-        row = m.Document(
-            person_id=cand.person_id,
-            category=m.DocumentCategory(category),
-            storage_ref=f"seed://{candidate['candidate_ref']}/{category}.pdf",
-            extracted=sidecar,  # encrypted column
-        )
-        s.add(row)
-        s.flush()
-        refs.append({"id": str(row.id), "category": category})
-    return {
-        "documents": refs,
-        "consented_purposes": list(CONSENTED),
-        "joining_date": candidate["documents"]["joining_date"],
-    }
+    if response.status_code != 201:
+        raise RuntimeError(f"upload refused ({response.status_code}): {response.text[:200]}")
 
 
 class ScenarioPlayer:
@@ -144,10 +150,13 @@ class ScenarioPlayer:
         engine: Engine,
         sessions: sessionmaker[Session],
         clock: Clock,
+        api: ApiClient,
         faults: FaultControl | None = None,
     ) -> None:
-        """Bind the engine, a movable clock and (for the outage scenario) the mock fault control."""
-        self.engine, self.sessions, self.clock, self.faults = engine, sessions, clock, faults
+        """Bind the engine, a movable clock, the API (uploads go through its real route) and, for
+        the outage scenario, the mock fault control."""
+        self.engine, self.sessions, self.clock = engine, sessions, clock
+        self.api, self.faults = api, faults
 
     # ------------------------------------------------------------ helpers
 
@@ -256,21 +265,20 @@ class ScenarioPlayer:
                 self._decide(task, kinds)
             return Outcome(ref, scenario, self._run(run_id).status.value, run_id, kinds)
         self.clock.advance(hours=float(candidate["upload_after_hours"] or 1))
-        with self.sessions.begin() as s:
-            payload = upload(s, candidate)
-        self.engine.record_subject_action(
-            run_id, "documents.uploaded", payload, actor=f"subject:{ref}"
-        )
+        # The joiner follows the link from the invitation the run sent.
+        token = unseal(self._run(run_id).context["ctx"]["invite"]["token"])
+        upload_via_api(self.api, str(token), candidate)
         for _ in range(12):
             self._settle()
             progressed = False
             for task in self._open_tasks(run_id):
                 progressed |= self._decide(task, kinds)
             if self._waiting_for(run_id, "policy_acknowledgements"):
-                self.engine.record_subject_action(
-                    run_id, "policies.acknowledged", {"policies": ["code_of_conduct", "posh", "it_acceptable_use"]},
-                    actor=f"subject:{ref}",
-                )  # fmt: skip
+                acknowledged = self.api.post(
+                    "/api/v1/policies/acknowledgements", json={"token": str(token)}
+                )
+                if acknowledged.status_code != 200:
+                    raise RuntimeError(f"acknowledgement refused: {acknowledged.text[:200]}")
                 progressed = True
             if self._run(run_id).status in (m.RunStatus.COMPLETED, m.RunStatus.FAILED):
                 break

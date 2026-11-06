@@ -11,9 +11,10 @@ from __future__ import annotations
 import logging
 import os
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from datetime import datetime
-from typing import Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI
 from sqlalchemy.orm import Session, sessionmaker
@@ -34,6 +35,9 @@ from relay.models.router import ModelRouter
 from relay.rules import build_rules
 from relay.skills import build_skills
 from relay.skills.base import load_manifest
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 log = logging.getLogger(__name__)
 
@@ -110,6 +114,30 @@ def run_worker(engine: Engine, *, idle_sleep: float = 0.2, max_passes: int | Non
             time.sleep(idle_sleep)
 
 
+def in_process_api(
+    engine: Engine, sessions: sessionmaker[Session], storage_dir: Path | None = None
+) -> TestClient:
+    """The real API over `engine` and `sessions`, called in process (simulation and tests)."""
+    from fastapi.testclient import TestClient
+
+    from relay.api.deps import get_session
+
+    services = ApiServices(
+        policy=PolicyService(audit=policy_audit_hook), config=get_config(), engine=engine
+    )
+    if storage_dir is not None:
+        services.storage_dir = storage_dir
+    app = create_api(services)
+
+    def session() -> Iterator[Session]:
+        with sessions() as s:
+            yield s
+            s.commit()
+
+    app.dependency_overrides[get_session] = session
+    return TestClient(app)
+
+
 def create_app() -> FastAPI:
     """Build the API with the production wiring and its own engine (workers tick separately)."""
     engine: Any = build_engine()
@@ -168,7 +196,7 @@ def simulate(
     ds = read()
     if scenario:
         ds = Dataset(candidates=[c for c in ds.candidates if c["scenario"] == scenario])
-    player = ScenarioPlayer(engine, sessions, clock, faults)
+    player = ScenarioPlayer(engine, sessions, clock, in_process_api(engine, sessions), faults)
     report = player.play_all(ds)
     for o in report.outcomes:
         mark = "OK " if o.as_expected else "!! "

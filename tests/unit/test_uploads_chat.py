@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import uuid
 from collections.abc import Iterator, Mapping
@@ -246,8 +247,9 @@ def test_a_tampered_link_is_refused(world: World) -> None:
 
 def test_a_link_for_nothing_stored_is_refused(world: World) -> None:
     token = world.token()
-    link = world.session.scalars(select(m.UploadLink)).first()
-    assert link is not None
+    nonce = json.loads(base64.urlsafe_b64decode(token.partition(".")[0]))["n"]
+    # The test database is shared, so find this token's own link rather than any link.
+    link = world.session.scalars(select(m.UploadLink).where(m.UploadLink.nonce == nonce)).one()
     world.session.delete(link)
     world.session.flush()
     assert world.upload(token).status_code == 403
