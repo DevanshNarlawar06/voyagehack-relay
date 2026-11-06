@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from relay.config import ModelsConfig, get_config
+from relay.core.errors import LowConfidence, TransientError
 from relay.db.models import (
     CostEvent,
     CostKind,
@@ -34,7 +35,6 @@ from relay.models.router import ModelRouter
 from relay.models.types import (
     ChatMessage,
     InMemorySink,
-    LowConfidence,
     ModelRequest,
     ModelUnavailable,
     ProviderRequest,
@@ -386,6 +386,10 @@ def test_tier1_outage_falls_through_to_tier2(monkeypatch: pytest.MonkeyPatch) ->
     router, _sink, _provider = scripted_router(monkeypatch, [RuntimeError("503"), reply()])
     result = router.complete(request())
     assert result.tier == "tier2"
+
+
+def test_router_errors_belong_to_the_engine_taxonomy() -> None:
+    assert issubclass(ModelUnavailable, TransientError)
 
 
 def test_both_tiers_down_is_model_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:

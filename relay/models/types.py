@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from relay.core.errors import TransientError
 from relay.models.pii_gateway import PiiVault
 
 ConfidenceFn = Callable[[dict[str, Any]], float]
@@ -149,13 +150,5 @@ class ModelResult:
     payload_ids: list[UUID]
 
 
-class ModelRouterError(Exception):
-    """Base class for router failures. Messages never contain prompt text."""
-
-
-class LowConfidence(ModelRouterError):
-    """Both tiers fell short of the threshold, or gave invalid output: goes to a human task."""
-
-
-class ModelUnavailable(ModelRouterError):
-    """Every provider failed. Transient: the engine retries, then parks (PRD 11.4)."""
+class ModelUnavailable(TransientError):
+    """A provider failed. If every tier does, the engine retries, then parks (PRD 11.4)."""

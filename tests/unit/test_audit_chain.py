@@ -10,14 +10,15 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, select, text
 from sqlalchemy.orm import Session, sessionmaker
 from typer.testing import CliRunner
 
 from relay.cli import app
 from relay.core.audit.chain import GENESIS_HASH, compute_hash
 from relay.core.audit.verifier import VerifyResult, verify_chain
-from relay.core.audit.writer import AuditEntry, append_event
+from relay.core.audit.writer import AuditEntry, append_event, policy_audit_hook
+from relay.core.policy import ActionRequest, Actor, PolicyService
 from relay.db.models import ActorType, AuditEvent
 
 
@@ -258,3 +259,18 @@ def test_cli_exit_code_follows_the_result() -> None:
 def test_cli_verifies_a_real_database(db_url: str) -> None:
     result = CliRunner().invoke(app, ["audit", "verify", "--url", db_url])
     assert result.exit_code == 0, result.output
+
+
+@db
+def test_policy_service_decisions_reach_the_chain(db_session: Session) -> None:
+    service = PolicyService(audit=policy_audit_hook)
+    actor = Actor(type="system", id="engine", roles=["system"])
+    decision, decision_id = service.authorize(
+        db_session, ActionRequest(action="employment.terminate", actor=actor)
+    )
+    assert decision.effect == "REQUIRE_HUMAN"
+    event = db_session.scalars(select(AuditEvent).order_by(AuditEvent.seq.desc()).limit(1)).one()
+    assert event.action == "policy.authorize:employment.terminate"
+    assert event.effect == "REQUIRE_HUMAN"
+    assert event.data["decision_id"] == str(decision_id)
+    assert verify_chain(db_session).ok
