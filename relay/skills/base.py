@@ -28,6 +28,11 @@ class SkillManifest(BaseModel):
     prompt_version: str
     threshold: float | None = Field(default=None, ge=0, le=1)  # from evals/threshold_report.md
     max_output_tokens: int | None = Field(default=None, gt=0)
+    # What docs/pii-inventory.md is generated from (PRD 14.1).
+    data_seen: list[str] = Field(min_length=1)
+    masking: str
+    model_use: str
+    retention: str
 
 
 def load_manifest(name: str, directory: Path = SKILLS_DIR) -> SkillManifest:

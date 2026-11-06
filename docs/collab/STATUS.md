@@ -4,16 +4,16 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 21:14Z_
+_Updated 2026-11-06 22:17Z_
 
-Now: #6 WP7 onboarding vertical (branch a/6-onboarding). In review: #52 (#5 chaos). Blocked: none. Merged this tick: #47 #45 #41 #46 #43 #48 #49 #50 #51
+Now: waiting on review of #58 (#6 WP7). Next: #60 analyst on tasks, #59 probation child run, then #8 (exit extension). Blocked: none. Branch: a/6-onboarding
 <!-- STATUS:A:END -->
 
 
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 21:36Z_
+_Updated 2026-11-06 22:36Z_
 
-**Now:** waiting on WP7 for a live end-to-end pass of console, upload and chat. **In review:** #53, https://github.com/DevanshNarlawar06/voyagehack-relay/pull/54. **Next:** enhancements per PROTOCOL 11, UI first. **Blocked:** #15 needs an LLM key (#20). **Needs a person:** consent notice wording.
+**Stopped:** usage limit reached. **In review:** #57. **Not done:** policy acknowledgement route; real-path end-to-end run. **Branch:** b/e2e-live (driver, no PR). **Needs a person:** consent wording, LLM key, extension rehearsals.
 <!-- STATUS:B:END -->

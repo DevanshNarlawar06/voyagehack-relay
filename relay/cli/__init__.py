@@ -23,6 +23,10 @@ audit_app = typer.Typer(no_args_is_help=True, help="Audit log.")
 seed_app = typer.Typer(no_args_is_help=True, help="Synthetic data.")
 app.add_typer(seed_app, name="seed")
 app.add_typer(audit_app, name="audit")
+new_app = typer.Typer(no_args_is_help=True, help="Generate an extension (PRD 20).")
+app.add_typer(new_app, name="new")
+docs_app = typer.Typer(no_args_is_help=True, help="Generated documentation.")
+app.add_typer(docs_app, name="docs")
 app.add_typer(policy_app, name="policy")
 
 # Policy text contains ₹ and other non-ASCII; Windows consoles default to cp1252.
@@ -55,6 +59,50 @@ def seed_users(url: str | None = None) -> None:
     with session_scope(url) as session:
         count = load_demo_users(session)
     typer.echo(f"{count} demo users ready")
+
+
+def _scaffold(kind: str, name: str) -> None:
+    from relay.config import REPO_ROOT
+    from relay.scaffold import ScaffoldError, new_connector, new_skill, new_workflow
+
+    makers = {"workflow": new_workflow, "skill": new_skill, "connector": new_connector}
+    try:
+        created = makers[kind](name)
+    except ScaffoldError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from None
+    for path in created:
+        typer.echo(f"created {path.relative_to(REPO_ROOT).as_posix()}")
+    typer.echo("Next: docs/developer-guide.md")
+
+
+@new_app.command("workflow")
+def new_workflow_command(name: str) -> None:
+    """Create a workflow, a policy test and a simulation test that pass as generated."""
+    _scaffold("workflow", name)
+
+
+@new_app.command("skill")
+def new_skill_command(name: str) -> None:
+    """Create a skill manifest, prompt, module, test and empty eval set."""
+    _scaffold("skill", name)
+
+
+@new_app.command("connector")
+def new_connector_command(name: str) -> None:
+    """Create a connector manifest and a contract test."""
+    _scaffold("connector", name)
+
+
+@docs_app.command("pii-inventory")
+def pii_inventory() -> None:
+    """Regenerate docs/pii-inventory.md from skill manifests (PRD 14.1)."""
+    from relay.config import REPO_ROOT
+    from relay.pii_inventory import generate
+
+    path = REPO_ROOT / "docs" / "pii-inventory.md"
+    path.write_text(generate(), encoding="utf-8", newline="\n")
+    typer.echo(f"wrote {path.relative_to(REPO_ROOT).as_posix()}")
 
 
 @audit_app.command("verify")
