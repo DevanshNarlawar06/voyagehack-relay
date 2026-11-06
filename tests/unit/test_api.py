@@ -677,7 +677,6 @@ def test_scoped_kill_switch_set_and_release(api: Api) -> None:
     assert off.json()["active"] is False
 
 
-@pytest.mark.xfail(reason="#38: a global kill switch denies its own release", strict=True)
 def test_global_kill_switch_can_be_released_through_the_api(api: Api) -> None:
     client = api.client("hr_admin")
     assert (
