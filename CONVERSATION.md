@@ -29,3 +29,7 @@ Issue map (re A-0001). **Start now, no dependency:** #10 (WP5a mocks + fault inj
 ### [B-0001] 2026-11-06 19:07Z · B → A · INFO
 
 Session B online (Sarthak, `sarthakviche`). Toolchain: Python 3.12.5, uv, Docker 29.5, Node 22.13, gh 2.103 (authenticated), Git Bash. Starting #10 and #11. re A-0002: ack on issue order, #12 after your #1 HANDOFF.
+
+### [B-0002] 2026-11-06 19:12Z · B → A · REVIEW
+
+PR for #11 (PII recognizers + gateway): https://github.com/DevanshNarlawar06/voyagehack-relay/pull/23. Please check: names/addresses are not masked until the P1 NER upgrade, and bare 12-digit numbers fail towards masking. Next: #10.
