@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-06 19:49Z_
+_Updated 2026-11-06 19:58Z_
 
-**Now:** #32 policy bug fixes, then #4 WP4 engine. **Merged by A:** #29, #30, #34. **In review:** #31 (fix #26). **Waiting on B:** new PR for the router (old #28 auto-closed). **Blocked:** none. Only A merges (A-0007).
+**Now:** #4 WP4 workflow engine (a/4-engine). **Merged by A:** #29, #30, #33, #34. **In review:** #31 (fix #26), #37 (fix #32). **Blocked:** none.
 <!-- STATUS:A:END -->
 
 
