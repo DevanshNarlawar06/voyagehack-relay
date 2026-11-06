@@ -235,3 +235,32 @@ def test_run_request_without_workflow_or_step_is_denied() -> None:
     assert decision.effect == "DENY" and decision.rule_ids == ["incomplete_request"]
     ok = req.model_copy(update={"workflow": "onboarding"})
     assert evaluate(ok, EvaluationContext(policies=POLICIES)).effect == "ALLOW"
+
+
+def test_global_kill_switch_never_locks_hr_out() -> None:
+    """Issue #38: HR can release a global switch and read audit while it is on."""
+    from uuid import uuid4
+
+    ctx = EvaluationContext(
+        policies=POLICIES, kill_switches=KillSwitchState(frozenset({("global", "*")}))
+    )
+    hr = Actor(type="human", id="u-hradmin", roles=["hr_admin"])
+    for action in ("kill_switch.set", "audit.read", "runs.read"):
+        assert evaluate(ActionRequest(action=action, actor=hr), ctx).effect == "ALLOW", action
+    in_run = ActionRequest(
+        action="assets.laptop.allocate",
+        actor=Actor(type="system", id="engine", roles=["system"]),
+        run_id=uuid4(), workflow="onboarding", step_id="order_laptop",
+        attributes={"amount_inr": 1},
+    )  # fmt: skip
+    assert evaluate(in_run, ctx).is_kill_switch
+    human_on_paused_run = ActionRequest(
+        action="tasks.decide", actor=hr, run_id=uuid4(), workflow="onboarding", step_id="x"
+    )
+    assert evaluate(human_on_paused_run, ctx).is_kill_switch
+    agent_outside_run = ActionRequest(
+        action="chat.answer",
+        actor=Actor(type="agent", id="agent:helpdesk", allowed_actions=["chat.*"]),
+        principal_roles=["employee"], skill="helpdesk",
+    )  # fmt: skip
+    assert evaluate(agent_outside_run, ctx).is_kill_switch

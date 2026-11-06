@@ -32,8 +32,13 @@ class KillSwitchState:
     def hit(self, req: ActionRequest) -> tuple[str, str] | None:
         """Return the first active switch matching `req`, if any.
 
-        Step switches may target `step_id` or `workflow.step_id`.
+        Step switches may target `step_id` or `workflow.step_id`. A kill switch stops automated
+        activity: humans acting outside any run (console, audit, policy and kill-switch actions)
+        are not affected, so HR can always release a switch (issue #38). Agents and the system
+        are affected everywhere, and anything carrying a `run_id` is affected for everyone.
         """
+        if req.actor.type == "human" and req.run_id is None and req.workflow is None:
+            return None
         values = {
             "workflow": req.workflow,
             "step": req.step_id,
