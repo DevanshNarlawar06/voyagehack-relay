@@ -137,3 +137,43 @@ def kill(
             session, scope, target, active=not off, actor=actor, note=note
         )
     typer.echo(f"kill switch {scope}:{target} {'released' if off else 'ACTIVE'}")
+
+
+@app.command()
+def validate(
+    write_schema: bool = typer.Option(False, help="Regenerate relay/core/dsl/schema/*.json."),
+) -> None:
+    """Validate every workflow in definitions/workflows against schema, policies and references.
+
+    Rule/connector/skill references are checked by the worker at registration; this command checks
+    schema, needs, cycles, CEL, declared actions and reserved-decision assignment.
+    """
+    import json
+
+    from relay.config import REPO_ROOT
+    from relay.core.dsl.model import WorkflowDefinition, parse_definition
+    from relay.core.policy.packs import load_dir
+    from relay.core.policy.service import DEFAULT_POLICY_DIR
+    from relay.core.registry.store import DEFAULT_WORKFLOW_DIR
+    from relay.core.registry.validate import validate_definition
+
+    if write_schema:
+        out = REPO_ROOT / "relay" / "core" / "dsl" / "schema" / "workflow.schema.json"
+        out.write_text(
+            json.dumps(WorkflowDefinition.model_json_schema(), indent=2) + "\n", encoding="utf-8"
+        )
+        typer.echo(f"wrote {out.relative_to(REPO_ROOT)}")
+    policies, _ = load_dir(DEFAULT_POLICY_DIR)
+    failed = 0
+    for path in sorted(DEFAULT_WORKFLOW_DIR.glob("*.yaml")):
+        try:
+            errors = validate_definition(
+                parse_definition(path.read_text(encoding="utf-8")), policies
+            )
+        except ValueError as exc:
+            errors = [str(exc)]
+        failed += bool(errors)
+        typer.echo(f"{'OK  ' if not errors else 'FAIL'} {path.name}")
+        for e in errors:
+            typer.echo(f"     - {e}")
+    raise typer.Exit(1 if failed else 0)

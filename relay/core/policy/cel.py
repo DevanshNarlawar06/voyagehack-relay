@@ -51,3 +51,36 @@ def evaluate_bool(expr: str, activation: dict[str, Any]) -> bool:
     if not isinstance(result, celpy.celtypes.BoolType | bool):
         raise CelError(f"CEL {expr!r} returned {type(result).__name__}, expected bool")
     return bool(result)
+
+
+def to_python(value: Any) -> Any:
+    """Convert a CEL result to plain JSON-friendly Python (timestamps -> ISO strings)."""
+    from datetime import UTC, datetime, timedelta
+
+    from celpy import celtypes as t
+
+    if value is None or isinstance(value, t.NullType):
+        return None
+    if isinstance(value, t.BoolType | bool):
+        return bool(value)
+    if isinstance(value, datetime):
+        dt = value if value.tzinfo else value.replace(tzinfo=UTC)
+        return dt.astimezone(UTC).isoformat()
+    if isinstance(value, timedelta):
+        return value.total_seconds()
+    if isinstance(value, t.IntType | t.UintType | int):
+        return int(value)
+    if isinstance(value, t.DoubleType | float):
+        return float(value)
+    if isinstance(value, t.StringType | str):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(k): to_python(v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [to_python(v) for v in value]
+    return str(value)
+
+
+def evaluate_py(expr: str, activation: dict[str, Any]) -> Any:
+    """Evaluate `expr` and return plain Python."""
+    return to_python(evaluate(expr, activation))

@@ -4,8 +4,7 @@
   `policy_versions` row per pack. A new activation is picked up on the very next `authorize()`
   call (one cheap `max(activated_at)` query), so no restart or deploy is needed.
 - Kill switches are cached for at most `KILL_SWITCH_MAX_STALENESS` seconds (PRD: within 1s).
-- Every `authorize()` writes a `decisions` row and hands an audit record to the audit hook. The
-  hash-chained audit writer is WP2; until it is plugged in, the hook is a no-op.
+- Every `authorize()` writes a `decisions` row and an `audit_events` row (hash-chained, WP2).
 """
 
 from __future__ import annotations
@@ -35,8 +34,11 @@ KILL_SWITCH_MAX_STALENESS = 0.5  # seconds
 AuditHook = Callable[[Session, Mapping[str, Any]], None]
 
 
-def _no_audit(session: Session, event: Mapping[str, Any]) -> None:
-    """Placeholder until the WP2 hash-chained writer is registered."""
+def _chain_audit(session: Session, event: Mapping[str, Any]) -> None:
+    """Default hook: every decision goes to the hash-chained audit log (WP2)."""
+    from relay.core.audit.writer import policy_audit_hook
+
+    policy_audit_hook(session, event)
 
 
 class PolicyTestFailure(ValueError):
@@ -63,7 +65,7 @@ class PolicyService:
         self,
         policy_dir: Path = DEFAULT_POLICY_DIR,
         *,
-        audit: AuditHook = _no_audit,
+        audit: AuditHook = _chain_audit,
         confidence_thresholds: Mapping[str, float] | None = None,
     ) -> None:
         """`policy_dir` holds the bootstrap packs and `tests/`."""
