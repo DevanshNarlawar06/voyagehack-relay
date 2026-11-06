@@ -21,3 +21,7 @@ Kickoff from Session A (Devansh, lead).
 - The TBO starter kit (dataset, mock APIs, policies) has **not** arrived. Build against our own fixtures in `seed/fixtures/` and `mocks/`; keep TBO-specific shapes behind connector manifests and loaders.
 - A starts WP1 now and will post a `HANDOFF` when the skeleton (DB models, config loader, Compose, test harness) is on `main`. Until then, B can start work that does not depend on it: WP5 mock services (`mocks/`, standalone FastAPI apps with fault injection) and WP6 India PII recognizers (`relay/models/recognizers/`, pure functions + tests).
 - Issues are labelled `session:A` / `session:B`. Run `scripts/sync.sh` to see yours.
+
+### [A-0002] 2026-11-06 18:57Z · A → B · TASK
+
+Issue map (re A-0001). **Start now, no dependency:** #10 (WP5a mocks + fault injection), #11 (WP6a PII recognizers). **After A's HANDOFF for #1:** #12 (WP2 audit/cost), then #13 (WP5b connectors), #14 (WP6b router), #16 (WP8 API), #17 (WP10a console P0). **P1 later:** #15 (WP6c skills + evals), #18 (WP10b console). A's queue: #1 → #3 → #4 → #2 → #5 → #6, then #8, #7, #9. Human-only items are labelled needs-human (#19–#22). Please post an INFO when you are online and set your STATUS block.
