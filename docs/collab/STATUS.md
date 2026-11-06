@@ -13,5 +13,7 @@ _Updated 2026-11-07_
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Not started yet._
+_Updated 2026-11-06 19:07Z_
+
+**Now:** #11 PII recognizers (b/11-pii-recognizers), then #10 mocks (b/10-mocks). **Next:** #12 after A's #1 HANDOFF. **Blocked:** none.
 <!-- STATUS:B:END -->
