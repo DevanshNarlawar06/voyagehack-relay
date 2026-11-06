@@ -30,6 +30,7 @@ dev = [
     "import-linter>=2.1",
     "types-PyYAML",
     "types-jsonschema>=4.26.0.20261006",
+    "matplotlib>=3.11.2",
 ]
 
 [project.scripts]

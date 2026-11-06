@@ -1,0 +1,60 @@
+{"question": "how many leaves do I get in probation", "chunk": "leave.probation"}
+{"question": "can I use earned leave during probation", "chunk": "leave.probation"}
+{"question": "is leave allowed while on probation", "chunk": "leave.probation"}
+{"question": "can I take casual leave in my probation", "chunk": "leave.probation"}
+{"question": "what is my annual leave entitlement", "chunk": "leave.entitlement"}
+{"question": "how many earned leave days per year", "chunk": "leave.entitlement"}
+{"question": "how many sick leaves do I get", "chunk": "leave.entitlement"}
+{"question": "when does leave accrual start", "chunk": "leave.entitlement"}
+{"question": "how many casual leave days do we get annually", "chunk": "leave.entitlement"}
+{"question": "can I take leave during my notice period", "chunk": "leave.notice"}
+{"question": "is earned leave allowed during notice", "chunk": "leave.notice"}
+{"question": "what is the rule for leave while serving notice", "chunk": "leave.notice"}
+{"question": "what is the notice period for grade G3", "chunk": "notice.period"}
+{"question": "what is my notice period if I resign", "chunk": "notice.period"}
+{"question": "how long is the notice period", "chunk": "notice.period"}
+{"question": "what notice do I serve during probation", "chunk": "notice.period"}
+{"question": "how many days notice for G5", "chunk": "notice.period"}
+{"question": "what is the probation period for G4", "chunk": "probation.length"}
+{"question": "how long is probation", "chunk": "probation.length"}
+{"question": "how many months of probation for grade G1", "chunk": "probation.length"}
+{"question": "what is the probation length by grade", "chunk": "probation.length"}
+{"question": "when is full and final settlement paid", "chunk": "fnf.timeline"}
+{"question": "how soon do I get my full and final", "chunk": "fnf.timeline"}
+{"question": "how many working days for settlement of wages", "chunk": "fnf.timeline"}
+{"question": "when are my dues settled after my last working day", "chunk": "fnf.timeline"}
+{"question": "what is the PF contribution", "chunk": "pf.contribution"}
+{"question": "how much provident fund does the employer pay", "chunk": "pf.contribution"}
+{"question": "what is the employee PF rate", "chunk": "pf.contribution"}
+{"question": "what is the provident fund wage ceiling", "chunk": "pf.contribution"}
+{"question": "is PF mandatory", "chunk": "pf.contribution"}
+{"question": "how much is the EPF contribution", "chunk": "pf.contribution"}
+{"question": "when is gratuity payable", "chunk": "gratuity.eligibility"}
+{"question": "how many years of service for gratuity", "chunk": "gratuity.eligibility"}
+{"question": "how is gratuity calculated", "chunk": "gratuity.eligibility"}
+{"question": "what is the gratuity ceiling", "chunk": "gratuity.eligibility"}
+{"question": "am I eligible for gratuity after 5 years", "chunk": "gratuity.eligibility"}
+{"question": "how much time off can I take in my first few months", "chunk": "leave.probation"}
+{"question": "when will I be confirmed in my job", "chunk": "probation.length"}
+{"question": "what is my retirement savings deduction", "chunk": "pf.contribution"}
+{"question": "what do I get when I retire after a long career", "chunk": "gratuity.eligibility"}
+{"question": "what is the wifi password", "chunk": null}
+{"question": "can I bring my dog to the office", "chunk": null}
+{"question": "who won the cricket match", "chunk": null}
+{"question": "where is the cafeteria", "chunk": null}
+{"question": "how do I reset my laptop password", "chunk": null}
+{"question": "what is the dress code", "chunk": null}
+{"question": "is there a gym in the building", "chunk": null}
+{"question": "how do I claim travel expenses", "chunk": null}
+{"question": "when is the next town hall", "chunk": null}
+{"question": "what are the office timings", "chunk": null}
+{"question": "how do I get a parking pass", "chunk": null}
+{"question": "can I work from home on fridays", "chunk": null}
+{"question": "what is our maternity policy", "chunk": null}
+{"question": "how do I apply for an internal transfer", "chunk": null}
+{"question": "what is the referral bonus", "chunk": null}
+{"question": "who is my HR partner", "chunk": null}
+{"question": "what insurance cover do I have", "chunk": null}
+{"question": "do you know a good restaurant nearby", "chunk": null}
+{"question": "how do I change my bank account", "chunk": null}
+{"question": "what is the appraisal cycle", "chunk": null}
