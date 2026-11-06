@@ -1,13 +1,14 @@
 """Application-level encryption for sensitive columns (PRD 10, 14.2).
 
-AES-256-GCM with a random 96-bit nonce per value. The key comes from `RELAY_ENCRYPTION_KEY`
-(urlsafe base64 of 32 bytes). Stored format: ``v1:<urlsafe-b64(nonce || ciphertext+tag)>``.
+AES-256-GCM with a random 96-bit nonce per value. The key is `RELAY_ENCRYPTION_KEY` (urlsafe
+base64 of 32 bytes) from the environment or `.env`. Stored format: ``v1:<urlsafe-b64(nonce || ciphertext+tag)>``.
 """
 
 from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 from typing import Any
 
@@ -16,6 +17,9 @@ from sqlalchemy import Text
 from sqlalchemy.engine import Dialect
 from sqlalchemy.types import TypeDecorator
 
+from relay.config import get_config, get_settings
+
+_log = logging.getLogger(__name__)
 _PREFIX = "v1:"
 _DEV_KEY = base64.urlsafe_b64encode(b"relay-dev-only-key-do-not-use!!!").decode()
 
@@ -25,8 +29,26 @@ def generate_key() -> str:
     return base64.urlsafe_b64encode(AESGCM.generate_key(bit_length=256)).decode()
 
 
+class MissingEncryptionKey(RuntimeError):
+    """No RELAY_ENCRYPTION_KEY is configured and demo mode is off."""
+
+
+def _configured_key() -> str:
+    """Key from the environment or `.env` (via Settings). Falls back to the dev key only in demo
+    mode, with a warning; otherwise refuses to run (issue #26)."""
+    raw = get_settings().relay_encryption_key
+    if raw:
+        return raw
+    if get_config().app.demo_mode:
+        _log.warning("RELAY_ENCRYPTION_KEY is not set; using the public dev key (demo mode only)")
+        return _DEV_KEY
+    raise MissingEncryptionKey(
+        "RELAY_ENCRYPTION_KEY is not set. Generate one with `relay config gen-key` and put it in .env"
+    )
+
+
 def _key_bytes(key: str | None = None) -> bytes:
-    raw = key or os.environ.get("RELAY_ENCRYPTION_KEY") or _DEV_KEY
+    raw = key or _configured_key()
     decoded = base64.urlsafe_b64decode(raw)
     if len(decoded) != 32:
         raise ValueError("RELAY_ENCRYPTION_KEY must be urlsafe base64 of exactly 32 bytes")
