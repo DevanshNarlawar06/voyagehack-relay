@@ -1,0 +1,434 @@
+{
+  "$defs": {
+    "Defaults": {
+      "additionalProperties": false,
+      "properties": {
+        "retry": {
+          "$ref": "#/$defs/RetryPolicy"
+        },
+        "timeout_seconds": {
+          "default": 120,
+          "exclusiveMinimum": 0,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        }
+      },
+      "title": "Defaults",
+      "type": "object"
+    },
+    "HumanTaskSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "assignee_role": {
+          "title": "Assignee Role",
+          "type": "string"
+        },
+        "assignee_user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assignee User"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "context_from": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Context From",
+          "type": "array"
+        }
+      },
+      "required": [
+        "assignee_role",
+        "options"
+      ],
+      "title": "HumanTaskSpec",
+      "type": "object"
+    },
+    "ParallelBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "parallel": {
+          "$ref": "#/$defs/ParallelBody"
+        }
+      },
+      "required": [
+        "parallel"
+      ],
+      "title": "ParallelBlock",
+      "type": "object"
+    },
+    "ParallelBody": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "needs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Needs",
+          "type": "array"
+        },
+        "branches": {
+          "items": {
+            "items": {
+              "$ref": "#/$defs/Step"
+            },
+            "type": "array"
+          },
+          "minItems": 1,
+          "title": "Branches",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "branches"
+      ],
+      "title": "ParallelBody",
+      "type": "object"
+    },
+    "RetryPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "backoff": {
+          "default": "exponential",
+          "enum": [
+            "exponential",
+            "fixed"
+          ],
+          "title": "Backoff",
+          "type": "string"
+        },
+        "base_seconds": {
+          "default": 10,
+          "exclusiveMinimum": 0,
+          "title": "Base Seconds",
+          "type": "number"
+        },
+        "max_seconds": {
+          "default": 600,
+          "exclusiveMinimum": 0,
+          "title": "Max Seconds",
+          "type": "number"
+        }
+      },
+      "title": "RetryPolicy",
+      "type": "object"
+    },
+    "Sla": {
+      "additionalProperties": false,
+      "description": "Chasing (PRD 11.6): reminders to the owning team, then escalation to a human queue.",
+      "properties": {
+        "fulfil_within": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fulfil Within"
+        },
+        "remind_at": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Remind At",
+          "type": "array"
+        },
+        "escalate_after": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Escalate After"
+        },
+        "escalate_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Escalate To"
+        }
+      },
+      "title": "Sla",
+      "type": "object"
+    },
+    "Step": {
+      "additionalProperties": false,
+      "description": "One step. `inputs`/`attributes`/`outputs` values are CEL over {ctx, trigger, result, now}.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "rule",
+            "connector",
+            "skill",
+            "human",
+            "wait"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "uses": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uses"
+        },
+        "needs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Needs",
+          "type": "array"
+        },
+        "when": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "When"
+        },
+        "inputs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "object"
+        },
+        "attributes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Attributes",
+          "type": "object"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Outputs",
+          "type": "object"
+        },
+        "sla": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sla"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "on_failure": {
+          "default": "park",
+          "enum": [
+            "park",
+            "fail"
+          ],
+          "title": "On Failure",
+          "type": "string"
+        },
+        "retry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RetryPolicy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "task": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HumanTaskSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "until": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Until"
+        },
+        "for_subject_action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "For Subject Action"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "action"
+      ],
+      "title": "Step",
+      "type": "object"
+    },
+    "Trigger": {
+      "additionalProperties": false,
+      "properties": {
+        "event": {
+          "title": "Event",
+          "type": "string"
+        },
+        "require_decision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Require Decision"
+        }
+      },
+      "required": [
+        "event"
+      ],
+      "title": "Trigger",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "subject": {
+      "title": "Subject",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "trigger": {
+      "$ref": "#/$defs/Trigger"
+    },
+    "context": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Context",
+      "type": "object"
+    },
+    "defaults": {
+      "$ref": "#/$defs/Defaults"
+    },
+    "steps": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Step"
+          },
+          {
+            "$ref": "#/$defs/ParallelBlock"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "subject",
+    "trigger",
+    "steps"
+  ],
+  "title": "WorkflowDefinition",
+  "type": "object"
+}
