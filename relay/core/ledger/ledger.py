@@ -90,3 +90,27 @@ def fail_permanently(session: Session, key: str, at: datetime) -> None:
     if row is not None and row.status is LedgerStatus.PENDING:
         row.status = LedgerStatus.FAILED_PERMANENT
         row.completed_at = at
+
+
+def reopen(session: Session, key: str) -> None:
+    """A person fixed the data and chose retry: a permanently failed side effect may run again.
+
+    The row goes back to `pending`, so the next attempt reconciles first and then calls out.
+    """
+    row = session.scalar(
+        select(IdempotencyLedger).where(IdempotencyLedger.key == key).with_for_update()
+    )
+    if row is not None and row.status is LedgerStatus.FAILED_PERMANENT:
+        row.status = LedgerStatus.PENDING
+        row.completed_at = None
+
+
+def abandon(session: Session, key: str, at: datetime, *, note: dict[str, Any]) -> None:
+    """A person overrode the step: Relay will not perform this side effect. Closes a pending row."""
+    row = session.scalar(
+        select(IdempotencyLedger).where(IdempotencyLedger.key == key).with_for_update()
+    )
+    if row is not None and row.status is LedgerStatus.PENDING:
+        row.status = LedgerStatus.FAILED_PERMANENT
+        row.response = {**(row.response or {}), **note}
+        row.completed_at = at
