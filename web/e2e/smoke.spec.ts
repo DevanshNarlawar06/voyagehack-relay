@@ -78,6 +78,36 @@ test("run detail draws the graph and explains a step", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Compute terms" })).toBeVisible();
 });
 
+test("the audit explorer shows what left the system, masked", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Audit");
+  await page.getByRole("button", { name: /documents\.extract/ }).click();
+  await expect(page.getByRole("heading", { name: "What left our system" })).toBeVisible();
+  await expect(page.getByText(/PAN: <PAN_1>/)).toBeVisible();
+  await page.getByRole("button", { name: "Verify chain" }).click();
+  await expect(page.getByText(/Chain intact/)).toBeVisible();
+  await page.getByLabel("Effect").selectOption("DENY");
+  await page.getByRole("button", { name: "Search" }).click();
+  await expect(page.getByRole("button", { name: /documents\.extract/ })).toBeHidden();
+  await page.getByLabel("Action contains").fill("nothing-matches");
+  await page.getByRole("button", { name: "Search" }).click();
+  await expect(page.getByText("No events match")).toBeVisible();
+});
+
+test("employees show a record without document contents", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Employees");
+  await page.getByRole("button", { name: "Show record for Aarav Mehta" }).click();
+  await expect(page.getByText("Sensitive fields stay encrypted")).toBeVisible();
+  await expect(page.getByText("Pre hire created")).toBeVisible();
+});
+
+test("the registry lists workflow versions", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Registry");
+  await expect(page.getByRole("rowheader", { name: "Onboarding" })).toBeVisible();
+});
+
 test("roles limit what a user can do", async ({ page }) => {
   await signIn(page, "Leela Iyer");
   await expect(page.getByText("Auditor", { exact: true })).toBeVisible();

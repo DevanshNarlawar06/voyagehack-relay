@@ -185,6 +185,85 @@ export interface FaultRule {
   remaining: number | null;
 }
 
+export interface AuditEvent {
+  id: string;
+  seq: number;
+  ts: string;
+  actor_type: "human" | "agent" | "system";
+  actor_id: string;
+  on_behalf_of: string | null;
+  action: string;
+  run_id: string | null;
+  effect: string | null;
+  workflow_def_version: string | null;
+  policy_version: string | null;
+  skill_version: string | null;
+  prompt_version: string | null;
+  model_id: string | null;
+  input_hash: string | null;
+  reasoning: string | null;
+  prev_hash: string;
+  hash: string;
+}
+
+export interface ModelPayload {
+  id: string;
+  direction: "out" | "in";
+  masked_text: string;
+  provider: string;
+  model_id: string | null;
+  region: string | null;
+  token_count: number;
+}
+
+export interface AuditEventDetail extends AuditEvent {
+  payload: ModelPayload | null;
+}
+
+export interface AuditFilters {
+  actor?: string;
+  action?: string;
+  run_id?: string;
+  effect?: string;
+  before_seq?: number;
+}
+
+export interface VerifyResult {
+  ok: boolean;
+  checked: number;
+  first_bad_seq: number | null;
+  problem: string | null;
+}
+
+export type DefinitionStatus = "draft" | "active" | "retired";
+
+export interface Definition {
+  name: string;
+  version: number;
+  status: DefinitionStatus;
+  content_hash: string;
+  activated_by: string | null;
+  activated_at: string | null;
+}
+
+export type EmployeeState = "pre_hire" | "onboarding" | "active" | "notice" | "exited";
+
+export interface EmployeeSummary {
+  id: string;
+  full_name: string;
+  employee_code: string | null;
+  state: EmployeeState;
+  role_title: string | null;
+  department: string | null;
+}
+
+export interface EmployeeRecord extends EmployeeSummary {
+  lifecycle: { id: string; event_type: string; at: string }[];
+  documents: { id: string; category: string; retention_until: string | null }[];
+  consents: { purpose_id: string; notice_version: string; withdrawn_at: string | null }[];
+  data_requests: { id: string; type: string; status: string }[];
+}
+
 export interface RelayApi {
   /** True when this client serves fixtures, so the UI can say the numbers are not measured. */
   readonly isDemoData: boolean;
@@ -206,4 +285,10 @@ export interface RelayApi {
   faults(): Promise<FaultRule[]>;
   addFault(system: string, fault: FaultMode): Promise<FaultRule>;
   clearFaults(): Promise<void>;
+  auditEvents(filters: AuditFilters): Promise<AuditEvent[]>;
+  auditEvent(id: string): Promise<AuditEventDetail>;
+  verifyAudit(): Promise<VerifyResult>;
+  definitions(): Promise<Definition[]>;
+  employees(): Promise<EmployeeSummary[]>;
+  employee(id: string): Promise<EmployeeRecord>;
 }

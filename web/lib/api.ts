@@ -2,7 +2,12 @@
 // NEXT_PUBLIC_RELAY_API_URL to use the real backend. The shell shows a banner in fixtures mode.
 import { createFixtureApi } from "@/lib/fixtures";
 import type {
+  AuditEvent,
+  AuditEventDetail,
   ConnectorHealth,
+  Definition,
+  EmployeeRecord,
+  EmployeeSummary,
   FaultMode,
   FaultRule,
   HumanTask,
@@ -17,6 +22,7 @@ import type {
   RunSummary,
   Session,
   User,
+  VerifyResult,
 } from "@/lib/types";
 
 const TOKEN_KEY = "relay.session";
@@ -106,6 +112,19 @@ function createHttpApi(baseUrl: string): RelayApi {
     addFault: (system: string, fault: FaultMode) =>
       post<FaultRule>("/controls/faults", { system, fault }),
     clearFaults: () => request<void>("/controls/faults", { method: "DELETE" }),
+    auditEvents: (filters) => {
+      const query = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") query.set(key, String(value));
+      });
+      const suffix = query.toString();
+      return request<AuditEvent[]>(`/audit${suffix ? `?${suffix}` : ""}`);
+    },
+    auditEvent: (id) => request<AuditEventDetail>(`/audit/${encodeURIComponent(id)}`),
+    verifyAudit: () => request<VerifyResult>("/audit/verify"),
+    definitions: () => request<Definition[]>("/definitions"),
+    employees: () => request<EmployeeSummary[]>("/employees"),
+    employee: (id) => request<EmployeeRecord>(`/employees/${encodeURIComponent(id)}`),
   };
 }
 
