@@ -9,6 +9,7 @@ No I/O here; `relay.core.policy.service` loads state and persists the decision.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -116,6 +117,16 @@ def evaluate(req: ActionRequest, ctx: EvaluationContext) -> Decision:
     pol = ctx.policies
     actor = req.actor
 
+    # 0. Engine-originated requests must say where they come from, or kill switches could miss
+    #    them (issue #32).
+    if req.run_id is not None and not (req.workflow and req.step_id):
+        return _decision(
+            ctx,
+            "DENY",
+            "request from a run must name its workflow and step",
+            ["incomplete_request"],
+        )
+
     # 1. Kill switch
     hit = ctx.kill_switches.hit(req)
     if hit:
@@ -176,9 +187,12 @@ def evaluate(req: ActionRequest, ctx: EvaluationContext) -> Decision:
     if req.skill and "confidence" in req.attributes:
         threshold = ctx.confidence_thresholds.get(req.skill)
         confidence = req.attributes["confidence"]
-        if threshold is not None and (
-            not isinstance(confidence, int | float) or confidence < threshold
-        ):
+        valid = (
+            isinstance(confidence, int | float)
+            and not isinstance(confidence, bool)
+            and math.isfinite(confidence)
+        )
+        if threshold is not None and (not valid or confidence < threshold):
             return _decision(
                 ctx,
                 "REQUIRE_HUMAN",

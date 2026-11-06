@@ -70,7 +70,7 @@ class PolicyService:
         self.policy_dir = policy_dir
         self.audit = audit
         self.confidence_thresholds = dict(confidence_thresholds or {})
-        self._bootstrap, _ = load_dir(policy_dir)
+        self._bootstrap, self._bootstrap_sources = load_dir(policy_dir)
         self._cache = _Cache()
 
     # ------------------------------------------------------------ state
@@ -190,19 +190,23 @@ class PolicyService:
             raise ValueError(
                 f"{draft.pack} version must increase (active {current.version}, got {draft.version})"
             )
+        self._ensure_bootstrap_row(session, draft.pack)
+        row = self._stored(session, draft.pack, draft.version)
+        digest = content_hash(text)
+        if row is not None and row.content_hash != digest:
+            # A stored version is immutable: audit events stamped with it must keep meaning the
+            # same rules (PRD 6.10, issue #32). Re-activating identical content is fine.
+            raise ValueError(
+                f"{draft.pack}@{draft.version} is already stored with different content; "
+                "use a new version number"
+            )
         results = self.test(session, draft, draft_tests)
         if not all(r.passed for r in results):
             raise PolicyTestFailure(results)
-        row = session.scalar(
-            select(m.PolicyVersion).where(
-                m.PolicyVersion.pack == draft.pack, m.PolicyVersion.version == draft.version
-            )
-        )
         if row is None:
-            row = m.PolicyVersion(pack=draft.pack, version=draft.version)
+            row = m.PolicyVersion(pack=draft.pack, version=draft.version, content=text)
             session.add(row)
-        row.content = text
-        row.content_hash = content_hash(text)
+        row.content_hash = digest
         row.tests_passed = True
         row.activated_by = actor
         row.activated_at = datetime.now(UTC)
@@ -211,12 +215,9 @@ class PolicyService:
         return row
 
     def rollback(self, session: Session, pack: str, version: int, *, actor: str) -> m.PolicyVersion:
-        """Re-activate an earlier stored version (tests are re-run first)."""
-        row = session.scalar(
-            select(m.PolicyVersion).where(
-                m.PolicyVersion.pack == pack, m.PolicyVersion.version == version
-            )
-        )
+        """Re-activate an earlier version, including the bootstrap file (tests are re-run first)."""
+        self._ensure_bootstrap_row(session, pack)
+        row = self._stored(session, pack, version)
         if row is None:
             raise ValueError(f"no stored version {pack}@{version}")
         results = self.test(session, parse_pack(row.content))
@@ -227,6 +228,41 @@ class PolicyService:
         session.flush()
         self._audit_admin(session, actor, "policy.rollback", pack, {"version": version})
         return row
+
+    def history(self, session: Session, pack: str) -> list[m.PolicyVersion]:
+        """Every stored version of `pack`, oldest first (bootstrap included once activity starts)."""
+        return list(
+            session.scalars(
+                select(m.PolicyVersion)
+                .where(m.PolicyVersion.pack == pack)
+                .order_by(m.PolicyVersion.version)
+            )
+        )
+
+    def _stored(self, session: Session, pack: str, version: int) -> m.PolicyVersion | None:
+        return session.scalar(
+            select(m.PolicyVersion).where(
+                m.PolicyVersion.pack == pack, m.PolicyVersion.version == version
+            )
+        )
+
+    def _ensure_bootstrap_row(self, session: Session, pack: str) -> None:
+        """Store the bootstrap file as a version row so it can be rolled back to and shown in
+        history. It is not marked activated: it is active by default until something else is."""
+        boot = getattr(self._bootstrap, pack)
+        if self._stored(session, pack, boot.version) is None:
+            text = self._bootstrap_sources[pack]
+            session.add(
+                m.PolicyVersion(
+                    pack=pack,
+                    version=boot.version,
+                    content=text,
+                    content_hash=content_hash(text),
+                    tests_passed=True,
+                    activated_by="bootstrap",
+                )
+            )
+            session.flush()
 
     def set_kill_switch(
         self,
