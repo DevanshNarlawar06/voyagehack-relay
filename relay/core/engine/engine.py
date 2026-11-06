@@ -52,7 +52,19 @@ log = logging.getLogger(__name__)
 
 TERMINAL_OK = {m.StepStatus.SUCCEEDED, m.StepStatus.SKIPPED}
 TERMINAL = TERMINAL_OK | {m.StepStatus.FAILED}
+OPEN_TASK = (m.HumanTaskStatus.OPEN, m.HumanTaskStatus.CLAIMED)
+RUN_ENDED = (m.RunStatus.CANCELLED, m.RunStatus.COMPLETED, m.RunStatus.FAILED)
+# Steps a human task can still act on. RUNNING is excluded: a worker holds the lease.
+DECIDABLE = {
+    m.StepStatus.WAITING_HUMAN,
+    m.StepStatus.WAITING_TIMER,
+    m.StepStatus.PARKED,
+    m.StepStatus.RETRY_SCHEDULED,
+    m.StepStatus.PAUSED,
+}
 EXCEPTION_OPTIONS = ["retry", "override", "fail"]
+ESCALATION_OPTIONS = ["chase", "override", "fail"]
+ESCALATION_ACTION = "sla.escalation"
 APPROVAL_OPTIONS = ["approve", "reject"]
 ENGINE_ACTOR = Actor(type="system", id="engine", roles=["system"])
 DEFAULT_POOL = "pool:hr_ops"
@@ -319,6 +331,14 @@ class Engine:
             run = s.get(m.WorkflowRun, sr.run_id)
             assert run is not None
             wf = self.definitions.get(s, run.definition_name, run.definition_version)
+            if run.status in RUN_ENDED:
+                # The run was cancelled or failed after this step was queued: no side effects.
+                sr.lease_owner = None
+                self._set_status(
+                    s, wf, run, sr, m.StepStatus.SKIPPED, data={"reason": f"run {run.status}"}
+                )
+                s.commit()
+                return
             step = wf.step(sr.step_id)
             now = self.deps.clock()
             if sr.started_at is None:
@@ -774,6 +794,11 @@ class Engine:
             decision, decision_id = self.policy.authorize(s, req)
             if decision.effect != "ALLOW" or task.assignee_role not in actor.roles:
                 raise TaskDecisionRefused(f"{actor.id} may not decide this task: {decision.reason}")
+            if task.assignee_user_id is not None and task.assignee_user_id != user_id:
+                # PRD 2: a task routed to a named human is theirs alone, not the whole role's.
+                raise TaskDecisionRefused("this task is assigned to a named person")
+            if run.status in RUN_ENDED or sr.status not in DECIDABLE:
+                raise TaskDecisionRefused(f"the step is {sr.status}, nothing is waiting on this")
             task.status = m.HumanTaskStatus.DECIDED
             task.decision = {"option": option, "output": dict(output or {})}
             task.decided_by = user_id
@@ -783,7 +808,13 @@ class Engine:
             sr.human_touched = True
             self._audit(s, wf, run, sr, "task.decided", actor=actor, effect=option, decision=decision,
                         data={"task_id": str(task.id), "kind": task.kind.value}, reasoning=reason)  # fmt: skip
-            self._apply_decision(s, run, wf, step, sr, task, option, dict(output or {}), user_id)
+            try:
+                self._apply_decision(
+                    s, run, wf, step, sr, task, option, dict(output or {}), user_id
+                )
+            except cel.CelError as exc:
+                # e.g. an override whose output lacks a field the step's `outputs` read
+                raise TaskDecisionRefused(f"the output does not fit this step: {exc}") from None
 
     def _apply_decision(
         self,
@@ -797,6 +828,9 @@ class Engine:
         output: dict[str, Any],
         user_id: uuid.UUID,
     ) -> None:
+        if task.action == ESCALATION_ACTION:
+            self._apply_escalation(s, run, wf, step, sr, option, output, user_id)
+            return
         if step.kind == "human":
             self._finish(
                 s,
@@ -812,22 +846,87 @@ class Engine:
             if option == "approve":
                 sr.input = {**(sr.input or {}), "approved_by": str(user_id)}
                 self._set_status(s, wf, run, sr, m.StepStatus.READY)
-            else:
+            elif option == "reject":
                 sr.error = {"type": "Rejected", "reason": task.reason}
-                self._set_status(s, wf, run, sr, m.StepStatus.FAILED)
-                self._advance(s, run, wf)
+                self._fail_step(s, run, wf, sr)
+            else:
+                raise TaskDecisionRefused(f"no handler for option {option!r}")
             return
         if option == "accept" and sr.output is not None:
             self._finish(s, run, wf, step, sr, sr.output, human_touched=True)
         elif option == "retry":
             sr.attempt = 0
             sr.next_attempt_at = None
+            sr.error = None
+            if step.kind == "connector" and step.uses:
+                # The person fixed the data: the side effect may be attempted again (#44.4).
+                ledger.reopen(s, ledger.idempotency_key(run.id, step.id, step.uses))
             self._set_status(s, wf, run, sr, m.StepStatus.READY)
         elif option == "override":
-            self._finish(s, run, wf, step, sr, output, human_touched=True, extra={"override": True})
+            self._override(s, run, wf, step, sr, output, user_id)
+        elif option == "fail":
+            self._fail_step(s, run, wf, sr)
         else:
-            self._set_status(s, wf, run, sr, m.StepStatus.FAILED)
-            self._advance(s, run, wf)
+            raise TaskDecisionRefused(f"no handler for option {option!r}")
+
+    def _apply_escalation(
+        self,
+        s: Session,
+        run: m.WorkflowRun,
+        wf: WorkflowDefinition,
+        step: Step,
+        sr: m.StepRun,
+        option: str,
+        output: dict[str, Any],
+        user_id: uuid.UUID,
+    ) -> None:
+        """An SLA escalation: chase leaves the step waiting, override completes it, fail fails it."""
+        if option == "chase":
+            now = self.deps.clock()
+            self.deps.notifier.notify("subject", "chase", {"run_id": str(run.id), "step": step.id})
+            if step.sla is not None and step.sla.escalate_delay is not None:
+                s.add(
+                    m.Timer(
+                        step_run_id=sr.id,
+                        due_at=now + step.sla.escalate_delay,
+                        purpose=m.TimerPurpose.SLA_ESCALATE,
+                        payload={"to": step.sla.escalate_to},
+                    )
+                )
+            self._audit(s, wf, run, sr, "sla.chased", data={"by": str(user_id)})
+        elif option == "override":
+            self._override(s, run, wf, step, sr, output, user_id)
+        elif option == "fail":
+            self._fail_step(s, run, wf, sr)
+        else:
+            raise TaskDecisionRefused(f"no handler for option {option!r}")
+
+    def _override(
+        self,
+        s: Session,
+        run: m.WorkflowRun,
+        wf: WorkflowDefinition,
+        step: Step,
+        sr: m.StepRun,
+        output: dict[str, Any],
+        user_id: uuid.UUID,
+    ) -> None:
+        if step.kind == "connector" and step.uses:
+            # Relay will not perform this side effect; close the row so it is not left pending.
+            ledger.abandon(
+                s,
+                ledger.idempotency_key(run.id, step.id, step.uses),
+                self.deps.clock(),
+                note={"override_by": str(user_id)},
+            )
+        self._finish(s, run, wf, step, sr, output, human_touched=True, extra={"override": True})
+
+    def _fail_step(
+        self, s: Session, run: m.WorkflowRun, wf: WorkflowDefinition, sr: m.StepRun
+    ) -> None:
+        sr.lease_owner = None
+        self._set_status(s, wf, run, sr, m.StepStatus.FAILED)
+        self._advance(s, run, wf)
 
     def record_subject_action(
         self,
@@ -870,14 +969,28 @@ class Engine:
             ):
                 return
             wf = self.definitions.get(s, run.definition_name, run.definition_version)
-            s.execute(
-                update(m.HumanTask)
-                .where(m.HumanTask.run_id == run_id, m.HumanTask.status == m.HumanTaskStatus.OPEN)
-                .values(status=m.HumanTaskStatus.CANCELLED)
-            )
             run.status = m.RunStatus.CANCELLED
             run.completed_at = self.deps.clock()
+            self._stop_remaining(s, run, wf, "run cancelled")
             self._audit(s, wf, run, None, "run.cancelled", data={"actor": actor}, reasoning=reason)
+
+    def _stop_remaining(
+        self, s: Session, run: m.WorkflowRun, wf: WorkflowDefinition, reason: str
+    ) -> None:
+        """The run has ended: skip every step that has not finished and close its open tasks.
+
+        A RUNNING step is left alone: its worker is mid-call, and `_execute_inner` / `_relock`
+        record the truthful outcome. Steps leased later see the ended run and skip themselves.
+        """
+        for sr in s.scalars(select(m.StepRun).where(m.StepRun.run_id == run.id).with_for_update()):
+            if sr.status in TERMINAL or sr.status is m.StepStatus.RUNNING:
+                continue
+            self._set_status(s, wf, run, sr, m.StepStatus.SKIPPED, data={"reason": reason})
+        s.execute(
+            update(m.HumanTask)
+            .where(m.HumanTask.run_id == run.id, m.HumanTask.status.in_(OPEN_TASK))
+            .values(status=m.HumanTaskStatus.CANCELLED)
+        )
 
     # ================================================================ timers and SLAs
 
@@ -951,9 +1064,9 @@ class Engine:
                             run_id=run.id,
                             step_run_id=sr.id,
                             kind=m.HumanTaskKind.EXCEPTION,
-                            action="sla.escalation",
+                            action=ESCALATION_ACTION,
                             assignee_role=role,
-                            options=["chase", "override", "fail"],
+                            options=list(ESCALATION_OPTIONS),
                             context_packet={"step": step.id, "reason": "SLA exceeded"},
                         )
                     )
@@ -977,8 +1090,15 @@ class Engine:
         data: Mapping[str, Any] | None = None,
     ) -> None:
         sr.status = status
-        if status in TERMINAL and sr.finished_at is None:
-            sr.finished_at = self.deps.clock()
+        if status in TERMINAL:
+            if sr.finished_at is None:
+                sr.finished_at = self.deps.clock()
+            s.flush()  # a task decided in this transaction must be DECIDED before the update
+            s.execute(
+                update(m.HumanTask)
+                .where(m.HumanTask.step_run_id == sr.id, m.HumanTask.status.in_(OPEN_TASK))
+                .values(status=m.HumanTaskStatus.CANCELLED)
+            )
         self._audit(
             s, wf, run, sr, f"step.{status.value.lower()}", decision=decision, data=dict(data or {})
         )
@@ -1014,6 +1134,7 @@ class Engine:
         if m.StepStatus.FAILED in statuses:
             run.status = m.RunStatus.FAILED
             run.completed_at = now
+            self._stop_remaining(s, run, wf, "run failed")
             self._audit(s, wf, run, None, "run.failed")
         elif statuses <= TERMINAL_OK:
             run.status = m.RunStatus.COMPLETED
