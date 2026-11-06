@@ -268,54 +268,71 @@ def list_tasks(session: Session, user: m.User) -> list[TaskOut]:
     return [task_out(task, step_id) for task, step_id in session.execute(query)]
 
 
-def _employee_out(employee: m.Employee, person: m.Person) -> EmployeeOut:
+# Named columns only: selecting the rows would decrypt 🔒 columns in memory for no reason.
+_EMPLOYEE_COLUMNS = (
+    m.Employee.id,
+    m.Person.full_name,
+    m.Employee.employee_code,
+    m.Employee.state,
+    m.Employee.role_title,
+    m.Employee.department,
+)
+
+
+def _employee_out(row: Any) -> EmployeeOut:
     return EmployeeOut(
-        id=employee.id,
-        full_name=person.full_name,
-        employee_code=employee.employee_code,
-        state=employee.state.value,
-        role_title=employee.role_title,
-        department=employee.department,
+        id=row.id,
+        full_name=row.full_name,
+        employee_code=row.employee_code,
+        state=row.state.value,
+        role_title=row.role_title,
+        department=row.department,
     )
 
 
 def list_employees(session: Session) -> list[EmployeeOut]:
     """List employees by name."""
     rows = session.execute(
-        select(m.Employee, m.Person)
+        select(*_EMPLOYEE_COLUMNS)
         .join(m.Person, m.Employee.person_id == m.Person.id)
         .order_by(m.Person.full_name)
         .limit(_MAX_RUNS)
     )
-    return [_employee_out(employee, person) for employee, person in rows]
+    return [_employee_out(row) for row in rows]
 
 
-def employee_detail(session: Session, employee: m.Employee) -> EmployeeDetailOut:
+def employee_detail(session: Session, employee_id: UUID) -> EmployeeDetailOut | None:
     """Build an employee's record. Document contents and 🔒 columns are never selected."""
-    person = session.get(m.Person, employee.person_id)
-    assert person is not None
+    row = session.execute(
+        select(*_EMPLOYEE_COLUMNS, m.Employee.person_id)
+        .join(m.Person, m.Employee.person_id == m.Person.id)
+        .where(m.Employee.id == employee_id)
+    ).first()
+    if row is None:
+        return None
+    person_id = row.person_id
     lifecycle = session.execute(
         select(m.LifecycleEvent.id, m.LifecycleEvent.event_type, m.LifecycleEvent.created_at)
-        .where(m.LifecycleEvent.employee_id == employee.id)
+        .where(m.LifecycleEvent.employee_id == employee_id)
         .order_by(m.LifecycleEvent.created_at)
     )
     documents = session.execute(
         select(m.Document.id, m.Document.category, m.Document.retention_until).where(
-            m.Document.person_id == person.id
+            m.Document.person_id == person_id
         )
     )
     consents = session.execute(
         select(m.Consent.purpose_id, m.Consent.notice_version, m.Consent.withdrawn_at).where(
-            m.Consent.person_id == person.id
+            m.Consent.person_id == person_id
         )
     )
     requests = session.execute(
         select(m.DataRequest.id, m.DataRequest.type, m.DataRequest.status).where(
-            m.DataRequest.person_id == person.id
+            m.DataRequest.person_id == person_id
         )
     )
     return EmployeeDetailOut(
-        **_employee_out(employee, person).model_dump(),
+        **_employee_out(row).model_dump(),
         lifecycle=[
             LifecycleOut(id=r.id, event_type=r.event_type, at=r.created_at) for r in lifecycle
         ],

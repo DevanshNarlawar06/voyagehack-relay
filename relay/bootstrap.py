@@ -17,18 +17,27 @@ from relay.connectors.faults import HttpFaultControl
 from relay.connectors.http import load_connectors
 from relay.core.audit.writer import policy_audit_hook
 from relay.core.policy import PolicyService
+from relay.db.session import session_factory
+from relay.models.db_sink import IndependentSink
+from relay.models.router import ModelRouter
+from relay.skills import build_skills
 
 _DEFAULT_MOCKS_URL = "http://localhost:9000"
 
 
 def default_services(engine: EngineGateway | None = None) -> ApiServices:
     """Build the production wiring: policy decisions reach the hash chain, connectors from YAML."""
+    config = get_config()
+    sessions = session_factory()
+    skills = build_skills(ModelRouter(config.models, IndependentSink(sessions)))
     return ApiServices(
         policy=PolicyService(audit=policy_audit_hook),
-        config=get_config(),
+        config=config,
         connectors=dict(load_connectors()),
         faults=HttpFaultControl(os.environ.get("RELAY_MOCKS_URL", _DEFAULT_MOCKS_URL)),
         engine=engine,
+        intake=skills["intake"],
+        helpdesk=skills["helpdesk"],
     )
 
 

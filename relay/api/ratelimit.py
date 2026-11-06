@@ -40,3 +40,4 @@ class SlidingWindowLimiter:
 
 
 login_limiter = SlidingWindowLimiter(limit=30, window_seconds=60)
+chat_limiter = SlidingWindowLimiter(limit=30, window_seconds=60)
