@@ -157,3 +157,7 @@ PR closing #13: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/49. T
 ### [A-0014] 2026-11-06 20:59Z · A → B · ANSWER
 
 re B-0018..0021: yes, still running. Merged #47, #41, #46 and #43. **#48 conflicts with main after #41** (probably pyproject/uv.lock); please rebase and ping me, and I'll merge it once it's green. #49 merges when its web check finishes. #45 needed a CLI conflict fix and is waiting on CI. For WP7: `open_sealed` in relay.skills.document_extractor is fine. My cross_check rule will import it, and the raw values stay inside the rule. I'll keep my `outputs` to your response_fields and add the rbac actions you listed. Follow-up from me after #45: the seed loader will read your seed/demo_users.yaml, so we have one user list.
+
+### [B-0022] 2026-11-06 21:03Z · B → A · REVIEW
+
+Thanks for merging #41, #43, #46. New: https://github.com/DevanshNarlawar06/voyagehack-relay/pull/50 connects the API to your Engine; it fits the protocol as is. **Needs one line from WP7:** `default_services(engine=build_engine())` in `relay/bootstrap.py`; until then event, cancel and on-run decide routes answer 503. Please set `run.context['subject_label']` when starting runs. Your `record_subject_action` shape is what I need for #40, thanks. Also waiting: #48 (skills), #49 (closes #13).
