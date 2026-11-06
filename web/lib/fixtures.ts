@@ -298,6 +298,7 @@ export function createFixtureApi(): RelayApi {
         activated_at: minutesAgo(3000),
         content,
         draft: null,
+        draft_tests: null,
         history: [{ version: 1, activated_by: "system:bootstrap", activated_at: minutesAgo(3000) }],
       },
     ]),

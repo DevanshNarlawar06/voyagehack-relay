@@ -90,10 +90,10 @@ function createHttpApi(baseUrl: string): RelayApi {
       post<HumanTask>(`/tasks/${encodeURIComponent(id)}/decide`, { option, reason }),
     policies: () => request<PolicyPackSummary[]>("/policies"),
     policy: (pack) => request<PolicyPack>(`/policies/${encodeURIComponent(pack)}`),
-    saveDraft: (pack, content) =>
+    saveDraft: (pack, content, tests) =>
       request<void>(`/policies/${encodeURIComponent(pack)}/draft`, {
         method: "PUT",
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, tests: tests || null }),
       }),
     testPolicy: (pack) => post<PolicyTestResult[]>(`/policies/${encodeURIComponent(pack)}/test`),
     activatePolicy: (pack) =>

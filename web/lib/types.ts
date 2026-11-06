@@ -146,6 +146,7 @@ export interface PolicyPackSummary {
 export interface PolicyPack extends PolicyPackSummary {
   content: string;
   draft: string | null;
+  draft_tests: string | null;
   history: { version: number; activated_by: string | null; activated_at: string | null }[];
 }
 
@@ -196,7 +197,7 @@ export interface RelayApi {
   decideTask(id: string, option: string, reason: string): Promise<HumanTask>;
   policies(): Promise<PolicyPackSummary[]>;
   policy(pack: string): Promise<PolicyPack>;
-  saveDraft(pack: string, content: string): Promise<void>;
+  saveDraft(pack: string, content: string, tests?: string | null): Promise<void>;
   testPolicy(pack: string): Promise<PolicyTestResult[]>;
   activatePolicy(pack: string): Promise<PolicyPackSummary>;
   killSwitches(): Promise<KillSwitch[]>;
