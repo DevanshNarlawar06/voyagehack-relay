@@ -35,6 +35,7 @@ from relay.core.audit.writer import AuditEntry, append_event, policy_audit_hook
 from relay.core.cost.writer import allocate_infra
 from relay.core.dsl.model import Step, WorkflowDefinition, parse_duration
 from relay.core.engine.ports import ConnectorResultLike, EngineDeps
+from relay.core.engine.sealed import unseal
 from relay.core.errors import (
     ConflictError,
     LowConfidence,
@@ -160,7 +161,14 @@ class Engine:
                 subject_type=wf.subject,
                 subject_id=subject_id,
                 status=m.RunStatus.RUNNING,
-                context={"ctx": ctx, "trigger": trigger, "sla": {"reminders": 0}},
+                context={
+                    "ctx": ctx,
+                    "trigger": trigger,
+                    "sla": {"reminders": 0},
+                    "subject_label": str(
+                        trigger.get("subject_label") or f"{wf.subject} {subject_id[:8]}"
+                    ),
+                },
                 started_by_actor=actor,
                 started_at=now,
                 trace_id=uuid.uuid4().hex,
@@ -404,10 +412,21 @@ class Engine:
         approved_by = (sr.input or {}).get("approved_by")
         if actor is None and approved_by:
             actor = self._user_actor(s, uuid.UUID(approved_by))
+        principal_roles = None
+        if actor is None and step.kind == "skill":
+            # PRD 6.7: an agent may do only what both its principal and its skill allow.
+            skill = self.deps.skills.get(step.uses or "")
+            actor = Actor(
+                type="agent",
+                id=f"skill:{step.uses}",
+                allowed_actions=list(skill.allowed_actions) if skill else [],
+            )
+            principal_roles = list(ENGINE_ACTOR.roles)
         return ActionRequest(
             action=step.action,
             actor=actor or ENGINE_ACTOR,
             on_behalf_of=DEFAULT_POOL,
+            principal_roles=principal_roles,
             subject=SubjectRef(type=run.subject_type, id=run.subject_id),
             resource={"inputs": sorted(step.inputs)},  # names only: no PII in decisions
             attributes={**attrs, "consented_purposes": consented},
@@ -541,9 +560,10 @@ class Engine:
             elif entry.status is m.LedgerStatus.FAILED_PERMANENT:
                 raise PermanentError(f"{step.uses} already failed permanently")
             elif not entry.fresh:
-                result = asyncio.run(conn.reconcile(op, key, inputs))
+                result = asyncio.run(conn.reconcile(op, key, unseal(inputs)))
         if replay is None and result is None:
-            result = asyncio.run(conn.call(op, inputs, idempotency_key=key))
+            # Sealed values are opened only here, for the outgoing call (PRD 10.1).
+            result = asyncio.run(conn.call(op, unseal(inputs), idempotency_key=key))
         sr = self._relock(s, sr)
         if replay is not None:
             self._finish(s, run, wf, step, sr, replay, extra={"replayed": True})
@@ -596,7 +616,8 @@ class Engine:
         skill = self.deps.skills.get(step.uses)
         if skill is None:
             raise PermanentError(f"unknown skill {step.uses}")
-        out = skill.run(inputs, run_id=run.id, step_run_id=sr.id)
+        # Skills run in process and return masked output, so they may see sealed inputs opened.
+        out = skill.run(unseal(inputs), run_id=run.id, step_run_id=sr.id)
         stamp = {
             "skill_version": out.skill_version,
             "prompt_version": out.prompt_version,
