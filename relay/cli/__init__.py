@@ -6,6 +6,9 @@ registering a Typer sub-app here.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import typer
 
 from relay import __version__
@@ -14,9 +17,16 @@ app = typer.Typer(no_args_is_help=True, help="Relay: governed HR workflow runtim
 db_app = typer.Typer(no_args_is_help=True, help="Database migrations.")
 config_app = typer.Typer(no_args_is_help=True, help="Configuration.")
 app.add_typer(db_app, name="db")
+policy_app = typer.Typer(no_args_is_help=True, help="Policy packs: test and activate.")
 app.add_typer(config_app, name="config")
 audit_app = typer.Typer(no_args_is_help=True, help="Audit log.")
 app.add_typer(audit_app, name="audit")
+app.add_typer(policy_app, name="policy")
+
+# Policy text contains ₹ and other non-ASCII; Windows consoles default to cp1252.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 @app.command()
@@ -63,3 +73,67 @@ def config_gen_key() -> None:
     from relay.db.crypto import generate_key
 
     typer.echo(generate_key())
+
+
+@policy_app.command("test")
+def policy_test(
+    pack: str | None = typer.Argument(None, help="Only run cases for this pack."),
+    draft: Path | None = typer.Option(None, help="Draft pack YAML to test in place of the file."),
+) -> None:
+    """Run definitions/policies/tests/*.yaml against the packs on disk (no database needed)."""
+    from relay.core.policy.packs import load_dir, parse_pack
+    from relay.core.policy.service import DEFAULT_POLICY_DIR
+    from relay.core.policy.testing import load_case_files, run_cases
+
+    policies, _ = load_dir(DEFAULT_POLICY_DIR)
+    if draft is not None:
+        policies = policies.with_pack(parse_pack(draft.read_text(encoding="utf-8")))
+    results = run_cases(policies, load_case_files(DEFAULT_POLICY_DIR / "tests"), pack)
+    for r in results:
+        typer.echo(f"{'PASS' if r.passed else 'FAIL'}  {r.pack}: {r.name}  ({r.detail})")
+    failed = sum(not r.passed for r in results)
+    typer.echo(f"{len(results) - failed} passed, {failed} failed  [{policies.version}]")
+    raise typer.Exit(1 if failed else 0)
+
+
+@policy_app.command("activate")
+def policy_activate(
+    file: Path,
+    actor: str = typer.Option(..., help="Who is activating (an hr_admin user id)."),
+    tests: Path | None = typer.Option(None, help="Edited test case file for this pack."),
+) -> None:
+    """Test and activate a pack. It applies to the next authorize() call, with no restart."""
+    from relay.core.policy import PolicyService, PolicyTestFailure
+    from relay.db.session import session_scope
+
+    try:
+        with session_scope() as session:
+            row = PolicyService().activate(
+                session,
+                file.read_text(encoding="utf-8"),
+                actor=actor,
+                draft_tests=tests.read_text(encoding="utf-8") if tests else None,
+            )
+            typer.echo(f"activated {row.pack}@{row.version}")
+    except (PolicyTestFailure, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+
+@app.command()
+def kill(
+    scope: str = typer.Option(..., help="global | workflow | step | skill | connector"),
+    target: str = typer.Option("*", help="Name of the workflow/step/skill/connector."),
+    off: bool = typer.Option(False, "--off", help="Release the switch instead."),
+    actor: str = typer.Option(..., help="Who is setting the switch (an hr_admin user id)."),
+    note: str | None = typer.Option(None),
+) -> None:
+    """Set or release a kill switch. Takes effect within one second (PRD 12.6)."""
+    from relay.core.policy import PolicyService
+    from relay.db.session import session_scope
+
+    with session_scope() as session:
+        PolicyService().set_kill_switch(
+            session, scope, target, active=not off, actor=actor, note=note
+        )
+    typer.echo(f"kill switch {scope}:{target} {'released' if off else 'ACTIVE'}")

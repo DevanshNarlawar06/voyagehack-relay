@@ -1,0 +1,58 @@
+pack: rbac
+cases:
+  - name: unknown role is denied
+    request: { action: assets.laptop.allocate, actor: {type: human, id: u-x, roles: [new_joiner]}, attributes: { amount_inr: 1 } }
+    expect: { effect: DENY, rule_ids: [rbac] }
+  - name: agent with no principal cannot act
+    request: { action: documents.request, actor: {type: agent, id: "agent:comms", allowed_actions: ["documents.*"]} }
+    expect: { effect: DENY, rule_ids: [rbac] }
+  - name: agent outside its skill allowlist is denied
+    request:
+      action: assets.laptop.allocate
+      actor: {type: agent, id: "agent:document_extractor", allowed_actions: ["documents.extract"]}
+      principal_roles: [hr_admin]
+      attributes: { amount_inr: 1 }
+    expect: { effect: DENY, rule_ids: [rbac] }
+  - name: agent never exceeds its principal
+    request:
+      action: employee.create
+      actor: {type: agent, id: "agent:intake", allowed_actions: ["*"]}
+      principal_roles: [new_joiner]
+    expect: { effect: DENY, rule_ids: [rbac] }
+  - name: agent within principal and allowlist is allowed (with consent)
+    request:
+      action: documents.extract
+      actor: {type: agent, id: "agent:document_extractor", allowed_actions: ["documents.extract"]}
+      principal_roles: [hr_ops]
+      attributes: { consented_purposes: [onboarding_verification] }
+    expect: { effect: ALLOW }
+  - name: extraction without consent is denied (DPDP purpose limitation)
+    request:
+      action: documents.extract
+      actor: {type: agent, id: "agent:document_extractor", allowed_actions: ["documents.extract"]}
+      principal_roles: [hr_ops]
+    expect: { effect: DENY, rule_ids: [dpdp_purpose] }
+  - name: legitimate-use purpose needs no consent
+    request: { action: statutory.pf.register, actor: {type: system, id: engine, roles: [system]} }
+    expect: { effect: ALLOW }
+  - name: global kill switch denies everything
+    request: { action: employee.create, actor: {type: system, id: engine, roles: [system]}, workflow: onboarding }
+    kill_switches: [[global, "*"]]
+    expect: { effect: DENY, rule_ids: [kill_switch] }
+  - name: workflow kill switch only hits that workflow
+    request: { action: employee.create, actor: {type: system, id: engine, roles: [system]}, workflow: exit }
+    kill_switches: [[workflow, onboarding]]
+    expect: { effect: ALLOW }
+  - name: connector kill switch
+    request: { action: assets.laptop.allocate, actor: {type: system, id: engine, roles: [system]}, connector: assets, attributes: { amount_inr: 1 } }
+    kill_switches: [[connector, assets]]
+    expect: { effect: DENY, rule_ids: [kill_switch] }
+  - name: low-confidence skill output goes to hr_ops
+    request:
+      action: documents.extract
+      actor: {type: agent, id: "agent:document_extractor", allowed_actions: ["documents.extract"]}
+      principal_roles: [hr_ops]
+      skill: document_extractor
+      attributes: { confidence: 0.61, consented_purposes: [onboarding_verification] }
+    confidence_thresholds: { document_extractor: 0.82 }
+    expect: { effect: REQUIRE_HUMAN, approver_role: hr_ops, rule_ids: [confidence_gate] }

@@ -1,0 +1,42 @@
+pack: labour_rules
+version: 1
+owner: hr_admin
+description: >
+  Statutory and company labour rules as decision tables (read by relay/rules/) plus assertions
+  checked by authorize(). Values are PLACEHOLDERS shaped like typical Indian practice until TBO's
+  sample policies arrive (issue #19); every row cites its source so reviewers can check it.
+tables:
+  probation_months_by_grade:
+    source: "TBO Onboarding Policy §3 (placeholder)"
+    rows: { G1: 6, G2: 6, G3: 6, G4: 3, G5: 3, default: 6 }
+  notice_days:
+    source: "TBO Notice Period Policy §2 (placeholder)"
+    during_probation: 15
+    by_grade: { G1: 30, G2: 30, G3: 60, G4: 90, G5: 90, default: 60 }
+  leave:
+    source: "TBO Leave Policy §1-4 (placeholder)"
+    annual_entitlement_days: { earned: 18, casual: 8, sick: 8 }
+    accrual_starts: joining_date
+    earned_leave_usable_during_probation: false
+    leave_during_notice: "earned leave needs manager approval; casual and sick allowed"
+  full_and_final:
+    source: "Code on Wages 2019 §17(2): wages due within two working days of separation"
+    settle_within_working_days: 2
+  provident_fund:
+    source: "EPF & MP Act 1952; EPF Scheme 1952 para 26"
+    mandatory_wage_ceiling_inr: 15000
+    employee_rate: 0.12
+    employer_rate: 0.12
+  gratuity:
+    source: "Payment of Gratuity Act 1972 §4 (ceiling per 2018 notification)"
+    min_continuous_service_years: 5
+    formula: "last_drawn_basic_da * 15 / 26 * completed_years"
+    ceiling_inr: 2000000
+    paid_only_after: payroll.fnf.signoff
+assertions:
+  - id: payroll_uses_approved_ctc
+    description: Payroll setup must use the approved CTC verbatim; agents never modify compensation
+    applies_to: ["payroll.employee.setup"]
+    when: "attributes.ctc_matches_offer != true"
+    effect: DENY
+    source: "PRD 5.1 step 12; PS6 guardrail on compensation"

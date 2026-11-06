@@ -1,0 +1,11 @@
+pack: labour_rules
+cases:
+  - name: payroll setup with the approved CTC is allowed
+    request: { action: payroll.employee.setup, actor: {type: system, id: engine, roles: [system]}, attributes: { ctc_matches_offer: true, consented_purposes: [payroll_setup] } }
+    expect: { effect: ALLOW }
+  - name: payroll setup with a changed CTC is denied
+    request: { action: payroll.employee.setup, actor: {type: system, id: engine, roles: [system]}, attributes: { ctc_matches_offer: false, consented_purposes: [payroll_setup] } }
+    expect: { effect: DENY, rule_ids: [payroll_uses_approved_ctc] }
+  - name: payroll setup without the CTC check fails closed
+    request: { action: payroll.employee.setup, actor: {type: system, id: engine, roles: [system]}, attributes: { consented_purposes: [payroll_setup] } }
+    expect: { effect: DENY, rule_ids: [payroll_uses_approved_ctc] }
