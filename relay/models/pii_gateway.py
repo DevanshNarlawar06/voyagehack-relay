@@ -82,6 +82,10 @@ class PiiGateway:
         """Use the given recognizers; the default is the offline regex and checksum set."""
         self._recognizers = recognizers
 
+    def with_recognizer(self, recognizer: Recognizer) -> "PiiGateway":
+        """Return a gateway that also applies `recognizer`."""
+        return PiiGateway((*self._recognizers, recognizer))
+
     def analyze(self, text: str) -> list[Span]:
         """Return the non-overlapping PII spans in `text`, in document order."""
         return resolve_overlaps(s for r in self._recognizers for s in r.analyze(text))

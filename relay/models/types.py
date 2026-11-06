@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from relay.core.errors import TransientError
 from relay.models.pii_gateway import PiiVault
+from relay.models.recognizers import Entity
 
 ConfidenceFn = Callable[[dict[str, Any]], float]
 
@@ -43,6 +44,8 @@ class ModelRequest(BaseModel):
     threshold: float | None = Field(default=None, ge=0, le=1)
     max_output_tokens: int | None = Field(default=None, gt=0)
     vault: PiiVault | None = None  # pass one to keep tokens stable across a run's calls
+    # Values the system of record already knows, such as names, masked wherever they appear.
+    known_values: list[tuple[Entity, str]] = Field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +151,18 @@ class ModelResult:
     escalated: bool
     cost_inr: Decimal
     payload_ids: list[UUID]
+
+
+class ModelClient(Protocol):
+    """What skills need from the router. They depend on this, so they never reach litellm."""
+
+    def complete(self, request: ModelRequest) -> ModelResult:
+        """Mask, call a model and return a validated answer."""
+        ...
+
+    def is_offline(self, tier: str) -> bool:
+        """True if a tier is the deterministic mock."""
+        ...
 
 
 class ModelUnavailable(TransientError):

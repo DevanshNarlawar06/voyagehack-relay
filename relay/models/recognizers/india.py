@@ -144,6 +144,18 @@ BANK_ACCOUNT = RegexRecognizer(
     group=1,
 )
 
+
+def known_value_recognizer(entity: Entity, values: list[str]) -> RegexRecognizer | None:
+    """Match values we already hold, such as a joiner's name, wherever they appear."""
+    wanted = sorted({value.strip() for value in values if value.strip()}, key=len, reverse=True)
+    if not wanted:
+        return None
+    alternatives = "|".join(re.escape(value) for value in wanted)
+    return RegexRecognizer(
+        entity, re.compile(rf"(?<!\w)(?:{alternatives})(?!\w)", re.IGNORECASE), 0.99
+    )
+
+
 DEFAULT_RECOGNIZERS: tuple[RegexRecognizer, ...] = (
     PAN,
     AADHAAR,
