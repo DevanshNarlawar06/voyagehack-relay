@@ -57,6 +57,7 @@ python_version = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # so tests can import mocks/
 markers = ["db: needs a Postgres database (DATABASE_URL)"]
 
 # Architecture contracts (PRD 6, 21). Run: lint-imports

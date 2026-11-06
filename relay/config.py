@@ -56,6 +56,7 @@ class InfraCostsConfig(_Strict):
 
     currency: Literal["INR"]
     monthly: dict[str, float]
+    vm_vcpus: int = Field(default=2, gt=0)  # for p_cpu = VM cost / vCPU-seconds per month (PRD 17)
 
     @property
     def monthly_fixed_inr(self) -> float:
