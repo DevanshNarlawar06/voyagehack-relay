@@ -497,6 +497,16 @@ class UploadLink(Timestamped, Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class SlackPost(Timestamped, Base):
+    """An approval card posted to Slack for a task, so a restart never posts it twice (PRD 16.2)."""
+
+    __tablename__ = "slack_posts"
+
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("human_tasks.id"), unique=True)
+    channel: Mapped[str] = mapped_column(String(64))
+    ts: Mapped[str | None] = mapped_column(String(32))
+
+
 class Conversation(Timestamped, Base):
     __tablename__ = "conversations"
 
