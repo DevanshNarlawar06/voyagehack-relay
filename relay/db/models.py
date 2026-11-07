@@ -507,6 +507,16 @@ class SlackPost(Timestamped, Base):
     ts: Mapped[str | None] = mapped_column(String(32))
 
 
+class SlackNotice(Timestamped, Base):
+    """An SLA reminder posted to a team channel, keyed by its audit event (PRD 16.2)."""
+
+    __tablename__ = "slack_notices"
+
+    audit_seq: Mapped[int] = mapped_column(BigInteger, unique=True)
+    channel: Mapped[str] = mapped_column(String(64))
+    ts: Mapped[str | None] = mapped_column(String(32))
+
+
 class Conversation(Timestamped, Base):
     __tablename__ = "conversations"
 
