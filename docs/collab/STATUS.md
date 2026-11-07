@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 03:36Z_
+_Updated 2026-11-07 04:09Z_
 
-Now: #64 Slack (CI rerun after uv-prune fix), #65 docs in review. Next: backlog empty after these, so open enhancement issues (UI first) and split with B. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/9-docs
+Now: #72 (#69) in review; #65 docs merges at 04:21Z. Next: #70 SLA posts to team channels, then #71. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/69-decision-output
 <!-- STATUS:A:END -->
 
 
