@@ -135,7 +135,8 @@ function createHttpApi(baseUrl: string): RelayApi {
     employees: () => request<EmployeeSummary[]>("/employees"),
     employee: (id) => request<EmployeeRecord>(`/employees/${encodeURIComponent(id)}`),
     dataRequests: () => request<DataRequest[]>("/data-requests"),
-    raiseDataRequest: (type) => post<{ id: string; run_id: string | null }>("/data-requests", { type }),
+    raiseDataRequest: (type, details) =>
+      post<{ id: string; run_id: string | null }>("/data-requests", { type, details: details || null }),
     chat: (text) => post<ChatReply>("/chat", { text }),
     uploadDocuments: async (token, files, consents) => {
       // Multipart, so the browser sets the header. The signed link is the credential, not a session.

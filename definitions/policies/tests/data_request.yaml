@@ -34,6 +34,12 @@ cases:
   - name: "dpdp: hr_admin opens an export"
     request: { action: data_request.export.open, actor: { type: human, id: u-hradmin, roles: [hr_admin] } }
     expect: { effect: ALLOW }
+  - name: "dpdp: a manager may raise a request about themselves"
+    request: { action: data_request.create, actor: { type: human, id: u-mgr, roles: [manager] } }
+    expect: { effect: ALLOW }
+  - name: "dpdp: hr_ops may raise a request about themselves"
+    request: { action: data_request.create, actor: { type: human, id: u-hrops, roles: [hr_ops] } }
+    expect: { effect: ALLOW }
   - name: "dpdp: an employee may raise a request"
     request: { action: data_request.create, actor: { type: human, id: u-emp, roles: [employee] } }
     expect: { effect: ALLOW }

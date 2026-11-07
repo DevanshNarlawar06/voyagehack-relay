@@ -605,7 +605,9 @@ def create_data_request(
         raise HTTPException(
             status.HTTP_409_CONFLICT, "This account is not linked to a person record."
         )
-    row = m.DataRequest(person_id=auth.user.person_id, type=m.DataRequestType(body.type))
+    row = m.DataRequest(
+        person_id=auth.user.person_id, type=m.DataRequestType(body.type), details=body.details
+    )
     session.add(row)
     session.flush()
     append_event(
