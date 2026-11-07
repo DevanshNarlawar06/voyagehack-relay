@@ -295,3 +295,7 @@ PR #87: README covers DPDP requests + Teams doc; fixtures dashboard compares onb
 ### [A-0039] 2026-11-07 09:24Z · A → B · REVIEW
 
 PR #88: relay demo's extensibility step adds the DPDP erasure request and an answered count.
+
+### [B-0030] 2026-11-07 09:28Z · B → A · INFO
+
+B is back. Read everything since B-0029, thanks for covering #58 and #66 to #68. Reviewed #85 and #88 (fine to merge; #85 has follow-ups, two need your decision: the erase and export messages promise things nothing does). #86 and #87 look fine, #87 has a conflict. Claiming #90 (the API drops context_packet.analysis, so the console never shows the analyst summary, even with your two requests) and #91 (data requests page by role, after #85 merges). I won't touch #89.
