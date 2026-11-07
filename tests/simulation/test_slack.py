@@ -239,3 +239,37 @@ def test_journey_2_resigning_in_a_dm_starts_exit_and_cards_the_manager(world: Wo
     # The employee cannot accept their own resignation from the card.
     refused = world.service.click("UTEST1005", str(task.id), "accept")
     assert refused.kind == "refused"
+
+
+def test_journey_2_the_manager_accepts_in_slack_with_an_agreed_release_date(world: World) -> None:
+    with world.sessions() as s:
+        run = s.scalar(
+            select(m.WorkflowRun).where(
+                m.WorkflowRun.definition_name == "exit", m.WorkflowRun.subject_id == "TBO1005"
+            )
+        )
+        assert run is not None
+        task = s.scalar(select(m.HumanTask).where(m.HumanTask.run_id == run.id))
+        manager = s.scalar(
+            select(m.User)
+            .join(m.Employee, m.Employee.person_id == m.User.person_id)
+            .where(m.Employee.employee_code == "TBO1000")
+        )
+    assert task is not None and manager is not None and manager.slack_user_id
+    click = world.service.click(manager.slack_user_id, str(task.id), "accept")
+    assert click.kind == "needs_input" and click.action == "employment.resignation.accept"
+    both = world.service.decide(
+        manager.slack_user_id, str(task.id), "accept", "",
+        {"release_date": "2026-12-01", "buyout_agreed": True},
+    )  # fmt: skip
+    assert both.kind == "refused"
+    done = world.service.decide(
+        manager.slack_user_id, str(task.id), "accept", "", {"release_date": "2026-12-01"}
+    )
+    assert done.kind == "decided"
+    world.engine.run_until_idle()
+    with world.sessions() as s:
+        ctx = s.get(m.WorkflowRun, run.id).context["ctx"]  # type: ignore[union-attr]
+    assert ctx["acceptance"]["release_date"] == "2026-12-01"
+    assert ctx["acceptance"]["decided_by"] == str(manager.id)
+    assert ctx["exit_terms"]["last_working_day"] == "2026-12-01"

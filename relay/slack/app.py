@@ -62,6 +62,10 @@ def handle_click(service: SlackService, client: Any, body: dict[str, Any]) -> No
     """A card button: open the reason modal if one is needed, else decide and update the card."""
     task_id, option = cards.parse_button_value(body["actions"][0]["value"])
     result = service.click(body["user"]["id"], task_id, option)
+    if result.kind == "needs_input":
+        modal = cards.MODALS[result.action]
+        client.views_open(trigger_id=body["trigger_id"], view=modal(task_id, option, result.title))
+        return
     if result.kind == "needs_reason":
         client.views_open(
             trigger_id=body["trigger_id"], view=cards.reason_modal(task_id, option, result.title)
@@ -83,6 +87,16 @@ def handle_reason(
     reason = view["state"]["values"][cards.REASON_BLOCK][cards.REASON_INPUT]["value"] or ""
     task_id, option = cards.parse_button_value(view["private_metadata"])
     result = service.decide(body["user"]["id"], task_id, option, reason)
+    client.chat_postMessage(channel=body["user"]["id"], text=result.text)
+
+
+def handle_input(
+    service: SlackService, client: Any, body: dict[str, Any], view: dict[str, Any]
+) -> None:
+    """An input modal (accepting a resignation) was submitted: decide with its fields."""
+    output, note = cards.read_resignation_modal(view)
+    task_id, option = cards.parse_button_value(view["private_metadata"])
+    result = service.decide(body["user"]["id"], task_id, option, note, output)
     client.chat_postMessage(channel=body["user"]["id"], text=result.text)
 
 
@@ -109,6 +123,11 @@ def build_app(service: SlackService, *, token: str, signing_secret: str | None =
             return
         ack()
         handle_reason(service, client, body, view)
+
+    @app.view(cards.INPUT_VIEW)
+    def on_input(ack: Any, body: dict[str, Any], view: dict[str, Any], client: Any) -> None:
+        ack()
+        handle_input(service, client, body, view)
 
     return app
 
