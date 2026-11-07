@@ -126,6 +126,8 @@ actions:
   data_request.correction.decide: { description: "Approve or reject a correction to the person's record" }
   data_request.erasure.decide: { description: "Erase, or refuse because the law requires keeping the data (reserved)" }
   data_request.close: { description: "Record how a data request ended" }
+  documents.retention.check: { description: "Find documents whose DPDP retention has ended" }
+  documents.purge: { description: "Delete an expired document's file and extracted fields (audited)" }
 
 purposes:   # documentation only; legitimate-use purposes skip the consent check
   onboarding_verification: Verify identity and eligibility documents of a new joiner

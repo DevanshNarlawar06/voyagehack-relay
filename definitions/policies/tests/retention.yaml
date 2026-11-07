@@ -1,0 +1,12 @@
+# DPDP retention sweeper (PRD 14). `relay policy test` runs this.
+pack: rbac
+cases:
+  - name: "retention: the engine may purge expired documents"
+    request: { action: documents.purge, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: ALLOW }
+  - name: "retention: an auditor cannot purge documents"
+    request: { action: documents.purge, actor: { type: human, id: u-aud, roles: [auditor] } }
+    expect: { effect: DENY }
+  - name: "retention: a manager cannot purge documents"
+    request: { action: documents.purge, actor: { type: human, id: u-mgr, roles: [manager] } }
+    expect: { effect: DENY }

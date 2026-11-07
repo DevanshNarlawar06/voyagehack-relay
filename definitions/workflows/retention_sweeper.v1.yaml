@@ -1,0 +1,28 @@
+# DPDP retention sweeper (PRD 14). Built only through extension points: no relay/core change.
+# Started nightly by `relay retention-sweep` (event `retention.sweep.due`, optional `as_of` date).
+# Finds documents past what retention.yaml allows and purges them: the encrypted file is deleted,
+# extracted fields are cleared, and the audited step result names each purged document.
+# When the rules can't tell (no employee record, no exit date), a document is kept.
+name: retention_sweeper
+version: 1
+subject: system
+description: Purge documents whose DPDP retention has ended, auditing each purge
+trigger: { event: retention.sweep.due }
+context:
+  as_of: "has(trigger.as_of) ? trigger.as_of : now"
+steps:
+  - id: find_expired
+    kind: rule
+    uses: rules.retention.find_expired
+    action: documents.retention.check
+    inputs: { as_of: "ctx.as_of" }
+    outputs: { expired: "result" }
+
+  - id: purge_documents
+    kind: rule
+    uses: rules.retention.purge
+    action: documents.purge
+    needs: [find_expired]
+    when: "ctx.expired.count > 0"
+    inputs: { document_ids: "ctx.expired.documents" }
+    outputs: { purge: "result" }
