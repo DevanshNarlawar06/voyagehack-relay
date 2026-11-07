@@ -704,7 +704,10 @@ export function createFixtureApi(): RelayApi {
       return employee ? wait(employee) : Promise.reject(new Error("Employee not found."));
     },
     dataRequests: () => wait(dataRequests),
-    raiseDataRequest: (type) => {
+    raiseDataRequest: (type, details) => {
+      if (type === "correction" && !details?.trim()) {
+        return Promise.reject(new Error("Say what should be corrected."));
+      }
       const row: DataRequest = {
         id: `r${dataRequests.length + 1}`,
         type,

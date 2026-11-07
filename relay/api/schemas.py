@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
 
 
 class UserOut(BaseModel):
@@ -373,6 +373,15 @@ class DataRequestIn(BaseModel):
     """A DPDP request from the signed-in person about their own data."""
 
     type: Literal["access", "correction", "erasure"]
+    details: str | None = Field(default=None, max_length=1000)
+
+    @model_validator(mode="after")
+    def _correction_says_what(self) -> DataRequestIn:
+        """A correction must say what to correct, or HR Ops would decide blind."""
+        self.details = (self.details or "").strip() or None
+        if self.type == "correction" and self.details is None:
+            raise ValueError("say what should be corrected")
+        return self
 
 
 class DataRequestOut(BaseModel):

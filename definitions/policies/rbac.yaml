@@ -40,6 +40,7 @@ roles:
     - "connectors.read"
     - "events.ingest"
     - "data_request.correction.decide"
+    - "data_request.create"   # everyone is a data principal: raise a request about yourself
   hr_admin: ["*"]
   manager:
     - "runs.read.team"
@@ -50,6 +51,7 @@ roles:
     - "employment.release_date.agree"
     - "employment.notice_buyout.agree"
     - "chat.*"
+    - "data_request.create"
   approver_offer: ["hiring.*", "tasks.*"]
   approver_it_spend: ["assets.laptop.allocate", "assets.laptop.allocate.exception", "tasks.*"]
   approver_finance: ["comp.*", "payroll.*", "statutory.*", "tasks.*"]
