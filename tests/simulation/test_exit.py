@@ -221,6 +221,7 @@ def test_the_demo_checklist_sees_the_exits_and_names_what_is_missing(played) -> 
         steps = {step.title: step for step in checklist(s)}
     assert len(steps) == 7
     assert steps["Extensibility"].ready and "5 completed exits" in steps["Extensibility"].detail
+    assert "0 data requests answered" in steps["Extensibility"].detail
     assert steps["Governance"].ready  # no kill switch left active
     assert not steps["Dashboard"].ready  # this database has no onboarding runs
     assert not steps["Chaos"].ready and "relay simulate" in steps["Chaos"].detail
