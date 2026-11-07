@@ -375,9 +375,9 @@ def employee_detail(session: Session, employee_id: UUID) -> EmployeeDetailOut | 
         )
     )
     requests = session.execute(
-        select(m.DataRequest.id, m.DataRequest.type, m.DataRequest.status).where(
-            m.DataRequest.person_id == person_id
-        )
+        select(
+            m.DataRequest.id, m.DataRequest.type, m.DataRequest.status, m.DataRequest.run_id
+        ).where(m.DataRequest.person_id == person_id)
     )
     return EmployeeDetailOut(
         **_employee_out(row).model_dump(),
