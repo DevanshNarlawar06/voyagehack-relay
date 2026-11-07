@@ -20,6 +20,7 @@ from relay.api.schemas import (
     EmployeeRequestOut,
     LifecycleOut,
     RunDetailOut,
+    RunLinkOut,
     RunOut,
     StepDecisionOut,
     StepOut,
@@ -73,6 +74,16 @@ def _run_out(run: m.WorkflowRun, total: int, done: int, cost: Decimal) -> RunOut
         steps_total=total,
         steps_done=done,
         cost_inr=cost,
+        parent_run_id=run.parent_run_id,
+    )
+
+
+def _link(run: m.WorkflowRun) -> RunLinkOut:
+    return RunLinkOut(
+        id=run.id,
+        definition_name=run.definition_name,
+        status=run.status.value,
+        subject_label=subject_label(run),
     )
 
 
@@ -90,9 +101,13 @@ def team_subject_ids(session: Session, user: m.User) -> set[str]:
 
 
 def list_runs(
-    session: Session, *, status: str | None = None, subject_ids: set[str] | None = None
+    session: Session,
+    *,
+    status: str | None = None,
+    subject_ids: set[str] | None = None,
+    workflow: str | None = None,
 ) -> list[RunOut]:
-    """List runs, newest first. `subject_ids` limits them to those employees."""
+    """List runs, newest first. `subject_ids` limits them to those employees, `workflow` to one."""
     steps = (
         select(
             m.StepRun.run_id,
@@ -119,6 +134,8 @@ def list_runs(
         .order_by(m.WorkflowRun.started_at.desc())
         .limit(_MAX_RUNS)
     )
+    if workflow is not None:
+        query = query.where(m.WorkflowRun.definition_name == workflow)
     if status is not None:
         query = query.where(m.WorkflowRun.status == m.RunStatus(status))
     if subject_ids is not None:
@@ -206,8 +223,16 @@ def run_detail(session: Session, run: m.WorkflowRun) -> RunDetailOut:
         sum(1 for step, _ in rows if step.status is m.StepStatus.SUCCEEDED),
         sum(step_costs.values(), Decimal(0)),
     )
+    parent = session.get(m.WorkflowRun, run.parent_run_id) if run.parent_run_id else None
+    children = session.scalars(
+        select(m.WorkflowRun)
+        .where(m.WorkflowRun.parent_run_id == run.id)
+        .order_by(m.WorkflowRun.started_at)
+    ).all()
     return RunDetailOut(
         **summary.model_dump(),
+        parent=_link(parent) if parent else None,
+        children=[_link(child) for child in children],
         steps=steps,
         timeline=[
             TimelineEventOut(
