@@ -74,6 +74,12 @@ def validate_definition(
             cel.check(expr)
         except cel.CelError as exc:
             errors.append(f"context.{expr_name}: {exc}")
+    for i, child in enumerate(wf.on_complete):
+        for key, expr in child.payload.items():
+            try:
+                cel.check(expr)
+            except cel.CelError as exc:
+                errors.append(f"on_complete[{i}].payload.{key}: {exc}")
 
     for s in steps:
         for n in s.needs:

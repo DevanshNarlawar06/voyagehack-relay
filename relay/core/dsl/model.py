@@ -142,6 +142,17 @@ class ParallelBlock(_Model):
     parallel: ParallelBody
 
 
+class ChildRun(_Model):
+    """A linked run started when this one completes (PRD 19: probation as a child run).
+
+    `payload` values are CEL over the finished run (`ctx`, `trigger`, `now`, `run_id`). The child
+    starts in the same transaction that completes the parent, so the hand-off cannot be lost.
+    """
+
+    workflow: str
+    payload: dict[str, str] = Field(default_factory=dict)
+
+
 class WorkflowDefinition(_Model):
     name: str
     version: int = Field(ge=1)
@@ -151,6 +162,7 @@ class WorkflowDefinition(_Model):
     context: dict[str, str] = Field(default_factory=dict)
     defaults: Defaults = Field(default_factory=Defaults)
     steps: list[Step | ParallelBlock] = Field(min_length=1)
+    on_complete: list[ChildRun] = Field(default_factory=list)
 
     def flat_steps(self) -> list[Step]:
         """Every step, with parallel blocks expanded and block aliases resolved in `needs`.
