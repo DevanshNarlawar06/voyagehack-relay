@@ -96,6 +96,7 @@ actions:
   comms.send: { description: "Send a templated or drafted message to an employee or manager" }
   calendar.events.create: { description: "Schedule day-one events" }
   employee.activate: { description: "Readiness gate, move to active" }
+  employment.probation.schedule: { description: "Wait until probation ends" }
   employment.probation.confirm: { description: "Confirm/extend probation (reserved)" }
   hiring.offer.approve: { description: "Approve offer (baseline reserved)" }
 

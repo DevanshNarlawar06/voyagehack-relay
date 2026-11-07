@@ -1,5 +1,27 @@
 {
   "$defs": {
+    "ChildRun": {
+      "additionalProperties": false,
+      "description": "A linked run started when this one completes (PRD 19: probation as a child run).\n\n`payload` values are CEL over the finished run (`ctx`, `trigger`, `now`, `run_id`). The child\nstarts in the same transaction that completes the parent, so the hand-off cannot be lost.",
+      "properties": {
+        "workflow": {
+          "title": "Workflow",
+          "type": "string"
+        },
+        "payload": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Payload",
+          "type": "object"
+        }
+      },
+      "required": [
+        "workflow"
+      ],
+      "title": "ChildRun",
+      "type": "object"
+    },
     "Defaults": {
       "additionalProperties": false,
       "properties": {
@@ -419,6 +441,13 @@
       },
       "minItems": 1,
       "title": "Steps",
+      "type": "array"
+    },
+    "on_complete": {
+      "items": {
+        "$ref": "#/$defs/ChildRun"
+      },
+      "title": "On Complete",
       "type": "array"
     }
   },

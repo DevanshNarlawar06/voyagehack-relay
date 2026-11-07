@@ -156,41 +156,56 @@ class Engine:
         parent_run_id: uuid.UUID | None = None,
     ) -> uuid.UUID:
         """Start the active version of workflow `name` for `subject_id`."""
+        with self.sessions.begin() as s:
+            return self._start_run_in(
+                s, name, payload, actor=actor, subject_id=subject_id, parent_run_id=parent_run_id
+            )
+
+    def _start_run_in(
+        self,
+        s: Session,
+        name: str,
+        payload: Mapping[str, Any],
+        *,
+        actor: str,
+        subject_id: str,
+        parent_run_id: uuid.UUID | None = None,
+    ) -> uuid.UUID:
+        """Start a run inside the caller's transaction."""
         now = self.deps.clock()
         trigger = dict(payload)
-        with self.sessions.begin() as s:
-            wf = self.definitions.active(s, name)
-            if wf.trigger.require_decision:
-                self._require_decision(s, wf, trigger, actor, subject_id)
-            act = {"trigger": trigger, "now": now.isoformat(), "ctx": {}}
-            ctx = {k: cel.evaluate_py(expr, act) for k, expr in wf.context.items()}
-            run = m.WorkflowRun(
-                definition_name=wf.name,
-                definition_version=wf.version,
-                subject_type=wf.subject,
-                subject_id=subject_id,
-                status=m.RunStatus.RUNNING,
-                context={
-                    "ctx": ctx,
-                    "trigger": trigger,
-                    "sla": {"reminders": 0},
-                    "subject_label": str(
-                        trigger.get("subject_label") or f"{wf.subject} {subject_id[:8]}"
-                    ),
-                },
-                started_by_actor=actor,
-                started_at=now,
-                trace_id=uuid.uuid4().hex,
-                parent_run_id=parent_run_id,
-            )
-            s.add(run)
-            s.flush()
-            for step in wf.flat_steps():
-                s.add(m.StepRun(run_id=run.id, step_id=step.id, kind=m.StepKind(step.kind)))
-            s.flush()
-            self._audit(s, wf, run, None, "run.started", data={"actor": actor})
-            self._advance(s, run, wf)
-            return run.id
+        wf = self.definitions.active(s, name)
+        if wf.trigger.require_decision:
+            self._require_decision(s, wf, trigger, actor, subject_id)
+        act = {"trigger": trigger, "now": now.isoformat(), "ctx": {}}
+        ctx = {k: cel.evaluate_py(expr, act) for k, expr in wf.context.items()}
+        run = m.WorkflowRun(
+            definition_name=wf.name,
+            definition_version=wf.version,
+            subject_type=wf.subject,
+            subject_id=subject_id,
+            status=m.RunStatus.RUNNING,
+            context={
+                "ctx": ctx,
+                "trigger": trigger,
+                "sla": {"reminders": 0},
+                "subject_label": str(
+                    trigger.get("subject_label") or f"{wf.subject} {subject_id[:8]}"
+                ),
+            },
+            started_by_actor=actor,
+            started_at=now,
+            trace_id=uuid.uuid4().hex,
+            parent_run_id=parent_run_id,
+        )
+        s.add(run)
+        s.flush()
+        for step in wf.flat_steps():
+            s.add(m.StepRun(run_id=run.id, step_id=step.id, kind=m.StepKind(step.kind)))
+        s.flush()
+        self._audit(s, wf, run, None, "run.started", data={"actor": actor})
+        self._advance(s, run, wf)
+        return run.id
 
     def _require_decision(
         self,
@@ -1261,6 +1276,15 @@ class Engine:
             cfg = get_config()
             allocate_infra(s, run.id, cfg.infra_costs, cfg.volumes)
             self._audit(s, wf, run, None, "run.completed")
+            act = self._activation(run, now)
+            for child in wf.on_complete:
+                payload = {k: cel.evaluate_py(expr, act) for k, expr in child.payload.items()}
+                child_id = self._start_run_in(
+                    s, child.workflow, payload, actor=f"run:{run.id}", subject_id=run.subject_id,
+                    parent_run_id=run.id,
+                )  # fmt: skip
+                self._audit(s, wf, run, None, "run.child_started",
+                            data={"workflow": child.workflow, "child_run_id": str(child_id)})  # fmt: skip
         elif statuses & {m.StepStatus.READY, m.StepStatus.RUNNING, m.StepStatus.RETRY_SCHEDULED}:
             if run.status is not m.RunStatus.PAUSED or m.StepStatus.PAUSED not in statuses:
                 run.status = m.RunStatus.RUNNING
