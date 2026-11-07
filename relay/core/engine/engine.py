@@ -93,11 +93,12 @@ class TickResult:
     resumed: int = 0
     timers: int = 0
     executed: int = 0
+    analysed: int = 0
 
     @property
     def busy(self) -> bool:
         """True if this pass did any work."""
-        return bool(self.reclaimed or self.resumed or self.timers or self.executed)
+        return bool(self.reclaimed or self.resumed or self.timers or self.executed or self.analysed)
 
 
 class Engine:
@@ -249,7 +250,8 @@ class Engine:
         for step_run_id in self._lease(max_steps):
             self._execute(step_run_id)
             executed += 1
-        return TickResult(reclaimed, resumed, timers, executed)
+        analysed = self._analyse_pending()
+        return TickResult(reclaimed, resumed, timers, executed, analysed)
 
     def run_until_idle(self, max_passes: int = 1000) -> int:
         """Tick until a pass does nothing (simulation and tests). Returns passes made."""
@@ -765,10 +767,10 @@ class Engine:
         status: m.StepStatus = m.StepStatus.WAITING_HUMAN,
     ) -> m.HumanTask:
         context = {"step": step.id, "workflow": f"{wf.name}@{wf.version}", **packet}
-        if kind in ANALYSED_TASKS:
-            analysis = self._analyse(s, run, wf, step, sr, kind, options, packet)
-            if analysis is not None:
-                context["analysis"] = analysis
+        if kind in ANALYSED_TASKS and ANALYST in self.deps.skills:
+            # Summarised on the next tick, outside this transaction: a skill call must never
+            # run while the run and step rows are locked (its cost rows reference them).
+            context["analysis_pending"] = True
         task = m.HumanTask(
             run_id=run.id, step_run_id=sr.id, kind=kind, action=action, assignee_role=role,
             assignee_user_id=user_id, options=options, status=m.HumanTaskStatus.OPEN,
@@ -783,25 +785,49 @@ class Engine:
         self._advance(s, run, wf)
         return task
 
+    def _analyse_pending(self, limit: int = 10) -> int:
+        """Attach `exception_analyst` summaries to tasks opened since the last tick (PRD 22, demo 4).
+
+        Each task is handled in its own short transaction that locks only the task row, so the
+        skill's cost and payload rows (written on their own connection) never wait on us.
+        """
+        done = 0
+        for _ in range(limit):
+            with self.sessions.begin() as s:
+                task = s.scalar(
+                    select(m.HumanTask)
+                    .where(
+                        m.HumanTask.status.in_(OPEN_TASK),
+                        m.HumanTask.context_packet["analysis_pending"].as_boolean().is_(True),
+                    )
+                    .order_by(m.HumanTask.created_at)
+                    .limit(1)
+                    .with_for_update(skip_locked=True)
+                )
+                if task is None:
+                    break
+                packet = dict(task.context_packet or {})
+                packet.pop("analysis_pending", None)
+                analysis = self._analyse(s, task, packet)
+                if analysis is not None:
+                    packet["analysis"] = analysis
+                task.context_packet = packet
+                done += 1
+        return done
+
     def _analyse(
-        self,
-        s: Session,
-        run: m.WorkflowRun,
-        wf: WorkflowDefinition,
-        step: Step,
-        sr: m.StepRun,
-        kind: m.HumanTaskKind,
-        options: list[str],
-        packet: Mapping[str, Any],
+        self, s: Session, task: m.HumanTask, packet: Mapping[str, Any]
     ) -> dict[str, Any] | None:
-        """Ask `exception_analyst` for the summary a person sees on the task (PRD 22, demo 4).
+        """Ask `exception_analyst` for the summary a person sees on the task.
 
         It acts as an agent (principal ∩ allowlist, with a Decision row like any step) and sees
         only the reason, field names, options and step: no personal data. Any failure is logged
-        and the task opens without a summary; the analyst can never block a person's queue.
+        and the task keeps no summary; the analyst can never block a person's queue.
         """
         skill = self.deps.skills.get(ANALYST)
-        if skill is None:
+        run = s.get(m.WorkflowRun, task.run_id) if task.run_id else None
+        sr = s.get(m.StepRun, task.step_run_id) if task.step_run_id else None
+        if skill is None or run is None or sr is None:
             return None
         req = ActionRequest(
             action=ANALYSE_ACTION,
@@ -812,8 +838,8 @@ class Engine:
             principal_roles=list(ENGINE_ACTOR.roles),
             subject=SubjectRef(type=run.subject_type, id=run.subject_id),
             run_id=run.id,
-            step_id=step.id,
-            workflow=wf.name,
+            step_id=sr.step_id,
+            workflow=run.definition_name,
             skill=ANALYST,
         )
         try:
@@ -822,18 +848,18 @@ class Engine:
                 return None
             out = skill.run(
                 {
-                    "kind": kind.value,
+                    "kind": task.kind.value,
                     "reason": str(packet.get("reason", "")),
                     "fields": list(packet.get("fields") or []),
-                    "step": step.id,
-                    "options": options,
-                    "facts": {"workflow": wf.name, "attempts": sr.attempt},
+                    "step": sr.step_id,
+                    "options": list(task.options),
+                    "facts": {"workflow": run.definition_name, "attempts": sr.attempt},
                 },
                 run_id=run.id,
                 step_run_id=sr.id,
             )
         except Exception:  # never block the task on the analyst
-            log.warning("exception_analyst failed for step %s", step.id, exc_info=True)
+            log.warning("exception_analyst failed for step %s", sr.step_id, exc_info=True)
             return None
         return {
             **dict(out.output),
