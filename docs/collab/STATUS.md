@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 06:31Z_
+_Updated 2026-11-07 06:33Z_
 
-Now: #71 exit simulation and relay demo (gate running). Merged #72, #73 (closes #69, #70). Next: PR for #71, then more enhancements. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/71-exit-sim-demo
+Now: #74 (#71) in review. Next: more enhancements once #74 lands; B owns #66-#68 (console). Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/71-exit-sim-demo
 <!-- STATUS:A:END -->
 
 
