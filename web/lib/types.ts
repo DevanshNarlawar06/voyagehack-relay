@@ -335,7 +335,7 @@ export interface RelayApi {
   employees(): Promise<EmployeeSummary[]>;
   employee(id: string): Promise<EmployeeRecord>;
   dataRequests(): Promise<DataRequest[]>;
-  raiseDataRequest(type: DataRequestType): Promise<{ id: string; run_id: string | null }>;
+  raiseDataRequest(type: DataRequestType, details?: string): Promise<{ id: string; run_id: string | null }>;
   chat(text: string): Promise<ChatReply>;
   uploadDocuments(
     token: string,

@@ -308,6 +308,7 @@ class DataRequest(Timestamped, Base):
     type: Mapped[DataRequestType] = mapped_column(_enum(DataRequestType, "data_request_type"))
     status: Mapped[str] = mapped_column(String(32), default="open")
     run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("workflow_runs.id"))
+    details: Mapped[str | None] = mapped_column(Text)  # what to correct, or why to erase
 
 
 class User(Timestamped, Base):

@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader, type Tone } from "@/components/ui";
 import { api } from "@/lib/api";
@@ -24,9 +25,13 @@ const STATUS_TONES: Record<string, Tone> = {
 export default function DataRequestsPage() {
   const client = useQueryClient();
   const requests = useQuery({ queryKey: ["data-requests"], queryFn: () => api.dataRequests() });
+  const [details, setDetails] = useState("");
   const raise = useMutation({
-    mutationFn: (type: DataRequestType) => api.raiseDataRequest(type),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ["data-requests"] }),
+    mutationFn: (type: DataRequestType) => api.raiseDataRequest(type, details.trim()),
+    onSuccess: () => {
+      setDetails("");
+      void client.invalidateQueries({ queryKey: ["data-requests"] });
+    },
   });
 
   return (
@@ -37,10 +42,27 @@ export default function DataRequestsPage() {
       />
       <Card className="mb-4 p-4">
         <h2 className="text-sm font-medium">Raise a request about your own data</h2>
+        <label htmlFor="request-details" className="mt-3 block text-sm">
+          What should change, or why (needed for a correction)
+        </label>
+        <textarea
+          id="request-details"
+          value={details}
+          maxLength={1000}
+          rows={2}
+          onChange={(event) => setDetails(event.target.value)}
+          placeholder="For example: my surname is spelt Singh, not Sing"
+          className="mt-1 w-full rounded-md border border-border bg-background p-2 text-sm"
+        />
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {TYPES.map(({ type, label, detail }) => (
             <div key={type} className="rounded-md border border-border p-3">
-              <Button size="sm" variant="secondary" disabled={raise.isPending} onClick={() => raise.mutate(type)}>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={raise.isPending || (type === "correction" && !details.trim())}
+                onClick={() => raise.mutate(type)}
+              >
                 {label}
               </Button>
               <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
