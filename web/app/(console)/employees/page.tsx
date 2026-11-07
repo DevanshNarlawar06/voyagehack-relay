@@ -1,8 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 
+import { RunStatusBadge } from "@/components/status";
 import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader, type Tone } from "@/components/ui";
 import { api } from "@/lib/api";
 import { dateTime, humanize } from "@/lib/format";
@@ -30,8 +32,21 @@ function EmployeeDetail({ id }: { id: string }) {
   if (detail.isPending) return <LoadingState label="Loading record" rows={4} />;
   if (detail.isError) return <ErrorState error={detail.error} onRetry={() => detail.refetch()} />;
   const record = detail.data;
+  const runs = record.runs ?? [];
   return (
     <div className="space-y-5">
+      <Section title="Workflows" empty={runs.length === 0}>
+        <ul className="space-y-1 text-sm">
+          {runs.map((run) => (
+            <li key={run.id} className="flex flex-wrap items-center justify-between gap-2">
+              <Link href={`/runs/${run.id}`} className="hover:underline">
+                {humanize(run.definition_name)}
+              </Link>
+              <RunStatusBadge status={run.status} />
+            </li>
+          ))}
+        </ul>
+      </Section>
       <Section title="Lifecycle" empty={record.lifecycle.length === 0}>
         <ol className="space-y-1 text-sm">
           {record.lifecycle.map((event) => (
@@ -97,6 +112,11 @@ export default function EmployeesPage() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm">
                 <span className="font-medium">{employee.full_name}</span>
                 <Badge tone={STATE_TONES[employee.state]}>{humanize(employee.state)}</Badge>
+                {employee.last_working_day && (
+                  <span className="text-xs text-muted-foreground">
+                    {employee.state === "exited" ? "Left" : "Last day"} {employee.last_working_day}
+                  </span>
+                )}
                 <span className="text-muted-foreground">
                   {[employee.employee_code, employee.role_title, employee.department].filter(Boolean).join(" · ")}
                 </span>
