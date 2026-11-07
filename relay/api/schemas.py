@@ -356,6 +356,7 @@ class EmployeeRequestOut(BaseModel):
     id: UUID
     type: str
     status: str
+    run_id: UUID | None = None
 
 
 class EmployeeDetailOut(EmployeeOut):
@@ -392,3 +393,10 @@ class DataRequestOut(BaseModel):
     type: str
     status: str
     run_id: UUID | None
+
+
+class DataRequestRowOut(DataRequestOut):
+    """A DPDP request in a list: whose it is and when it was raised."""
+
+    person_name: str
+    created_at: datetime

@@ -13,7 +13,7 @@ Now: merging #80 (#68), #81 (#79), #82 (#77), #83 (#78), #85 (#84) as their 45-m
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 22:36Z_
+_Updated 2026-11-07 09:45Z_
 
-**Stopped:** usage limit reached. **In review:** #57. **Not done:** policy acknowledgement route; real-path end-to-end run. **Branch:** b/e2e-live (driver, no PR). **Needs a person:** consent wording, LLM key, extension rehearsals.
+Now: #92 (#90) in review. Next: #91 data requests page by role, once #85 merges. Waiting on A: the erase and export message decision (#85 review, items 4 and 5). Needs a person: #56 consent wording, #20 LLM key. Branch: b/90-task-analysis.
 <!-- STATUS:B:END -->
