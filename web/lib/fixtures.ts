@@ -450,9 +450,12 @@ export function createFixtureApi(): RelayApi {
       return run ? wait(run) : Promise.reject(new Error(`Run ${id} was not found.`));
     },
     tasks: () => wait(tasks.filter((t) => t.status === "open" || t.status === "claimed")),
-    decideTask: (id, option, reason) => {
+    decideTask: (id, option, reason, output) => {
       const task = tasks.find((t) => t.id === id);
       if (!task) return Promise.reject(new Error("Task not found."));
+      if (output?.release_date && output?.buyout_agreed) {
+        return Promise.reject(new Error("Agree a release date or a buyout, not both."));
+      }
       task.status = "decided";
       task.decision = option;
       task.reason = reason;

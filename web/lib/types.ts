@@ -113,6 +113,9 @@ export interface RunDetail extends RunSummary {
   timeline: TimelineEvent[];
 }
 
+/** Extra fields a decision may carry, checked per action by the API (issue #69). */
+export type DecisionOutput = Record<string, string | boolean>;
+
 export interface HumanTask {
   id: string;
   run_id: string | null;
@@ -285,7 +288,7 @@ export interface RelayApi {
   runs(status?: RunStatus): Promise<RunSummary[]>;
   run(id: string): Promise<RunDetail>;
   tasks(): Promise<HumanTask[]>;
-  decideTask(id: string, option: string, reason: string): Promise<HumanTask>;
+  decideTask(id: string, option: string, reason: string, output?: DecisionOutput): Promise<HumanTask>;
   policies(): Promise<PolicyPackSummary[]>;
   policy(pack: string): Promise<PolicyPack>;
   saveDraft(pack: string, content: string, tests?: string | null): Promise<void>;

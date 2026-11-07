@@ -9,7 +9,7 @@ import { Badge, Button, Card, EmptyState, ErrorState, LoadingState, PageHeader }
 import { api, errorMessage } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { humanize, slaLabel } from "@/lib/format";
-import type { HumanTask, TaskKind } from "@/lib/types";
+import type { DecisionOutput, HumanTask, TaskKind } from "@/lib/types";
 
 const KIND_ORDER: TaskKind[] = [
   "reserved_decision",
@@ -27,13 +27,67 @@ function needsReason(task: HumanTask, option: string): boolean {
   return /reject|override|refer/.test(option) || (suggested !== undefined && option !== suggested);
 }
 
+const RESIGNATION = "employment.resignation.accept";
+
+/** Optional terms a manager may agree when accepting a resignation (exit.v1 reads them). */
+function ResignationTerms({
+  id,
+  releaseDate,
+  buyout,
+  onReleaseDate,
+  onBuyout,
+}: {
+  id: string;
+  releaseDate: string;
+  buyout: boolean;
+  onReleaseDate: (value: string) => void;
+  onBuyout: (value: boolean) => void;
+}) {
+  return (
+    <fieldset className="mt-3 rounded-md border border-border p-3">
+      <legend className="px-1 text-sm">Agreed terms (optional)</legend>
+      <label className="block text-sm" htmlFor={`release-${id}`}>
+        Release date
+      </label>
+      <input
+        id={`release-${id}`}
+        type="date"
+        value={releaseDate}
+        disabled={buyout}
+        onChange={(event) => onReleaseDate(event.target.value)}
+        className="mt-1 rounded-md border border-border bg-background p-1.5 text-sm"
+      />
+      <label className="mt-2 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={buyout}
+          disabled={releaseDate !== ""}
+          onChange={(event) => onBuyout(event.target.checked)}
+        />
+        Buyout of the notice period agreed
+      </label>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Leave both empty to follow the notice period. A release date and a buyout cannot both be set.
+      </p>
+    </fieldset>
+  );
+}
+
 function TaskCard({ task, now }: { task: HumanTask; now: number }) {
   const client = useQueryClient();
   const { hasRole } = useAuth();
   const [option, setOption] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
+  const [buyout, setBuyout] = useState(false);
+  const isResignation = task.action === RESIGNATION;
   const decide = useMutation({
-    mutationFn: (args: { option: string; reason: string }) => api.decideTask(task.id, args.option, args.reason),
+    mutationFn: (args: { option: string; reason: string }) => {
+      const output: DecisionOutput = {};
+      if (isResignation && releaseDate) output.release_date = releaseDate;
+      if (isResignation && buyout) output.buyout_agreed = true;
+      return api.decideTask(task.id, args.option, args.reason, output);
+    },
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["tasks"] });
       void client.invalidateQueries({ queryKey: ["runs"] });
@@ -97,6 +151,15 @@ function TaskCard({ task, now }: { task: HumanTask; now: number }) {
               </Button>
             ))}
           </div>
+          {option && isResignation && (
+            <ResignationTerms
+              id={task.id}
+              releaseDate={releaseDate}
+              buyout={buyout}
+              onReleaseDate={setReleaseDate}
+              onBuyout={setBuyout}
+            />
+          )}
           {option && (
             <div className="mt-3">
               <label className="block text-sm" htmlFor={`reason-${task.id}`}>
