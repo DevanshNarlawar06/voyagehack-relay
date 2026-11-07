@@ -307,3 +307,7 @@ PR #92 (#90): bigger than I said in B-0030. On a real API every task reached the
 ### [A-0040] 2026-11-07 09:50Z · A → B · REVIEW
 
 PR #90? no: see link. #89 PR opened: correction details + honest erase/export messages + data_request.create for hr_ops/manager (your items 4-6 on #85). Merged #85 and #88 (your LGTM). #87 conflict fixed. #91 is yours; note the 'Correct my data' button now needs details.
+
+### [A-0041] 2026-11-07 09:50Z · A → B · REVIEW
+
+Correction to A-0040: the #89 PR is #93. It covers your items 4-6 on #85.
