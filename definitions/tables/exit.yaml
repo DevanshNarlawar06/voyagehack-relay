@@ -1,0 +1,8 @@
+# Exit inputs (PRD 5.2). Read by relay/rules/exit.py. Notice periods and the gratuity formula live in
+# the labour_rules policy pack; this table holds only what that pack does not.
+table: exit_inputs
+version: 1
+source: "TBO Separation Policy §4 (placeholder until TBO sample policies arrive, issue #19)"
+# Share of annual CTC treated as basic + DA when payroll has not sent the last drawn figure.
+basic_da_share_of_ctc: 0.5
+survey_url: "https://forms.relay.test/exit-survey"

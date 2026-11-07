@@ -1,0 +1,30 @@
+# Exit (PRD 5.2). `relay policy test` runs this. What must NOT be allowed matters most here.
+pack: reserved
+cases:
+  - name: "exit: the engine may route a resignation"
+    request: { action: employment.resignation.route, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: ALLOW }
+  - name: "exit: the engine may compute F&F inputs (they pay nothing)"
+    request: { action: payroll.fnf.compute, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: ALLOW }
+  - name: "exit: the engine cannot accept a resignation"
+    request: { action: employment.resignation.accept, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: REQUIRE_HUMAN, approver_role: manager }
+  - name: "exit: the manager accepts the resignation"
+    request: { action: employment.resignation.accept, actor: { type: human, id: u-manager, roles: [manager, employee] } }
+    expect: { effect: ALLOW }
+  - name: "exit: an agent cannot sign off F&F, even with payroll.* and a finance principal"
+    request:
+      action: payroll.fnf.signoff
+      actor: { type: agent, id: "skill:comms_drafter", roles: [], allowed_actions: ["payroll.*"] }
+      principal_roles: [approver_finance]
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_finance }
+  - name: "exit: hr_admin still needs the finance approver for F&F"
+    request: { action: payroll.fnf.signoff, actor: { type: human, id: u-hradmin, roles: [hr_admin] } }
+    expect: { effect: REQUIRE_HUMAN, approver_role: approver_finance }
+  - name: "exit: the finance approver signs off F&F"
+    request: { action: payroll.fnf.signoff, actor: { type: human, id: u-finance, roles: [approver_finance] } }
+    expect: { effect: ALLOW }
+  - name: "exit: the engine may revoke an access card"
+    request: { action: access.card.revoke, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: ALLOW }
