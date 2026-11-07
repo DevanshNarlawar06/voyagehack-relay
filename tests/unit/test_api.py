@@ -456,6 +456,52 @@ def test_rejecting_needs_a_reason(api: Api, option: str) -> None:
     assert response.json()["reason"] == "Forged scan"
 
 
+def test_inbox_shows_a_task_as_the_engine_stored_it(api: Api) -> None:
+    packet = {
+        "step": "cross_check",
+        "reason": "Documents disagree",
+        "analysis": {
+            "summary": "Names differ.",
+            "likely_cause": "Initials",
+            "suggested_option": "accept",
+        },
+        "proposed": {"sealed": {"pan": "v1:ciphertext"}},
+    }
+    api.task(context_packet=packet)
+    response = api.client("hr_ops").get("/api/v1/tasks")
+    shown = next(t for t in response.json() if t["context_packet"]["summary"] == "Names differ.")
+    assert shown["title"] == "Conflict: employee verify"
+    assert shown["context_packet"]["from_analysis"] is True
+    assert shown["context_packet"]["likely_cause"] == "Initials"
+    assert shown["context_packet"]["suggested_option"] == "accept"
+    assert "ciphertext" not in response.text
+
+
+def test_a_reserved_decisions_figures_are_named_from_its_definition(api: Api) -> None:
+    text = """
+name: named_context
+version: 7
+subject: employee
+description: test
+trigger: { event: named.context }
+steps:
+  - id: sign
+    kind: human
+    action: payroll.fnf.signoff
+    task:
+      assignee_role: hr_ops
+      options: [sign_off]
+      context_from: ["ctx.fnf.notice_shortfall_days"]
+"""
+    api.session.add(
+        m.WorkflowDefinition(name="named_context", version=7, content_hash="x" * 64, yaml=text)
+    )
+    api.session.flush()
+    api.task(context_packet={"workflow": "named_context@7", "step": "sign", "context_0": 21})
+    rows = api.client("hr_ops").get("/api/v1/tasks").json()
+    assert any(r["context_packet"]["facts"] == {"Fnf notice shortfall days": "21"} for r in rows)
+
+
 def test_unknown_option_is_refused(api: Api) -> None:
     task = api.task()
     response = api.client("hr_ops").post(

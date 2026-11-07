@@ -188,7 +188,7 @@ _TASK_ERRORS = (
 
 def _task_response(session: Session, task: m.HumanTask) -> s.TaskOut:
     step_id = session.scalar(select(m.StepRun.step_id).where(m.StepRun.id == task.step_run_id))
-    return views.task_out(task, step_id)
+    return views.task_out(session, task, step_id)
 
 
 @router.post("/tasks/{task_id}/claim", tags=["tasks"])

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import Decimal
+from functools import lru_cache
 from typing import Any
 from uuid import UUID
 
@@ -13,7 +15,6 @@ from sqlalchemy.orm import Session, aliased
 
 from relay.api.schemas import (
     ConsentOut,
-    ContextPacketOut,
     DocumentOut,
     EmployeeDetailOut,
     EmployeeOut,
@@ -27,6 +28,7 @@ from relay.api.schemas import (
     TaskOut,
     TimelineEventOut,
 )
+from relay.api.task_packet import describe
 from relay.core.dsl.model import parse_definition
 from relay.db import models as m
 
@@ -250,10 +252,36 @@ def run_detail(session: Session, run: m.WorkflowRun) -> RunDetailOut:
     )
 
 
-def task_out(task: m.HumanTask, step_id: str | None) -> TaskOut:
-    """Shape a task for the inbox. The packet may be partial: the engine fills what it knows."""
-    packet = task.context_packet or {}
-    facts = packet.get("facts")
+@lru_cache(maxsize=64)
+def _context_from(text: str, step_id: str) -> tuple[str, ...]:
+    """A step's `context_from`. Keyed on the definition's text, so a stored version cannot go stale."""
+    try:
+        steps = parse_definition(text).flat_steps()
+    except (ValueError, TypeError, AttributeError, yaml.YAMLError):
+        return ()
+    for step in steps:
+        if step.id == step_id and step.task is not None:
+            return tuple(step.task.context_from)
+    return ()
+
+
+def _context_names(session: Session, packet: Mapping[str, Any]) -> tuple[str, ...]:
+    """What the packet's `context_N` values are, from the version that opened the task."""
+    name, _, version = str(packet.get("workflow") or "").partition("@")
+    step = packet.get("step")
+    if not (name and version.isdigit() and step and any(k.startswith("context_") for k in packet)):
+        return ()
+    text = session.scalar(
+        select(m.WorkflowDefinition.yaml).where(
+            m.WorkflowDefinition.name == name, m.WorkflowDefinition.version == int(version)
+        )
+    )
+    return _context_from(text, str(step)) if text else ()
+
+
+def task_out(session: Session, task: m.HumanTask, step_id: str | None) -> TaskOut:
+    """Shape a task for the inbox, with what a person needs to decide it."""
+    title, packet = describe(task, _context_names(session, task.context_packet or {}))
     decision = task.decision or {}
     return TaskOut(
         id=task.id,
@@ -261,18 +289,12 @@ def task_out(task: m.HumanTask, step_id: str | None) -> TaskOut:
         step_id=step_id,
         kind=task.kind.value,
         action=task.action,
-        title=str(packet.get("title") or task.action),
+        title=title,
         assignee_role=task.assignee_role,
         status=task.status.value,
         options=list(task.options or []),
         sla_due_at=task.sla_due_at,
-        context_packet=ContextPacketOut(
-            summary=str(packet.get("summary") or "No summary was recorded for this task."),
-            likely_cause=packet.get("likely_cause"),
-            suggested_option=packet.get("suggested_option"),
-            facts={str(k): str(v) for k, v in facts.items()} if isinstance(facts, dict) else {},
-            rule=packet.get("rule"),
-        ),
+        context_packet=packet,
         decision=decision.get("option"),
         reason=task.reason,
     )
@@ -290,7 +312,7 @@ def list_tasks(session: Session, user: m.User) -> list[TaskOut]:
         )
         .order_by(case((m.HumanTask.sla_due_at.is_(None), 1), else_=0), m.HumanTask.sla_due_at)
     )
-    return [task_out(task, step_id) for task, step_id in session.execute(query)]
+    return [task_out(session, task, step_id) for task, step_id in session.execute(query)]
 
 
 # Named columns only: selecting the rows would decrypt 🔒 columns in memory for no reason.
