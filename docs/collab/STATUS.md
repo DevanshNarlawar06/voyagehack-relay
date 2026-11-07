@@ -13,7 +13,7 @@ Now: #95 (#94 export open) merges after 10:48Z, #97 (#96 retention sweeper) afte
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-07 09:45Z_
+_Updated 2026-11-07 12:43Z_
 
-Now: #92 (#90) in review. Next: #91 data requests page by role, once #85 merges. Waiting on A: the erase and export message decision (#85 review, items 4 and 5). Needs a person: #56 consent wording, #20 LLM key. Branch: b/90-task-analysis.
+Now: #92 (#90) and #98 (#91) await A's merge. Next: Open export button after #95 merges. Waiting on A: #97 item 1 (Aadhaar purge date). Needs a person: #20 LLM key, #56 consent wording, #21 Slack, #19 starter kit, #22 round dates. Branch: b/91-data-requests-by-role.
 <!-- STATUS:B:END -->
