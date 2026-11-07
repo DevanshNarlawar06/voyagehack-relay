@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session, aliased
 from relay.api.schemas import (
     ConsentOut,
     ContextPacketOut,
+    DataRequestRowOut,
     DocumentOut,
     EmployeeDetailOut,
     EmployeeOut,
@@ -326,6 +327,28 @@ def list_employees(session: Session) -> list[EmployeeOut]:
     return [_employee_out(row) for row in rows]
 
 
+def list_data_requests(session: Session, person_id: UUID | None) -> list[DataRequestRowOut]:
+    """DPDP requests, newest first: everyone's, or one person's when `person_id` is given."""
+    query = (
+        select(m.DataRequest, m.Person.full_name)
+        .join(m.Person, m.Person.id == m.DataRequest.person_id)
+        .order_by(m.DataRequest.created_at.desc())
+    )
+    if person_id is not None:
+        query = query.where(m.DataRequest.person_id == person_id)
+    return [
+        DataRequestRowOut(
+            id=r.id,
+            type=r.type.value,
+            status=r.status,
+            run_id=r.run_id,
+            person_name=name,
+            created_at=r.created_at,
+        )
+        for r, name in session.execute(query)
+    ]
+
+
 def employee_detail(session: Session, employee_id: UUID) -> EmployeeDetailOut | None:
     """Build an employee's record. Document contents and 🔒 columns are never selected."""
     row = session.execute(
@@ -374,6 +397,7 @@ def employee_detail(session: Session, employee_id: UUID) -> EmployeeDetailOut | 
             for r in consents
         ],
         data_requests=[
-            EmployeeRequestOut(id=r.id, type=r.type.value, status=r.status) for r in requests
+            EmployeeRequestOut(id=r.id, type=r.type.value, status=r.status, run_id=r.run_id)
+            for r in requests
         ],
     )
