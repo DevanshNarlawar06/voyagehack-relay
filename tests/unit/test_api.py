@@ -938,10 +938,14 @@ def test_data_request_is_about_the_signed_in_person(api: Api) -> None:
     person = m.Person(full_name="Requester")
     api.session.add(person)
     api.session.flush()
+    run = api.run()
+    assert api.engine is not None
+    api.engine.handle_event = lambda *_a, **_k: [run.id]  # type: ignore[method-assign]
     client = api.client("employee", email="me@test.example", person_id=person.id)
     response = client.post("/api/v1/data-requests", json={"type": "erasure"})
     assert response.status_code == 201
     assert response.json()["type"] == "erasure"
+    assert response.json()["run_id"] == str(run.id)  # the route started the workflow
     row = api.session.get(m.DataRequest, UUID(response.json()["id"]))
     assert row is not None
     assert row.person_id == person.id
