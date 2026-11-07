@@ -273,6 +273,7 @@ export function createFixtureApi(): RelayApi {
       context_packet: {
         summary:
           "The name on the PAN card differs from the offer letter by one word. Every other field matches. This usually means a middle name was dropped.",
+        from_analysis: true,
         likely_cause: "Middle name missing from the offer record",
         suggested_option: "accept_document_name",
         facts: {

@@ -27,6 +27,8 @@ test("the full governance journey", async ({ page }) => {
   await go(page, "Inbox");
   await expect(page.getByRole("heading", { name: "PAN name does not match the offer" })).toBeVisible();
   const card = page.getByRole("region", { name: "Conflicts" });
+  await expect(card.getByText("Analysis", { exact: true })).toBeVisible();
+  await expect(card.getByText(/^Likely cause:/)).toBeVisible();
   await card.getByRole("button", { name: "Request new document" }).click();
   await expect(card.getByRole("button", { name: /Record decision/ })).toBeDisabled();
   await card.getByLabel("Reason").fill("The scan is unreadable");

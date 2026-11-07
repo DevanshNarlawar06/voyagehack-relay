@@ -24,7 +24,7 @@ const KIND_ORDER: TaskKind[] = [
 /** A person overriding the suggestion, or saying no, must say why (PRD 16.2). */
 function needsReason(task: HumanTask, option: string): boolean {
   const suggested = task.context_packet.suggested_option;
-  return /reject|override|refer/.test(option) || (suggested !== undefined && option !== suggested);
+  return /reject|override|refer/.test(option) || (Boolean(suggested) && option !== suggested);
 }
 
 const RESIGNATION = "employment.resignation.accept";
@@ -104,7 +104,14 @@ function TaskCard({ task, now }: { task: HumanTask; now: number }) {
         <h3 className="font-medium">{task.title}</h3>
         <Badge tone={sla.overdue ? "bad" : "neutral"}>{sla.text}</Badge>
       </div>
-      <p className="mt-2 text-sm">{packet.summary}</p>
+      <p className="mt-2 text-sm">
+        {packet.from_analysis && (
+          <span className="mr-2 align-middle">
+            <Badge tone="accent">Analysis</Badge>
+          </span>
+        )}
+        {packet.summary}
+      </p>
       {packet.likely_cause && (
         <p className="mt-1 text-sm text-muted-foreground">Likely cause: {packet.likely_cause}</p>
       )}
