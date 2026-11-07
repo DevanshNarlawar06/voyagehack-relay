@@ -103,7 +103,7 @@ def test_an_access_request_builds_a_sealed_export_and_tells_the_person(world: Wo
     assert is_sealed(ctx["export"]["package"])  # the record itself never sits in ctx in plain text
     assert ctx["export"]["summary"]["consents"] >= 0
     bodies = [x["body"] for x in world.mocks.get("/notify/messages").json()["items"]]
-    assert any("data export is ready" in b for b in bodies)
+    assert any("data export has been prepared" in b for b in bodies)
 
 
 def test_a_correction_is_decided_by_hr_ops_and_a_rejection_needs_a_reason(world: World) -> None:

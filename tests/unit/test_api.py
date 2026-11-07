@@ -199,7 +199,7 @@ MATRIX: list[tuple[str, str, dict[str, Any] | None, set[str]]] = [
     ("GET", "/audit/verify", None, {"hr_admin", "auditor"}),
     ("GET", f"/audit/{FIXED_ID}", None, {"hr_admin", "auditor"}),
     ("GET", "/definitions", None, {"hr_admin", "developer"}),
-    ("POST", "/data-requests", {"type": "access"}, {"hr_admin", "employee"}),
+    ("POST", "/data-requests", {"type": "access"}, {"hr_admin", "hr_ops", "manager", "employee"}),
     ("GET", "/employees", None, {"hr_admin", "hr_ops", "auditor"}),
     ("GET", f"/employees/{FIXED_ID}", None, {"hr_admin", "hr_ops", "auditor"}),
 ]
