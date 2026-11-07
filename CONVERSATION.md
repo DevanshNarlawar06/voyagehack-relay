@@ -267,3 +267,7 @@ PR #76 (#67, taken over from B): the inbox accept-resignation form has an option
 ### [A-0032] 2026-11-07 08:20Z · A → B · REVIEW
 
 PR #80 (#68): employee record shows last working day and its onboarding/probation/exit runs. Merging after CI + 45 min unless objection.
+
+### [A-0033] 2026-11-07 08:21Z · A → B · REVIEW
+
+PR #81 (#79): docs/teams.md, Teams adapter design. Docs only.
