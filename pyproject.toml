@@ -20,6 +20,7 @@ dependencies = [
     "jsonschema>=4.26.0",
     "pyjwt>=2.15.1",
     "python-multipart>=0.0.33",
+    "slack-bolt>=1.21",
 ]
 
 [dependency-groups]
