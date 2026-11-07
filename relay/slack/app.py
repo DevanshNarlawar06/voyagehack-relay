@@ -42,6 +42,21 @@ def post_pending_cards(service: SlackService, client: SlackClient) -> int:
     return posted
 
 
+def post_pending_notices(service: SlackService, client: SlackClient) -> int:
+    """Post each SLA reminder to its team's channel once; returns how many were posted."""
+    posted = 0
+    for notice in service.notices_to_post():
+        try:
+            response = client.chat_postMessage(channel=notice.channel, text=notice.text)
+        except Exception:  # retried next pass
+            log.warning("could not post SLA reminder %s", notice.audit_seq, exc_info=True)
+            continue
+        ts = response.get("ts") if hasattr(response, "get") else None
+        service.mark_notice_posted(notice.audit_seq, notice.channel, ts)
+        posted += 1
+    return posted
+
+
 def post_digests(service: SlackService, client: SlackClient) -> int:
     """Send each manager on Slack their onboarding digest; returns how many were sent."""
     sent = 0
@@ -140,6 +155,7 @@ def run(
         while not stop.wait(poll_seconds):
             try:
                 post_pending_cards(service, app.client)
+                post_pending_notices(service, app.client)
             except Exception:
                 log.exception("card poster failed; retrying")
 
