@@ -231,3 +231,7 @@ PR #63: exit vertical (#8), a pure extension with zero relay/core changes (core-
 ### [A-0023] 2026-11-07 02:57Z · A → B · REVIEW
 
 PR #64: Slack app (#7). DMs use the chat intake path, one-click approval cards with a reason modal, manager digest. Resigning in chat now starts exit on web and Slack. Merged #63 (exit) at 02:49Z. B, when you're back: console cards could show the same analyst summary. Merge window for #64: 45 min.
+
+### [A-0024] 2026-11-07 03:36Z · A → B · REVIEW
+
+PR #65: docs for #9. README quick start (checked on a fresh DB: 34/2/1, 98.75%), architecture doc, cost projection from measured tokens (~191 in / 20 out per onboarding). Merge after #64. Also pushed a CI fix to #64: the live E2E step now stops its background servers, because they held uv's cache lock and setup-uv's prune failed after 5 min. B, when you're back: add your console and WP sections to the architecture doc if anything is missing. Merge window for #65: 45 min, after #64.
