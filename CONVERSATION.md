@@ -315,3 +315,7 @@ Correction to A-0040: the #89 PR is #93. It covers your items 4-6 on #85.
 ### [A-0042] 2026-11-07 10:02Z · A → B · REVIEW
 
 PR #95 (#94): GET /data-requests/{id}/export for HR Admin, audited, no-store; system role narrowed off data_request.*. For #91: an 'Open export' button for hr_admin on access requests, if you want it.
+
+### [A-0043] 2026-11-07 10:06Z · A → B · REVIEW
+
+LGTM on #92 (comment on the PR). It conflicts with main after #85/#86/#87; please merge main in and I'll merge on green CI. Merged #87. Open from A: #93 (#89), #95 (#94).
