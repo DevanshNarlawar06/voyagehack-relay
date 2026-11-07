@@ -48,6 +48,18 @@ class CardPost:
 
 
 @dataclass(frozen=True)
+class Notice:
+    """An SLA reminder waiting to be posted to a team channel."""
+
+    audit_seq: int
+    channel: str
+    text: str
+
+
+SLA_REMINDER = "sla.reminder"
+
+
+@dataclass(frozen=True)
 class ClickResult:
     """What a button click led to: decided, a reason is needed first, or refused."""
 
@@ -204,6 +216,47 @@ class SlackService:
         with self.sessions.begin() as s:
             if s.scalar(select(m.SlackPost).where(m.SlackPost.task_id == task_id)) is None:
                 s.add(m.SlackPost(task_id=task_id, channel=channel, ts=ts))
+
+    # ------------------------------------------------------------ SLA reminders to team channels
+
+    def notices_to_post(self, limit: int = 50) -> list[Notice]:
+        """SLA reminders from the audit log not yet posted, oldest first (PRD 16.2).
+
+        Read from the append-only audit log, outside any run's transaction, so a slow Slack never
+        holds the engine's locks and a reminder is posted only once it is committed.
+        """
+        posted = exists().where(m.SlackNotice.audit_seq == m.AuditEvent.seq)
+        with self.sessions() as s:
+            events = s.scalars(
+                select(m.AuditEvent)
+                .where(m.AuditEvent.action == SLA_REMINDER, ~posted)
+                .order_by(m.AuditEvent.seq)
+                .limit(limit)
+            ).all()
+            out = []
+            for event in events:
+                team = str((event.data or {}).get("team") or "hr_ops")
+                channel = self.channels.get(team)
+                if channel is None:
+                    continue
+                out.append(Notice(event.seq, channel, self._reminder_text(s, event, team)))
+            return out
+
+    @staticmethod
+    def _reminder_text(session: Session, event: m.AuditEvent, team: str) -> str:
+        step = session.get(m.StepRun, event.step_run_id) if event.step_run_id else None
+        run = session.get(m.WorkflowRun, event.run_id) if event.run_id else None
+        label = (run.context or {}).get("subject_label") if run else None
+        what = (step.step_id if step else "a step").replace("_", " ")
+        who = f" for {label}" if label else ""
+        run_ref = f" (run {str(event.run_id)[:8]})" if event.run_id else ""
+        return f"Reminder for {team.replace('_', ' ')}: *{what}*{who} is still waiting{run_ref}."
+
+    def mark_notice_posted(self, audit_seq: int, channel: str, ts: str | None) -> None:
+        """Remember a posted reminder so it is never posted twice."""
+        with self.sessions.begin() as s:
+            if s.scalar(select(m.SlackNotice).where(m.SlackNotice.audit_seq == audit_seq)) is None:
+                s.add(m.SlackNotice(audit_seq=audit_seq, channel=channel, ts=ts))
 
     # ------------------------------------------------------------ manager digest
 

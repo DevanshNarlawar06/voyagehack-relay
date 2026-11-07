@@ -31,7 +31,7 @@ from relay.db import models as m
 from relay.seeding.generate import read
 from relay.seeding.load import load
 from relay.seeding.scenarios import upload_via_api
-from relay.slack.app import post_digests, post_pending_cards
+from relay.slack.app import post_digests, post_pending_cards, post_pending_notices
 from relay.slack.service import UNKNOWN_USER, SlackService
 from tests.simulation.harness import FakeClock, clean
 
@@ -239,6 +239,37 @@ def test_journey_2_resigning_in_a_dm_starts_exit_and_cards_the_manager(world: Wo
     # The employee cannot accept their own resignation from the card.
     refused = world.service.click("UTEST1005", str(task.id), "accept")
     assert refused.kind == "refused"
+
+
+def test_sla_reminders_reach_the_team_channel_once(world: World) -> None:
+    cand = next(c for c in read().candidates if c["scenario"] == "ignores_document_request")
+    with world.sessions() as s:
+        row = s.scalar(select(m.Candidate).where(m.Candidate.external_ref == cand["candidate_ref"]))
+        assert row is not None and row.offer_id is not None
+        offer = s.get(m.Offer, row.offer_id)
+        assert offer is not None
+    run_id = world.engine.start_run(
+        "onboarding",
+        {
+            "candidate_ref": cand["candidate_ref"],
+            "manager_code": cand["offer"]["manager_code"],
+            "decision_task_id": str(offer.approved_decision_id),
+            "subject_label": cand["full_name"],
+        },
+        actor="human:hr.ops@relay.test",
+        subject_id=cand["candidate_ref"],
+    )
+    _settle(world.engine, world.clock)
+    world.clock.advance(hours=25)  # past the first 24h reminder on await_documents
+    _settle(world.engine, world.clock)
+    slack = FakeSlack()
+    assert post_pending_notices(world.service, slack) >= 1
+    mine = [p for p in slack.posts if cand["full_name"] in p["text"]]
+    assert mine and mine[0]["channel"] == "#hr-ops"
+    assert "await documents" in mine[0]["text"] and str(run_id)[:8] in mine[0]["text"]
+    assert post_pending_notices(world.service, slack) == 0  # never twice
+    with world.sessions() as s:
+        assert s.scalar(select(m.SlackNotice).limit(1)) is not None
 
 
 def test_journey_2_the_manager_accepts_in_slack_with_an_agreed_release_date(world: World) -> None:

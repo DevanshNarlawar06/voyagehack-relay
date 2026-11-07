@@ -12,6 +12,11 @@ Relay's Slack app runs in Socket Mode, so the demo needs no public URL. It does 
   card is posted once; `slack_posts` remembers which. A click is decided as the Relay user mapped
   from the Slack id (`users.slack_user_id`), with every check the console applies. Reject, override,
   or going against the analyst's suggestion opens a modal that asks for a reason.
+- **SLA reminders in team channels.** When a step's SLA reminder fires (a laptop order, an access
+  card, a joiner who has not uploaded), the reminder is posted to the team's channel, for example
+  `#it-fulfilment` for IT. It is read from the audit log after the engine commits, so Slack never
+  holds the engine up, and `slack_notices` makes sure each reminder is posted once. Escalations
+  open a task, so they arrive as an approval card in the same channel.
 - **Manager digest.** `relay slack --digest` sends each manager on Slack a templated summary of
   their joiners' onboarding progress. Schedule it daily with cron or a CI job.
 

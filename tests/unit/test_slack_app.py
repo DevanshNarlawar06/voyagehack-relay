@@ -12,10 +12,11 @@ from relay.slack.app import (
     handle_input,
     handle_reason,
     post_pending_cards,
+    post_pending_notices,
     reason_errors,
     reply_to_dm,
 )
-from relay.slack.service import CardPost, ClickResult
+from relay.slack.service import CardPost, ClickResult, Notice
 
 
 def _click_body(option: str = "approve") -> dict[str, Any]:
@@ -98,6 +99,15 @@ def test_a_slack_outage_leaves_the_card_to_retry() -> None:
 
 def test_the_app_builds_without_calling_slack() -> None:
     assert build_app(MagicMock(), token="xoxb-test") is not None
+
+
+def test_an_sla_reminder_is_marked_only_once_it_is_posted() -> None:
+    service, client = MagicMock(), MagicMock()
+    notice = Notice(audit_seq=7, channel="#it-fulfilment", text="Reminder")
+    service.notices_to_post.return_value = [notice, notice]
+    client.chat_postMessage.side_effect = [RuntimeError("down"), {"ts": "3.4"}]
+    assert post_pending_notices(service, client) == 1
+    service.mark_notice_posted.assert_called_once_with(7, "#it-fulfilment", "3.4")
 
 
 def _resignation_view(release: str | None, buyout: bool) -> dict[str, Any]:
