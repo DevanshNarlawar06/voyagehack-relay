@@ -1,0 +1,198 @@
+# Exit (PRD 5.2). Built only through extension points: no change under relay/core/.
+# Start it with event `employment.resignation.submitted` and a payload of:
+#   employee_code, resignation_date, requested_last_day, reason, buyout_requested, subject_label
+# Two reserved decisions stop the run for a named person: the manager accepts the resignation (and
+# may agree a release date or a notice buyout), and finance signs off the full and final settlement.
+# F&F amounts are inputs only, sealed in ctx, and nothing is paid without that sign-off.
+name: exit
+version: 1
+subject: employee
+description: Resignation to relieving letter, across the manager, IT, Admin, Payroll and Finance
+trigger: { event: employment.resignation.submitted }
+context:
+  employee_code: "trigger.employee_code"
+  resignation_date: "trigger.resignation_date"
+  requested_last_day: "trigger.requested_last_day"
+  reason: "trigger.reason"
+  buyout_requested: "trigger.buyout_requested"
+  consented_purposes: "[]"
+steps:
+  - id: route_resignation
+    kind: rule
+    uses: rules.exit.route_resignation
+    action: employment.resignation.route
+    inputs: { employee_code: "ctx.employee_code" }
+    outputs: { leaver: "result" }
+
+  - id: accept_resignation
+    kind: human
+    action: employment.resignation.accept
+    needs: [route_resignation]
+    task:
+      assignee_role: manager
+      assignee_user: "ctx.leaver.manager_user_id"
+      options: [accept]
+      context_from:
+        - "ctx.resignation_date"
+        - "ctx.requested_last_day"
+        - "ctx.reason"
+        - "ctx.buyout_requested"
+    outputs: { acceptance: "result" }
+
+  - id: compute_last_day
+    kind: rule
+    uses: rules.exit.compute_last_day
+    action: hr.exit_terms.compute
+    needs: [accept_resignation]
+    inputs:
+      employee_id: "ctx.leaver.employee_id"
+      resignation_date: "ctx.resignation_date"
+      requested_last_day: "ctx.requested_last_day"
+      acceptance: "ctx.acceptance"
+    outputs: { exit_terms: "result" }
+
+  - id: knowledge_transfer_plan
+    kind: skill
+    uses: comms_drafter
+    action: comms.kt_plan
+    needs: [compute_last_day]
+    inputs:
+      template: "'kt_plan'"
+      facts: >-
+        {'employee_name': ctx.leaver.full_name, 'manager_name': ctx.leaver.manager_name,
+         'last_working_day': ctx.exit_terms.last_working_day}
+    outputs: { kt_plan: "result" }
+
+  - id: send_kt_plan
+    kind: connector
+    uses: notify.email
+    action: comms.send
+    needs: [knowledge_transfer_plan]
+    inputs:
+      recipient: "ctx.leaver.email"
+      body: "ctx.kt_plan.subject + ': ' + ctx.kt_plan.body"
+
+  - id: schedule_access_revocation
+    kind: wait
+    action: access.revocation.schedule
+    needs: [compute_last_day]
+    until: "ctx.exit_terms.last_working_day + 'T18:00:00+05:30'"
+
+  - parallel:
+      id: revoke
+      needs: [schedule_access_revocation, send_kt_plan]
+      branches:
+        - - id: find_laptop
+            kind: connector
+            uses: assets.lookup_by_reference
+            action: assets.laptop.lookup
+            inputs: { employee_code: "ctx.employee_code" }
+            outputs: { laptop_id: "size(result.items) > 0 ? result.items[0].id : null" }
+          - id: recover_assets
+            kind: connector
+            uses: assets.recover_laptop
+            action: assets.laptop.recover
+            when: "ctx.laptop_id != null"
+            inputs: { external_id: "ctx.laptop_id" }
+            sla: { remind_at: [24h], escalate_after: 48h, escalate_to: it_ops }
+        - - id: find_access_card
+            kind: connector
+            uses: access.lookup
+            action: access.card.lookup
+            inputs: { employee_code: "ctx.employee_code" }
+            outputs: { card_id: "size(result.items) > 0 ? result.items[0].id : null" }
+          - id: revoke_access_card
+            kind: connector
+            uses: access.revoke_card
+            action: access.card.revoke
+            when: "ctx.card_id != null"
+            inputs: { external_id: "ctx.card_id" }
+        - - id: find_directory_account
+            kind: connector
+            uses: directory.lookup
+            action: directory.account.lookup
+            inputs: { employee_code: "ctx.employee_code" }
+            outputs: { account_id: "size(result.items) > 0 ? result.items[0].id : null" }
+          - id: disable_directory
+            kind: connector
+            uses: directory.disable_account
+            action: directory.account.disable
+            when: "ctx.account_id != null"
+            inputs: { external_id: "ctx.account_id" }
+
+  - id: find_payroll_record
+    kind: connector
+    uses: payroll.lookup
+    action: payroll.employee.lookup
+    needs: [revoke]
+    inputs: { employee_code: "ctx.employee_code" }
+    outputs: { payroll_id: "size(result.items) > 0 ? result.items[0].id : null" }
+
+  - id: notify_payroll_exit
+    kind: connector
+    uses: payroll.notify_exit
+    action: payroll.exit.notify
+    needs: [find_payroll_record]
+    when: "ctx.payroll_id != null"
+    inputs: { external_id: "ctx.payroll_id" }
+
+  - id: compute_fnf_inputs
+    kind: rule
+    uses: rules.exit.compute_fnf_inputs
+    action: payroll.fnf.compute
+    needs: [notify_payroll_exit]
+    inputs:
+      employee_id: "ctx.leaver.employee_id"
+      last_working_day: "ctx.exit_terms.last_working_day"
+      notice_shortfall_days: "ctx.exit_terms.notice_shortfall_days"
+    outputs: { fnf: "result" }
+
+  - id: fnf_signoff
+    kind: human
+    action: payroll.fnf.signoff
+    needs: [compute_fnf_inputs]
+    task:
+      assignee_role: approver_finance
+      options: [sign_off]
+      context_from:
+        - "ctx.fnf.completed_years"
+        - "ctx.fnf.gratuity.eligible"
+        - "ctx.fnf.notice_shortfall_days"
+        - "ctx.exit_terms.fnf_settle_by"
+    outputs: { signoff: "result" }
+
+  - id: issue_relieving_letter
+    kind: rule
+    uses: rules.exit.issue_relieving_letter
+    action: employment.relieving_letter.issue
+    needs: [fnf_signoff]
+    inputs:
+      employee_id: "ctx.leaver.employee_id"
+      last_working_day: "ctx.exit_terms.last_working_day"
+      signed_off_by: "ctx.signoff.decided_by"
+    outputs: { relieving: "result" }
+
+  - id: send_relieving_letter
+    kind: connector
+    uses: notify.email
+    action: comms.send
+    needs: [issue_relieving_letter]
+    inputs:
+      recipient: "ctx.leaver.email"
+      body: "ctx.relieving.letter"
+
+  - id: exit_survey
+    kind: connector
+    uses: notify.slack_dm
+    action: comms.exit_survey
+    needs: [issue_relieving_letter]
+    inputs:
+      recipient: "ctx.leaver.email"
+      body: "ctx.relieving.survey_message"
+
+  - id: close_exit
+    kind: rule
+    uses: rules.exit.mark_exited
+    action: employee.exit
+    needs: [send_relieving_letter, exit_survey]
+    inputs: { employee_id: "ctx.leaver.employee_id" }
