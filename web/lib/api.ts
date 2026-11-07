@@ -100,8 +100,8 @@ function createHttpApi(baseUrl: string): RelayApi {
     },
     run: (id) => request<RunDetail>(`/runs/${encodeURIComponent(id)}`),
     tasks: () => request<HumanTask[]>("/tasks?mine=true"),
-    decideTask: (id, option, reason) =>
-      post<HumanTask>(`/tasks/${encodeURIComponent(id)}/decide`, { option, reason }),
+    decideTask: (id, option, reason, output) =>
+      post<HumanTask>(`/tasks/${encodeURIComponent(id)}/decide`, { option, reason, output: output ?? {} }),
     policies: () => request<PolicyPackSummary[]>("/policies"),
     policy: (pack) => request<PolicyPack>(`/policies/${encodeURIComponent(pack)}`),
     saveDraft: (pack, content, tests) =>
