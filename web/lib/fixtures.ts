@@ -1,6 +1,7 @@
 // Invented data for building the screens before the API exists. Nothing here is measured, and the
 // shell labels it as such. All people and identifiers are synthetic.
 import type {
+  DataRequest,
   AuditEvent,
   AuditEventDetail,
   ConnectorHealth,
@@ -413,6 +414,17 @@ export function createFixtureApi(): RelayApi {
     },
   ];
 
+  const dataRequests: DataRequest[] = [
+    {
+      id: "r1",
+      type: "access",
+      status: "completed",
+      run_id: null,
+      person_name: "Neha Gupta",
+      created_at: minutesAgo(2880),
+    },
+  ];
+
   const usedTokens = new Set<string>();
   let kills: KillSwitch[] = [];
   let faults: FaultRule[] = [];
@@ -583,6 +595,19 @@ export function createFixtureApi(): RelayApi {
     employee: (id) => {
       const employee = employees.find((e) => e.id === id);
       return employee ? wait(employee) : Promise.reject(new Error("Employee not found."));
+    },
+    dataRequests: () => wait(dataRequests),
+    raiseDataRequest: (type) => {
+      const row: DataRequest = {
+        id: `r${dataRequests.length + 1}`,
+        type,
+        status: "in_progress",
+        run_id: null,
+        person_name: "Meera Nair",
+        created_at: new Date().toISOString(),
+      };
+      dataRequests.unshift(row);
+      return wait({ id: row.id, run_id: row.run_id });
     },
   };
 }

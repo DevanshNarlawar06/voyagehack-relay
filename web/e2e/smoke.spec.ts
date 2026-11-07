@@ -148,3 +148,12 @@ test("roles limit what a user can do", async ({ page }) => {
   await expect(page.getByText(/Only someone with the/).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /Record decision/ })).toHaveCount(0);
 });
+
+test("a person raises a data request and sees it listed", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Data requests");
+  await expect(page.getByRole("rowheader", { name: "Neha Gupta" })).toBeVisible();
+  await page.getByRole("button", { name: "See my data" }).click();
+  await expect(page.getByRole("status")).toContainText("Request raised");
+  await expect(page.getByRole("rowheader", { name: "Meera Nair" })).toBeVisible();
+});
