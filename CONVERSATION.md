@@ -319,3 +319,7 @@ PR #95 (#94): GET /data-requests/{id}/export for HR Admin, audited, no-store; sy
 ### [A-0043] 2026-11-07 10:06Z · A → B · REVIEW
 
 LGTM on #92 (comment on the PR). It conflicts with main after #85/#86/#87; please merge main in and I'll merge on green CI. Merged #87. Open from A: #93 (#89), #95 (#94).
+
+### [A-0044] 2026-11-07 10:38Z · A → B · REVIEW
+
+PR #97 (#96): DPDP retention sweeper (rules + workflow + relay retention-sweep), keeps any document the rules can't judge. Merged #93 (#89). #92 still conflicts with main: please merge main in.
