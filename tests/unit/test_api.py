@@ -200,6 +200,7 @@ MATRIX: list[tuple[str, str, dict[str, Any] | None, set[str]]] = [
     ("GET", f"/audit/{FIXED_ID}", None, {"hr_admin", "auditor"}),
     ("GET", "/definitions", None, {"hr_admin", "developer"}),
     ("POST", "/data-requests", {"type": "access"}, {"hr_admin", "employee"}),
+    ("GET", "/data-requests", None, set(ROLES)),  # scoped, not refused: see the test below
     ("GET", "/employees", None, {"hr_admin", "hr_ops", "auditor"}),
     ("GET", f"/employees/{FIXED_ID}", None, {"hr_admin", "hr_ops", "auditor"}),
 ]
@@ -938,10 +939,14 @@ def test_data_request_is_about_the_signed_in_person(api: Api) -> None:
     person = m.Person(full_name="Requester")
     api.session.add(person)
     api.session.flush()
+    run = api.run()
+    assert api.engine is not None
+    api.engine.handle_event = lambda *_a, **_k: [run.id]  # type: ignore[method-assign]
     client = api.client("employee", email="me@test.example", person_id=person.id)
     response = client.post("/api/v1/data-requests", json={"type": "erasure"})
     assert response.status_code == 201
     assert response.json()["type"] == "erasure"
+    assert response.json()["run_id"] == str(run.id)  # the route started the workflow
     row = api.session.get(m.DataRequest, UUID(response.json()["id"]))
     assert row is not None
     assert row.person_id == person.id
@@ -1099,6 +1104,27 @@ def test_runs_can_be_filtered_by_workflow(api: Api) -> None:
     api.run(definition_name="onboarding")
     rows = api.client("hr_ops").get("/api/v1/runs", params={"workflow": "exit"}).json()
     assert rows and {r["definition_name"] for r in rows} == {"exit"}
+
+
+def test_data_requests_list_is_everyone_for_hr_and_only_your_own_otherwise(api: Api) -> None:
+    mine, theirs = m.Person(full_name="Asha Rao"), m.Person(full_name="Vikram Shah")
+    api.session.add_all([mine, theirs])
+    api.session.flush()
+    api.session.add_all(
+        [
+            m.DataRequest(person_id=mine.id, type=m.DataRequestType.ACCESS),
+            m.DataRequest(person_id=theirs.id, type=m.DataRequestType.ERASURE),
+        ]
+    )
+    api.session.flush()
+    hr = api.client("hr_ops").get("/api/v1/data-requests").json()
+    assert {r["person_name"] for r in hr} >= {"Asha Rao", "Vikram Shah"}
+    me = api.client("employee", email="asha@test.example", person_id=mine.id)
+    own = me.get("/api/v1/data-requests").json()
+    assert [(r["person_name"], r["type"], r["run_id"]) for r in own] == [
+        ("Asha Rao", "access", None)
+    ]
+    assert api.client("employee").get("/api/v1/data-requests").json() == []  # no person record
 
 
 # ---------------------------------------------------------------- employee lifecycle (#68)

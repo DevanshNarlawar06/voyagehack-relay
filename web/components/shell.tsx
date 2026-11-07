@@ -3,6 +3,7 @@
 import {
   Activity,
   Boxes,
+  FileLock,
   Gauge,
   Inbox,
   LogOut,
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/controls", label: "Controls", icon: SlidersHorizontal },
   { href: "/audit", label: "Audit", icon: ShieldCheck },
   { href: "/employees", label: "Employees", icon: Users },
+  { href: "/data-requests", label: "Data requests", icon: FileLock },
   { href: "/registry", label: "Registry", icon: Boxes },
 ];
 

@@ -559,9 +559,21 @@ def get_employee(employee_id: UUID, auth: Auth, session: Db) -> s.EmployeeDetail
 # ---------------------------------------------------------------- DPDP
 
 
+@router.get("/data-requests", tags=["dpdp"])
+def list_data_requests(auth: Auth, session: Db) -> list[s.DataRequestRowOut]:
+    """HR sees every DPDP request; anyone else sees only their own."""
+    if auth.check("employee.read").effect == "ALLOW":
+        return views.list_data_requests(session, None)
+    if auth.user.person_id is None:
+        return []
+    return views.list_data_requests(session, auth.user.person_id)
+
+
 @router.post("/data-requests", status_code=status.HTTP_201_CREATED, tags=["dpdp"])
-def create_data_request(body: s.DataRequestIn, auth: Auth, session: Db) -> s.DataRequestOut:
-    """Raise a DPDP request about the signed-in person's own data."""
+def create_data_request(
+    body: s.DataRequestIn, auth: Auth, session: Db, services: Services
+) -> s.DataRequestOut:
+    """Raise a DPDP request about the signed-in person's own data and start its workflow."""
     auth.require("data_request.create")
     if auth.user.person_id is None:
         raise HTTPException(
@@ -582,6 +594,16 @@ def create_data_request(body: s.DataRequestIn, auth: Auth, session: Db) -> s.Dat
         ),
     )
     session.commit()
+    if services.engine is not None:  # no engine (a read-only API) leaves the request queued
+        run_ids = services.engine.handle_event(
+            "data_request.created",
+            {"data_request_id": str(row.id), "type": body.type},
+            actor=f"human:{auth.user.email}",
+            subject_id=str(auth.user.person_id),
+        )
+        if run_ids:
+            row.run_id = run_ids[0]
+            session.commit()
     return s.DataRequestOut(id=row.id, type=row.type.value, status=row.status, run_id=row.run_id)
 
 

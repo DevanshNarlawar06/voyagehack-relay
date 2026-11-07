@@ -155,3 +155,46 @@ test("the dashboard compares workflows", async ({ page }) => {
   await expect(table.getByRole("rowheader", { name: "Onboarding" })).toBeVisible();
   await expect(table.getByRole("rowheader", { name: "Exit" })).toBeVisible();
 });
+
+test("a person raises a data request and sees it listed", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Data requests");
+  await expect(page.getByRole("rowheader", { name: "Neha Gupta" })).toBeVisible();
+  await page.getByRole("button", { name: "See my data" }).click();
+  await expect(page.getByRole("status")).toContainText("Request raised");
+  await expect(page.getByRole("rowheader", { name: "Meera Nair" })).toBeVisible();
+});
+
+test("linked runs point both ways between onboarding and probation", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Runs");
+  await page.getByRole("button", { name: "Onboarding probation" }).click();
+  await expect(page).toHaveURL(/workflow=onboarding_probation/);
+  await expect(page.getByRole("link", { name: /Diya Kapoor/ })).toBeHidden();
+  await page.getByRole("link", { name: /Neha Gupta/ }).click();
+  const linked = page.getByRole("heading", { name: "Linked runs" }).locator("..");
+  await expect(linked).toContainText("Started by");
+  await linked.getByRole("link", { name: "Onboarding", exact: true }).click();
+  await expect(page).toHaveURL(/\/runs\/run-0024$/);
+  const back = page.getByRole("heading", { name: "Linked runs" }).locator("..");
+  await expect(back.getByRole("link", { name: "Onboarding probation" })).toBeVisible();
+});
+
+test("a manager accepts a resignation with a release date or a buyout, not both", async ({ page }) => {
+  await signIn(page, "Arjun Rao");
+  await go(page, "Inbox");
+  const card = page.locator("form").filter({
+    has: page.getByRole("group", { name: "Options for Accept resignation" }),
+  });
+  await card.getByRole("button", { name: "Accept", exact: true }).click();
+  const release = card.getByLabel("Release date");
+  const buyout = card.getByLabel("Buyout of the notice period agreed");
+  await release.fill("2026-12-18");
+  await expect(buyout).toBeDisabled();
+  await release.fill("");
+  await expect(buyout).toBeEnabled();
+  await buyout.check();
+  await expect(release).toBeDisabled();
+  await card.getByRole("button", { name: /Record decision/ }).click();
+  await expect(page.getByRole("heading", { name: "Accept resignation" })).toBeHidden();
+});

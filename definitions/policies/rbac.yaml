@@ -26,6 +26,7 @@ roles:
     - "grievance.route"
     - "posh.route"
     - "whistleblower.route"
+    - "data_request.*"   # erasure is still reserved for hr_admin (reserved.yaml)
   hr_ops:
     - "runs.read"
     - "tasks.*"
@@ -38,6 +39,7 @@ roles:
     - "kill_switch.read"
     - "connectors.read"
     - "events.ingest"
+    - "data_request.correction.decide"
   hr_admin: ["*"]
   manager:
     - "runs.read.team"
@@ -63,7 +65,7 @@ roles:
   employee:
     - "chat.*"
     - "employee.self.read"
-    - "data_request.*"
+    - "data_request.create"   # raise a request; never decide one
     - "consent.*"
     - "employment.resignation.submit"
     - "grievance.route"
@@ -118,6 +120,12 @@ actions:
   employment.relieving_letter.issue: { description: "Issue the templated relieving letter" }
   comms.exit_survey: { description: "Send the exit survey" }
   employee.exit: { description: "Close the record: employee exited" }
+  # DPDP data requests (PRD 14)
+  data_request.verify: { description: "Check a data request names a person and is open" }
+  data_request.export.build: { description: "Build the person's own record for an access request (sealed)" }
+  data_request.correction.decide: { description: "Approve or reject a correction to the person's record" }
+  data_request.erasure.decide: { description: "Erase, or refuse because the law requires keeping the data (reserved)" }
+  data_request.close: { description: "Record how a data request ended" }
 
 purposes:   # documentation only; legitimate-use purposes skip the consent check
   onboarding_verification: Verify identity and eligibility documents of a new joiner

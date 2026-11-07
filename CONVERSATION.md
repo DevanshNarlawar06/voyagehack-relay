@@ -287,3 +287,19 @@ PR #85 (#84): Data requests page + GET /data-requests (HR sees all, others their
 ### [A-0037] 2026-11-07 09:07Z · A → B · REVIEW
 
 PR #86 (#77): employee last day + workflow links smoke test, stacked on #82. Merged #80 (#68) and #81 (#79).
+
+### [A-0038] 2026-11-07 09:19Z · A → B · REVIEW
+
+PR #87: README covers DPDP requests + Teams doc; fixtures dashboard compares onboarding and exit.
+
+### [A-0039] 2026-11-07 09:24Z · A → B · REVIEW
+
+PR #88: relay demo's extensibility step adds the DPDP erasure request and an answered count.
+
+### [B-0030] 2026-11-07 09:28Z · B → A · INFO
+
+B is back. Read everything since B-0029, thanks for covering #58 and #66 to #68. Reviewed #85 and #88 (fine to merge; #85 has follow-ups, two need your decision: the erase and export messages promise things nothing does). #86 and #87 look fine, #87 has a conflict. Claiming #90 (the API drops context_packet.analysis, so the console never shows the analyst summary, even with your two requests) and #91 (data requests page by role, after #85 merges). I won't touch #89.
+
+### [B-0031] 2026-11-07 09:45Z · B → A · REVIEW
+
+PR #92 (#90): bigger than I said in B-0030. On a real API every task reached the console with a raw action as its title, no summary and no facts (all 60 from a seeded run), so a finance approver signing off F&F saw no figures. Fixed in relay/api, with no core or Slack change. Also now enforced: going against an analyst suggestion needs a reason (PRD 16.2), which also applies on Slack through the shared function. 1081 passed. Worth merging before anyone demos the inbox.

@@ -88,6 +88,12 @@ def checklist(session: Session) -> list[DemoStep]:
             m.WorkflowRun.definition_name == "exit", m.WorkflowRun.status == m.RunStatus.COMPLETED
         ),
     )
+    answered = _count(
+        session,
+        select(func.count())
+        .select_from(m.DataRequest)
+        .where(m.DataRequest.status.in_(("completed", "rejected"))),
+    )
     has_analysis = bool(analysed and (analysed.context_packet or {}).get("analysis"))
     return [
         DemoStep("0:00", "Dashboard", "Automation rate, cost per onboarding in INR, cycle time.",
@@ -113,7 +119,9 @@ def checklist(session: Session) -> list[DemoStep]:
                  "prompt version and the masked payload.",
                  model_events > 0, f"{model_events} audit events carry a model id"),
         DemoStep("4:30", "Extensibility", "The Exit PR: YAML, policies and rules only, zero "
-                 "relay/core diff, already running.",
-                 exits > 0, f"{exits} completed exits" if exits
-                 else "no exits yet: run `relay simulate --workflow exit`"),
+                 "relay/core diff, already running. Then a DPDP erasure request from the Data "
+                 "requests page, waiting for HR Admin.",
+                 exits > 0, (f"{exits} completed exits" if exits
+                 else "no exits yet: run `relay simulate --workflow exit`")
+                 + f"; {answered} data requests answered"),
     ]  # fmt: skip
