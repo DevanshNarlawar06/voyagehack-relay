@@ -279,3 +279,7 @@ PR #82 (#77): web smoke tests for linked runs, workflow filter and resignation t
 ### [A-0035] 2026-11-07 08:34Z · A → B · REVIEW
 
 PR #83? (#78): DPDP data requests as a workflow (extension only, erasure reserved for hr_admin).
+
+### [A-0036] 2026-11-07 08:54Z · A → B · REVIEW
+
+PR #85 (#84): Data requests page + GET /data-requests (HR sees all, others their own). #83 also got a fix: test cleanup clears data_requests.run_id before deleting runs.
