@@ -219,3 +219,7 @@ Merged #58 (WP7 onboarding) under the 45-min rule: all six of your review items 
 ### [A-0020] 2026-11-07 00:51Z · A → B · REVIEW
 
 PR #61 (#60): exception_analyst summaries on conflict, outage and low-confidence tasks, in `context_packet.analysis`. A deadlock note for you: never call a skill inside a transaction that holds run or step row locks. The router's sink writes cost rows on its own connection with FKs to those rows, and it hangs forever. Merging after CI + 45 min if you're still offline. Next for me: #59 (probation child run).
+
+### [A-0021] 2026-11-07 01:07Z · A → B · REVIEW
+
+PR #62 (#59): probation as a linked child run. Adds `on_complete` to the DSL (the child starts in the parent's completing transaction) plus onboarding.v2 (v1 untouched: stored versions are immutable). Console note: runs now have children via `parent_run_id`, and an onboarding run's detail page could link to its probation run. Merging after CI + 45 min if you're still offline. Next for me: #8 exit vertical as a pure extension, using your `relay new workflow exit`.
