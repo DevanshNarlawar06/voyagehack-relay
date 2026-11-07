@@ -11,7 +11,7 @@ import { RunStatusBadge, StepStatusBadge } from "@/components/status";
 import { Badge, Card, ErrorState, LoadingState, PageHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { dateTime, humanize, inr } from "@/lib/format";
-import type { Step } from "@/lib/types";
+import type { RunLink, Step } from "@/lib/types";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -49,6 +49,35 @@ function StepPanel({ step }: { step: Step }) {
           {step.error}
         </p>
       )}
+    </Card>
+  );
+}
+
+function LinkedRun({ label, run }: { label: string; run: RunLink }) {
+  return (
+    <li className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <Link href={`/runs/${run.id}`} className="font-medium hover:underline">
+        {humanize(run.definition_name)}
+      </Link>
+      <span className="text-xs text-muted-foreground">{run.subject_label}</span>
+      <RunStatusBadge status={run.status} />
+    </li>
+  );
+}
+
+function LinkedRuns({ parent, kids: started }: { parent?: RunLink | null; kids?: RunLink[] }) {
+  const kids = started ?? [];
+  if (!parent && kids.length === 0) return null;
+  return (
+    <Card className="p-4">
+      <h2 className="text-sm font-medium">Linked runs</h2>
+      <ul className="mt-3 space-y-2">
+        {parent && <LinkedRun label="Started by" run={parent} />}
+        {kids.map((child) => (
+          <LinkedRun key={child.id} label="Started" run={child} />
+        ))}
+      </ul>
     </Card>
   );
 }
@@ -95,6 +124,7 @@ export default function RunDetailPage() {
         actions={<RunStatusBadge status={data.status} />}
       />
       <div className="space-y-4">
+        <LinkedRuns parent={data.parent} kids={data.children} />
         <RunDag steps={data.steps} selected={current?.step_id ?? null} onSelect={setSelected} />
         {current && <StepPanel step={current} />}
         <Card className="p-4">

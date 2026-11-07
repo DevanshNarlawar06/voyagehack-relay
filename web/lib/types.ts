@@ -73,6 +73,16 @@ export interface RunSummary {
   steps_total: number;
   steps_done: number;
   cost_inr: string;
+  /** The run that started this one (a linked child run), if any. */
+  parent_run_id?: string | null;
+}
+
+/** A run linked to another: the parent that started it, or a child it started. */
+export interface RunLink {
+  id: string;
+  definition_name: string;
+  status: RunStatus;
+  subject_label: string;
 }
 
 export interface Step {
@@ -111,6 +121,8 @@ export interface TimelineEvent {
 export interface RunDetail extends RunSummary {
   steps: Step[];
   timeline: TimelineEvent[];
+  parent?: RunLink | null;
+  children?: RunLink[];
 }
 
 export interface HumanTask {
@@ -282,7 +294,7 @@ export interface RelayApi {
   demoUsers(): Promise<User[]>;
   login(email: string): Promise<Session>;
   metrics(workflow?: string): Promise<MetricsSummary>;
-  runs(status?: RunStatus): Promise<RunSummary[]>;
+  runs(status?: RunStatus, workflow?: string): Promise<RunSummary[]>;
   run(id: string): Promise<RunDetail>;
   tasks(): Promise<HumanTask[]>;
   decideTask(id: string, option: string, reason: string): Promise<HumanTask>;

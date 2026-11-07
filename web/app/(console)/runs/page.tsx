@@ -12,15 +12,25 @@ import { dateTime, humanize, inr } from "@/lib/format";
 import type { RunStatus } from "@/lib/types";
 
 const FILTERS: RunStatus[] = ["running", "waiting", "paused", "completed", "failed", "cancelled"];
+const WORKFLOWS = ["onboarding", "onboarding_probation", "exit"];
+
+function href(status?: string, workflow?: string): string {
+  const query = new URLSearchParams();
+  if (status) query.set("status", status);
+  if (workflow) query.set("workflow", workflow);
+  const qs = query.toString();
+  return qs ? `/runs?${qs}` : "/runs";
+}
 
 function RunsContent() {
   const params = useSearchParams();
   const router = useRouter();
   const raw = params.get("status");
   const status = FILTERS.find((f) => f === raw);
+  const workflow = WORKFLOWS.find((w) => w === params.get("workflow"));
   const runs = useQuery({
-    queryKey: ["runs", status],
-    queryFn: () => api.runs(status),
+    queryKey: ["runs", status, workflow],
+    queryFn: () => api.runs(status, workflow),
     refetchInterval: 3_000,
   });
 
@@ -28,7 +38,7 @@ function RunsContent() {
     <>
       <PageHeader title="Runs" description="Every workflow run, newest first." />
       <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Filter by status">
-        <Button size="sm" variant={status ? "ghost" : "secondary"} aria-pressed={!status} onClick={() => router.push("/runs")}>
+        <Button size="sm" variant={status ? "ghost" : "secondary"} aria-pressed={!status} onClick={() => router.push(href(undefined, workflow))}>
           All
         </Button>
         {FILTERS.map((filter) => (
@@ -37,9 +47,25 @@ function RunsContent() {
             size="sm"
             variant={status === filter ? "secondary" : "ghost"}
             aria-pressed={status === filter}
-            onClick={() => router.push(`/runs?status=${filter}`)}
+            onClick={() => router.push(href(filter, workflow))}
           >
             {humanize(filter)}
+          </Button>
+        ))}
+      </div>
+      <div className="mb-4 flex flex-wrap gap-1.5" role="group" aria-label="Filter by workflow">
+        <Button size="sm" variant={workflow ? "ghost" : "secondary"} aria-pressed={!workflow} onClick={() => router.push(href(status))}>
+          All workflows
+        </Button>
+        {WORKFLOWS.map((name) => (
+          <Button
+            key={name}
+            size="sm"
+            variant={workflow === name ? "secondary" : "ghost"}
+            aria-pressed={workflow === name}
+            onClick={() => router.push(href(status, name))}
+          >
+            {humanize(name)}
           </Button>
         ))}
       </div>
@@ -47,8 +73,8 @@ function RunsContent() {
       {runs.isError && <ErrorState error={runs.error} onRetry={() => runs.refetch()} />}
       {runs.data?.length === 0 && (
         <EmptyState
-          title={status ? `No ${status} runs` : "No runs yet"}
-          description={status ? "Try another filter." : "A run starts when a candidate accepts an approved offer."}
+          title={status || workflow ? "No runs match these filters" : "No runs yet"}
+          description={status || workflow ? "Try another filter." : "A run starts when a candidate accepts an approved offer."}
         />
       )}
       {runs.data && runs.data.length > 0 && (
@@ -73,6 +99,11 @@ function RunsContent() {
                   </th>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     {humanize(run.definition_name)} v{run.definition_version}
+                    {run.parent_run_id && (
+                      <Link href={`/runs/${run.parent_run_id}`} className="ml-2 text-xs text-muted-foreground hover:underline">
+                        child run
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-2.5">
                     <RunStatusBadge status={run.status} />
