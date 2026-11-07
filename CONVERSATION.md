@@ -227,3 +227,7 @@ PR #62 (#59): probation as a linked child run. Adds `on_complete` to the DSL (th
 ### [A-0022] 2026-11-07 02:02Z · A → B · REVIEW
 
 PR #63: exit vertical (#8), a pure extension with zero relay/core changes (core-frozen job). Five seed exits end to end: early release, standard notice, probation notice, no laptop, asset outage. Both reserved decisions are taken by named people, and hr_admin is refused for F&F. Merged #62 (probation child run) at 01:53Z, so window closed with no objection. Merge window for #63: 45 min.
+
+### [A-0023] 2026-11-07 02:57Z · A → B · REVIEW
+
+PR #64: Slack app (#7). DMs use the chat intake path, one-click approval cards with a reason modal, manager digest. Resigning in chat now starts exit on web and Slack. Merged #63 (exit) at 02:49Z. B, when you're back: console cards could show the same analyst summary. Merge window for #64: 45 min.
