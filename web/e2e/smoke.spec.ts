@@ -170,6 +170,35 @@ test("a person raises a data request and sees it listed", async ({ page }) => {
   await expect(page.getByRole("cell", { name: "Correction" })).toBeVisible();
 });
 
+test("erasing your data asks first, and can be called off", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Data requests");
+  const erase = page.getByRole("button", { name: "Erase my data" });
+  const confirm = page.getByRole("group", { name: "Confirm erasure request" });
+  await erase.click();
+  await confirm.getByRole("button", { name: "Cancel" }).click();
+  await expect(confirm).toBeHidden();
+  await expect(page.getByRole("cell", { name: "Erasure" })).toHaveCount(0);
+  await erase.click();
+  await confirm.getByRole("button", { name: "Send erasure request" }).click();
+  await expect(page.getByRole("cell", { name: "Erasure" })).toBeVisible();
+});
+
+for (const { who, name, raises, opensRuns } of [
+  { who: "HR Ops", name: "Rohan Das", raises: true, opensRuns: true },
+  { who: "a manager", name: "Arjun Rao", raises: true, opensRuns: false },
+  { who: "an auditor", name: "Leela Iyer", raises: false, opensRuns: true },
+  { who: "an approver", name: "Kabir Shah", raises: false, opensRuns: false },
+]) {
+  test(`the data requests page offers ${who} only what they can use`, async ({ page }) => {
+    await signIn(page, name);
+    await go(page, "Data requests");
+    await expect(page.getByRole("rowheader", { name: "Neha Gupta" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "See my data" })).toHaveCount(raises ? 1 : 0);
+    await expect(page.getByRole("link", { name: "View run" })).toHaveCount(opensRuns ? 1 : 0);
+  });
+}
+
 test("linked runs point both ways between onboarding and probation", async ({ page }) => {
   await signIn(page, "Meera Nair");
   await go(page, "Runs");
