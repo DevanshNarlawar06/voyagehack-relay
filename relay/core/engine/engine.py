@@ -972,7 +972,8 @@ class Engine:
                 wf,
                 step,
                 sr,
-                {"decision": option, "decided_by": str(user_id), **output},
+                # Output first, so it can never overwrite who decided or what they chose.
+                {**output, "decision": option, "decided_by": str(user_id)},
                 human_touched=True,
             )
             return

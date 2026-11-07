@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from relay.api.decision_outputs import OutputRefused, validate_output
 from relay.api.deps import Authorizer, EngineGateway
 from relay.core.audit.writer import AuditEntry, append_event
 from relay.core.engine.engine import TaskDecisionRefused
@@ -62,6 +63,14 @@ def _may_act(task: m.HumanTask, user: m.User) -> bool:
     return task.assignee_role in user.roles and named
 
 
+def can_decide(task: m.HumanTask, user: m.User) -> bool:
+    """Whether this user is the one the task is routed to (role, and named person if any).
+
+    A first check for interfaces such as Slack; `decide_task` checks again, with the policy engine.
+    """
+    return _may_act(task, user)
+
+
 def claim_task(session: Session, task_id: UUID, user: m.User) -> m.HumanTask:
     """Take a task from the role's queue."""
     task = _load_for_update(session, task_id)
@@ -100,6 +109,10 @@ def decide_task(
         raise InvalidDecision(f"{option} is not one of this task's options.")
     if reason_required(task, option) and not reason.strip():
         raise InvalidDecision("Please give a reason for this decision.")
+    try:
+        output = validate_output(task, output)
+    except OutputRefused as exc:
+        raise InvalidDecision(str(exc)) from None
     if task.run_id is None:
         return _record_without_a_run(auth, task_id, option, reason)
     if engine is None:

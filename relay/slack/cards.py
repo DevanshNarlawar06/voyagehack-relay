@@ -16,6 +16,9 @@ DECIDE_ACTION = "relay_decide"
 REASON_VIEW = "relay_reason"
 REASON_BLOCK = "reason"
 REASON_INPUT = "reason_text"
+INPUT_VIEW = "relay_input"
+RELEASE_BLOCK, RELEASE_INPUT = "release_date", "release_date_pick"
+BUYOUT_BLOCK, BUYOUT_INPUT = "buyout", "buyout_check"
 _MAX_FACTS = 8
 _DANGER = ("reject", "override", "fail", "refer")
 
@@ -130,6 +133,74 @@ def reason_modal(task_id: str, option: str, title: str) -> dict[str, Any]:
             },
         ],
     }
+
+
+def resignation_modal(task_id: str, option: str, title: str) -> dict[str, Any]:
+    """Accepting a resignation: optionally agree an earlier release date or a notice buyout."""
+    return {
+        "type": "modal",
+        "callback_id": INPUT_VIEW,
+        "private_metadata": button_value(task_id, option),
+        "title": {"type": "plain_text", "text": "Accept resignation"},
+        "submit": {"type": "plain_text", "text": "Accept"},
+        "close": {"type": "plain_text", "text": "Cancel"},
+        "blocks": [
+            {"type": "section", "text": {"type": "mrkdwn", "text": _text(title)}},
+            {
+                "type": "input",
+                "block_id": RELEASE_BLOCK,
+                "optional": True,
+                "label": {
+                    "type": "plain_text",
+                    "text": "Agreed release date (leave empty for notice)",
+                },
+                "element": {"type": "datepicker", "action_id": RELEASE_INPUT},
+            },
+            {
+                "type": "input",
+                "block_id": BUYOUT_BLOCK,
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Notice buyout"},
+                "element": {
+                    "type": "checkboxes",
+                    "action_id": BUYOUT_INPUT,
+                    "options": [
+                        {
+                            "text": {
+                                "type": "plain_text",
+                                "text": "Buyout of the notice period agreed",
+                            },
+                            "value": "yes",
+                        }
+                    ],
+                },
+            },
+            {
+                "type": "input",
+                "block_id": REASON_BLOCK,
+                "optional": True,
+                "label": {"type": "plain_text", "text": "Note"},
+                "element": {"type": "plain_text_input", "action_id": REASON_INPUT},
+            },
+        ],
+    }
+
+
+def read_resignation_modal(view: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+    """The decision output and note from a submitted resignation modal."""
+    values = view["state"]["values"]
+    release = values.get(RELEASE_BLOCK, {}).get(RELEASE_INPUT, {}).get("selected_date")
+    ticked = values.get(BUYOUT_BLOCK, {}).get(BUYOUT_INPUT, {}).get("selected_options") or []
+    note = values.get(REASON_BLOCK, {}).get(REASON_INPUT, {}).get("value") or ""
+    output: dict[str, Any] = {}
+    if release:
+        output["release_date"] = release
+    if ticked:
+        output["buyout_agreed"] = True
+    return output, note
+
+
+MODALS = {"employment.resignation.accept": resignation_modal}
 
 
 def decided_card_from_title(title: str, outcome: str) -> list[dict[str, Any]]:
