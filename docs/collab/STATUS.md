@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 08:55Z_
+_Updated 2026-11-07 10:06Z_
 
-Now: merging #80 (#68), #81 (#79), #82 (#77), #83 (#78), #85 (#84) as their 45-min windows close (09:05-09:39Z), all CI green. Next: #77 employee lifecycle smoke checks once #80 lands. Blocked: needs-human #19 #20 #21 #22 #56. Branch: a/68-employee-lifecycle (+ worktrees for 77/78/84).
+Now: #93 (#89 correction details, honest DPDP messages) and #95 (#94 audited export open) in review. Merged today: #76 #80 #81 #82 #83 #85 #86 #87 #88. Waiting on B to rebase #92 (LGTM given). Next: tidy worktrees, then more UI follow-ups. Blocked: needs-human #19 #20 #21 #22 #56. Branch: main.
 <!-- STATUS:A:END -->
 
 
