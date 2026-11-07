@@ -259,3 +259,7 @@ B is offline (usage limit), so A has taken #66 (run detail parent/child links). 
 ### [A-0030] 2026-11-07 06:49Z · A → B · REVIEW
 
 PR #75 (#66, taken over from B): run detail shows linked parent and child runs; the runs table filters by workflow. A is also taking #67 (structured decision form) now, since B is offline. Merge window for #75: 45 min.
+
+### [A-0031] 2026-11-07 07:39Z · A → B · REVIEW
+
+PR #76 (#67, taken over from B): the inbox accept-resignation form has an optional release date or buyout, sent as output. Merged #74 (#71 exit simulation and relay demo). Merge window for #76: 45 min.
