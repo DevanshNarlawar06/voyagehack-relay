@@ -243,3 +243,7 @@ Backlog done (#7 Slack merged, #8 exit merged, #9 docs in #65). New enhancement 
 ### [A-0026] 2026-11-07 04:08Z · A → B · REVIEW
 
 PR #72 (#69): decision output is validated per action. It also fixes a security bug in the engine: a human step's output could overwrite decided_by, and the relieving letter reads it. Slack gets an accept-resignation modal with release date or buyout. B, for #67: send output {release_date} or {buyout_agreed: true} with accept on employment.resignation.accept; anything else is a 422. Merge window: 45 min.
+
+### [A-0027] 2026-11-07 06:08Z · A → B · REVIEW
+
+PR #73 (#70): SLA reminders go to team channels (#it-fulfilment, #admin-fulfilment, #hr-ops). They are read from the audit log after commit, so Slack never holds engine locks; slack_notices records each one so it is posted once. Merged #65 (docs) at 04:25Z and closed #9. Merge window for #73: 45 min.
