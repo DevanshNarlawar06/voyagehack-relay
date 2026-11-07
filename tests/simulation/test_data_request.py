@@ -61,10 +61,10 @@ def world(db_url: str, tmp_path_factory: pytest.TempPathFactory) -> Iterator[Wor
     sa.dispose()
 
 
-def _raise(world: World, kind: str) -> tuple[uuid.UUID, uuid.UUID]:
+def _raise(world: World, kind: str, details: str | None = None) -> tuple[uuid.UUID, uuid.UUID]:
     response = world.api.post(
         "/api/v1/data-requests",
-        json={"type": kind},
+        json={"type": kind, "details": details},
         headers={"Authorization": f"Bearer {world.token}"},
     )
     assert response.status_code == 201, response.text
@@ -107,9 +107,10 @@ def test_an_access_request_builds_a_sealed_export_and_tells_the_person(world: Wo
 
 
 def test_a_correction_is_decided_by_hr_ops_and_a_rejection_needs_a_reason(world: World) -> None:
-    request_id, run_id = _raise(world, "correction")
+    request_id, run_id = _raise(world, "correction", "My surname is Singh, not Sing")
     task = _task(world, run_id)
     assert task.assignee_role == "hr_ops" and task.options == ["approve", "reject"]
+    assert "My surname is Singh, not Sing" in task.context_packet.values()  # HR sees what to fix
     hr_ops = _user(world, "hr.ops@relay.test")
     with pytest.raises(TaskDecisionRefused):
         world.engine.decide_task(task.id, user_id=hr_ops, option="reject")  # no reason
@@ -120,6 +121,27 @@ def test_a_correction_is_decided_by_hr_ops_and_a_rejection_needs_a_reason(world:
     status, run_status, ctx = _state(world, request_id, run_id)
     assert (status, run_status) == ("rejected", "completed")
     assert ctx["closed"]["outcome"] == "reject"
+
+
+def test_a_correction_must_say_what_to_correct(world: World) -> None:
+    for details in (None, "   "):
+        response = world.api.post(
+            "/api/v1/data-requests",
+            json={"type": "correction", "details": details},
+            headers={"Authorization": f"Bearer {world.token}"},
+        )
+        assert response.status_code == 422
+
+
+def test_an_approved_correction_says_hr_will_make_it(world: World) -> None:
+    request_id, run_id = _raise(world, "correction", "Update my address to Pune")
+    world.engine.decide_task(
+        _task(world, run_id).id, user_id=_user(world, "hr.ops@relay.test"), option="approve"
+    )
+    world.engine.run_until_idle()
+    status, _, ctx = _state(world, request_id, run_id)
+    assert status == "completed"
+    assert "HR will make it" in ctx["closed"]["message"]  # never claims a change nobody made
 
 
 def test_erasure_is_reserved_for_hr_admin(world: World) -> None:

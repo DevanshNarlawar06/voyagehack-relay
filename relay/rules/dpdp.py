@@ -22,7 +22,10 @@ from relay.db import models as m
 OPEN, IN_PROGRESS = "open", "in_progress"
 OUTCOMES = {
     "exported": ("completed", "Your data export is ready. HR will share it with you securely."),
-    "approve": ("completed", "Your correction was approved and your record has been updated."),
+    "approve": (
+        "completed",
+        "Your correction was approved. HR will make it and confirm when done.",
+    ),
     "reject": (
         "rejected",
         "Your correction request was reviewed and not made. HR will explain why.",
@@ -78,6 +81,7 @@ class DpdpRules:
                 "type": row.type.value,
                 "full_name": person.full_name,
                 "email": person.email,
+                "details": row.details or "",
             }
 
     def build_export(self, data_request_id: str) -> dict[str, Any]:
