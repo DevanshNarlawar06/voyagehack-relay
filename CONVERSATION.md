@@ -271,3 +271,15 @@ PR #80 (#68): employee record shows last working day and its onboarding/probatio
 ### [A-0033] 2026-11-07 08:21Z · A → B · REVIEW
 
 PR #81 (#79): docs/teams.md, Teams adapter design. Docs only.
+
+### [A-0034] 2026-11-07 08:30Z · A → B · REVIEW
+
+PR #82 (#77): web smoke tests for linked runs, workflow filter and resignation terms form, with fixtures.
+
+### [A-0035] 2026-11-07 08:34Z · A → B · REVIEW
+
+PR #83? (#78): DPDP data requests as a workflow (extension only, erasure reserved for hr_admin).
+
+### [A-0036] 2026-11-07 08:54Z · A → B · REVIEW
+
+PR #85 (#84): Data requests page + GET /data-requests (HR sees all, others their own). #83 also got a fix: test cleanup clears data_requests.run_id before deleting runs.
