@@ -203,3 +203,39 @@ def test_the_manager_digest_lists_their_joiner(world: World) -> None:
     slack = FakeSlack()
     assert post_digests(world.service, slack) >= 1
     assert any(p["channel"] == world.manager_slack for p in slack.posts)
+
+
+def test_journey_2_resigning_in_a_dm_starts_exit_and_cards_the_manager(world: World) -> None:
+    with world.sessions.begin() as s:
+        emp = s.scalar(select(m.Employee).where(m.Employee.employee_code == "TBO1005"))
+        assert emp is not None and emp.state is m.EmployeeState.ACTIVE
+        s.add(
+            m.User(
+                email="aniket.das@relay.test", display_name="Aniket Das",
+                slack_user_id="UTEST1005", person_id=emp.person_id, roles=["employee"],
+            )
+        )  # fmt: skip
+    reply = world.service.on_message("UTEST1005", "I want to resign")
+    assert "manager" in reply and "accept" in reply
+    with world.sessions() as s:
+        run = s.scalar(
+            select(m.WorkflowRun).where(
+                m.WorkflowRun.definition_name == "exit", m.WorkflowRun.subject_id == "TBO1005"
+            )
+        )
+        assert run is not None
+    world.engine.run_until_idle()
+    with world.sessions() as s:
+        task = s.scalar(select(m.HumanTask).where(m.HumanTask.run_id == run.id))
+        manager = s.scalar(
+            select(m.User)
+            .join(m.Employee, m.Employee.person_id == m.User.person_id)
+            .where(m.Employee.employee_code == "TBO1000")
+        )
+    assert task is not None and manager is not None
+    assert task.action == "employment.resignation.accept"
+    [card] = [c for c in world.service.cards_to_post() if c.task_id == task.id]
+    assert card.channel == manager.slack_user_id  # a DM to the named manager
+    # The employee cannot accept their own resignation from the card.
+    refused = world.service.click("UTEST1005", str(task.id), "accept")
+    assert refused.kind == "refused"
