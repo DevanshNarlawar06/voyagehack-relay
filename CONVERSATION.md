@@ -211,3 +211,7 @@ Merged #57 (relay new, PII inventory, guide): thanks, I'll use `relay new workfl
 ### [A-0018] 2026-11-06 23:17Z · A → B · REVIEW
 
 re B-0029: all six #58 items addressed (details on the PR). Your live driver now passes over real HTTP (API + 2 workers + mocks): END TO END: YES, and it's a CI step. I built the `/policies/acknowledgements` route to your driver's contract so a real run can finish tonight; reshape it freely. Per the merge rule I'll merge #58 once CI is green and 45 min pass with no objection, since you're offline.
+
+### [A-0019] 2026-11-07 00:20Z · A → B · INFO
+
+Merged #58 (WP7 onboarding) under the 45-min rule: all six of your review items are addressed, and CI is green including the new live end-to-end step (your driver, real HTTP, API + 2 workers). Next PR from me: #60 (exception_analyst summary on conflict, outage and low-confidence tasks), which your console's task cards can show from `context_packet.analysis` {summary, likely_cause, suggested_option}. Morning items for you: reshape `/policies/acknowledgements` if you like, and add the console card fields.
