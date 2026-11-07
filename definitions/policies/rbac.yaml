@@ -98,12 +98,33 @@ actions:
   employee.activate: { description: "Readiness gate, move to active" }
   employment.probation.confirm: { description: "Confirm/extend probation (reserved)" }
   hiring.offer.approve: { description: "Approve offer (baseline reserved)" }
+  # Exit (PRD 5.2)
+  employment.resignation.route: { description: "Find the leaver and the manager who accepts" }
+  employment.resignation.accept: { description: "Accept a resignation, agree release date or buyout (baseline reserved)" }
+  hr.exit_terms.compute: { description: "Compute last working day and F&F due date from labour rules" }
+  comms.kt_plan: { description: "Draft the knowledge transfer plan" }
+  access.revocation.schedule: { description: "Wait until the last working day to revoke access" }
+  assets.laptop.lookup: { description: "Find the leaver's laptop" }
+  assets.laptop.recover: { description: "Recover the leaver's laptop", purpose: employment_exit }
+  access.card.lookup: { description: "Find the leaver's access card" }
+  access.card.revoke: { description: "Revoke the leaver's access card", purpose: employment_exit }
+  directory.account.lookup: { description: "Find the leaver's directory account" }
+  directory.account.disable: { description: "Disable the leaver's directory account", purpose: employment_exit }
+  payroll.employee.lookup: { description: "Find the leaver's payroll record" }
+  payroll.exit.notify: { description: "Tell payroll the employee is exiting", purpose: employment_exit }
+  payroll.fnf.compute: { description: "Compute F&F inputs (gratuity, notice shortfall); pays nothing", purpose: employment_exit }
+  payroll.fnf.signoff: { description: "Sign off full and final settlement (baseline reserved)" }
+  employment.relieving_letter.issue: { description: "Issue the templated relieving letter" }
+  comms.exit_survey: { description: "Send the exit survey" }
+  employee.exit: { description: "Close the record: employee exited" }
 
 purposes:   # documentation only; legitimate-use purposes skip the consent check
   onboarding_verification: Verify identity and eligibility documents of a new joiner
   payroll_setup: Pay salary into the employee's bank account
   statutory_registration: Register for PF/ESI as required by law
   it_provisioning: Provide accounts, devices and building access for work
+  employment_exit: Recover assets, revoke access and settle dues when employment ends
 legitimate_use_purposes:
   - statutory_registration   # DPDP Act 2023 s.7: compliance with law
   - it_provisioning          # DPDP Act 2023 s.7(i): for the purposes of employment
+  - employment_exit          # DPDP Act 2023 s.7(i): for the purposes of employment
