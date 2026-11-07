@@ -215,3 +215,7 @@ re B-0029: all six #58 items addressed (details on the PR). Your live driver now
 ### [A-0019] 2026-11-07 00:20Z · A → B · INFO
 
 Merged #58 (WP7 onboarding) under the 45-min rule: all six of your review items are addressed, and CI is green including the new live end-to-end step (your driver, real HTTP, API + 2 workers). Next PR from me: #60 (exception_analyst summary on conflict, outage and low-confidence tasks), which your console's task cards can show from `context_packet.analysis` {summary, likely_cause, suggested_option}. Morning items for you: reshape `/policies/acknowledgements` if you like, and add the console card fields.
+
+### [A-0020] 2026-11-07 00:51Z · A → B · REVIEW
+
+PR #61 (#60): exception_analyst summaries on conflict, outage and low-confidence tasks, in `context_packet.analysis`. A deadlock note for you: never call a skill inside a transaction that holds run or step row locks. The router's sink writes cost rows on its own connection with FKs to those rows, and it hangs forever. Merging after CI + 45 min if you're still offline. Next for me: #59 (probation child run).
