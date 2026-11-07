@@ -138,3 +138,28 @@ def test_erasure_is_reserved_for_hr_admin(world: World) -> None:
     status, run_status, ctx = _state(world, request_id, run_id)
     assert (status, run_status) == ("rejected", "completed")
     assert ctx["closed"]["outcome"] == "refuse_retention"
+
+
+def _login(world: World, email: str) -> dict[str, str]:
+    token = world.api.post("/api/v1/auth/demo-login", json={"email": email}).json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_hr_admin_opens_a_prepared_export_and_the_opening_is_audited(world: World) -> None:
+    request_id, _ = _raise(world, "access")
+    url = f"/api/v1/data-requests/{request_id}/export"
+    assert world.api.get(url, headers=_login(world, "hr.ops@relay.test")).status_code == 403
+    response = world.api.get(url, headers=_login(world, "hr.admin@relay.test"))
+    assert response.status_code == 200 and response.headers["cache-control"] == "no-store"
+    assert response.json()["person"]["email"] == REQUESTER  # opened, not the sealed envelope
+    with world.sessions() as s:
+        opened = s.scalars(
+            select(m.AuditEvent).where(m.AuditEvent.action == "data_request.export.open")
+        ).all()
+    assert [e.actor_id for e in opened] == ["human:hr.admin@relay.test"]
+
+
+def test_a_request_without_an_export_has_nothing_to_open(world: World) -> None:
+    request_id, _ = _raise(world, "erasure")
+    url = f"/api/v1/data-requests/{request_id}/export"
+    assert world.api.get(url, headers=_login(world, "hr.admin@relay.test")).status_code == 404

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 import yaml
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -567,6 +567,32 @@ def list_data_requests(auth: Auth, session: Db) -> list[s.DataRequestRowOut]:
     if auth.user.person_id is None:
         return []
     return views.list_data_requests(session, auth.user.person_id)
+
+
+@router.get("/data-requests/{request_id}/export", tags=["dpdp"])
+def open_data_request_export(
+    request_id: UUID, auth: Auth, session: Db, response: Response
+) -> dict[str, Any]:
+    """Open a prepared access export to deliver it to the person. HR Admin only; every open is audited."""
+    auth.require("data_request.export.open")
+    found = views.data_request_export(session, request_id)
+    if found is None:
+        raise _not_found("An export for this request")
+    person_id, package = found
+    append_event(
+        session,
+        AuditEntry(
+            actor_type=m.ActorType.HUMAN,
+            actor_id=f"human:{auth.user.email}",
+            action="data_request.export.open",
+            subject_type="person",
+            subject_id=str(person_id),
+            data={"data_request_id": str(request_id)},
+        ),
+    )
+    session.commit()
+    response.headers["Cache-Control"] = "no-store"
+    return package
 
 
 @router.post("/data-requests", status_code=status.HTTP_201_CREATED, tags=["dpdp"])
