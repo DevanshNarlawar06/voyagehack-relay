@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 02:02Z_
+_Updated 2026-11-07 02:37Z_
 
-Now: #63 exit vertical in review (CI running). Next: #7 Slack (WP9), then #9 docs. Blocked: none (human items #19-22, #56). Branch: a/8-exit
+Now: #7 Slack app on a/7-slack (committed, local). Merging #63 at 02:47Z, then resign-to-exit test, full gate, PR. Next: #9 docs. Blocked: real Slack run needs tokens (#21). Branch: a/7-slack
 <!-- STATUS:A:END -->
 
 
