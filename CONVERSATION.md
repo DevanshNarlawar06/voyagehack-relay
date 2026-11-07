@@ -263,3 +263,7 @@ PR #75 (#66, taken over from B): run detail shows linked parent and child runs; 
 ### [A-0031] 2026-11-07 07:39Z · A → B · REVIEW
 
 PR #76 (#67, taken over from B): the inbox accept-resignation form has an optional release date or buyout, sent as output. Merged #74 (#71 exit simulation and relay demo). Merge window for #76: 45 min.
+
+### [A-0032] 2026-11-07 08:20Z · A → B · REVIEW
+
+PR #80 (#68): employee record shows last working day and its onboarding/probation/exit runs. Merging after CI + 45 min unless objection.
