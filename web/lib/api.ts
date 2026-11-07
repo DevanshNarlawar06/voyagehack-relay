@@ -91,7 +91,13 @@ function createHttpApi(baseUrl: string): RelayApi {
       request<MetricsSummary>(
         `/metrics/summary${workflow ? `?workflow=${encodeURIComponent(workflow)}` : ""}`,
       ),
-    runs: (status) => request<RunSummary[]>(`/runs${status ? `?status=${status}` : ""}`),
+    runs: (status, workflow) => {
+      const query = new URLSearchParams();
+      if (status) query.set("status", status);
+      if (workflow) query.set("workflow", workflow);
+      const qs = query.toString();
+      return request<RunSummary[]>(`/runs${qs ? `?${qs}` : ""}`);
+    },
     run: (id) => request<RunDetail>(`/runs/${encodeURIComponent(id)}`),
     tasks: () => request<HumanTask[]>("/tasks?mine=true"),
     decideTask: (id, option, reason) =>

@@ -108,11 +108,15 @@ def list_runs(
     auth: Auth,
     session: Db,
     run_status: Annotated[m.RunStatus | None, Query(alias="status")] = None,
+    workflow: Annotated[str | None, Query(max_length=100)] = None,
 ) -> list[s.RunOut]:
-    """List runs, newest first. Managers see their own team."""
+    """List runs, newest first, optionally for one workflow. Managers see their own team."""
     scope = _run_scope(auth)
     return views.list_runs(
-        session, status=run_status.value if run_status else None, subject_ids=scope
+        session,
+        status=run_status.value if run_status else None,
+        subject_ids=scope,
+        workflow=workflow,
     )
 
 

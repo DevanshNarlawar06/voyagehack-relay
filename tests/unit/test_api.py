@@ -1070,3 +1070,32 @@ def test_a_reserved_decision_with_no_declared_fields_takes_no_output(api: Api) -
         json={"option": "accept", "output": {"amount_inr": 1}},
     )
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------- linked runs (#66)
+
+
+def test_run_detail_links_the_parent_and_its_children(api: Api) -> None:
+    parent = api.run(status=m.RunStatus.COMPLETED, context={"subject_label": "Asha Rao"})
+    child = api.run(
+        definition_name="onboarding_probation",
+        parent_run_id=parent.id,
+        status=m.RunStatus.WAITING,
+        context={"subject_label": "Asha Rao"},
+    )
+    client = api.client("hr_ops")
+    detail = client.get(f"/api/v1/runs/{parent.id}").json()
+    assert detail["parent"] is None
+    assert [c["id"] for c in detail["children"]] == [str(child.id)]
+    assert detail["children"][0]["definition_name"] == "onboarding_probation"
+    assert detail["children"][0]["subject_label"] == "Asha Rao"
+    back = client.get(f"/api/v1/runs/{child.id}").json()
+    assert back["parent"]["id"] == str(parent.id) and back["parent_run_id"] == str(parent.id)
+    assert back["children"] == []
+
+
+def test_runs_can_be_filtered_by_workflow(api: Api) -> None:
+    api.run(definition_name="exit", subject_id="TBO-X1")
+    api.run(definition_name="onboarding")
+    rows = api.client("hr_ops").get("/api/v1/runs", params={"workflow": "exit"}).json()
+    assert rows and {r["definition_name"] for r in rows} == {"exit"}

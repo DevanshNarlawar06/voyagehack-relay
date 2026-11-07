@@ -46,6 +46,7 @@ class RunOut(BaseModel):
     steps_total: int
     steps_done: int
     cost_inr: Decimal
+    parent_run_id: UUID | None = None
 
     @field_serializer("cost_inr")
     def _money(self, value: Decimal) -> str:
@@ -97,11 +98,22 @@ class TimelineEventOut(BaseModel):
     reasoning: str | None
 
 
+class RunLinkOut(BaseModel):
+    """A linked run: the parent that started this one, or a child it started."""
+
+    id: UUID
+    definition_name: str
+    status: str
+    subject_label: str
+
+
 class RunDetailOut(RunOut):
-    """A run with its graph and timeline."""
+    """A run with its graph and timeline, and the runs linked to it."""
 
     steps: list[StepOut]
     timeline: list[TimelineEventOut]
+    parent: RunLinkOut | None = None
+    children: list[RunLinkOut] = Field(default_factory=list)
 
 
 class ContextPacketOut(BaseModel):

@@ -441,8 +441,10 @@ export function createFixtureApi(): RelayApi {
       return wait({ token: "fixture-token", user });
     },
     metrics: () => wait(metrics),
-    runs: (status) => {
-      const list: RunSummary[] = runs.filter((r) => !status || r.status === status);
+    runs: (status, workflow) => {
+      const list: RunSummary[] = runs.filter(
+        (r) => (!status || r.status === status) && (!workflow || r.definition_name === workflow),
+      );
       return wait(list);
     },
     run: (id) => {
