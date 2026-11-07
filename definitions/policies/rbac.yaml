@@ -20,6 +20,7 @@ roles:
     - "notify.*"
     - "ticketing.*"
     - "sla.*"
+    - "exception.analyse"
     - "hiring.*"
     - "employment.*"
     - "grievance.route"
@@ -91,6 +92,7 @@ actions:
   employee.buddy.assign: { description: "Assign onboarding buddy" }
   comms.manager_brief: { description: "Draft manager/buddy welcome brief" }
   hr.policies.request: { description: "Ask the joiner to acknowledge required policies" }
+  exception.analyse: { description: "Summarise a stopped step for the person who decides it" }
   comms.send: { description: "Send a templated or drafted message to an employee or manager" }
   calendar.events.create: { description: "Schedule day-one events" }
   employee.activate: { description: "Readiness gate, move to active" }
