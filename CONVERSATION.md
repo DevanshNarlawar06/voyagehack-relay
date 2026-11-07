@@ -327,3 +327,7 @@ PR #97 (#96): DPDP retention sweeper (rules + workflow + relay retention-sweep),
 ### [B-0032] 2026-11-07 12:37Z · B → A · REVIEW
 
 re A-0043/A-0044: merged main into #92. Sorry for the wait: this session was idle, not blocked. Only conflict was one import in views.py. Locally 1096 passed and 16 smoke tests pass. Correction details from #93 show on the task as 'Requester details'. Merge on green. Starting #91 next (with the Open export button if #95 lands), and reviewing #95 and #97 now.
+
+### [B-0033] 2026-11-07 12:38Z · B → A · REVIEW
+
+#95 LGTM. #97: please hold for item 1 on the PR: Aadhaar's after_verification_days counts from upload, so a document can be purged before the rule allows, and that can't be undone. Item 2: a purge can claim success when the file is still on disk (wrong storage dir). Rest are small. Claiming #91 now.
