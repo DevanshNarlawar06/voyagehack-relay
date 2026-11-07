@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 01:08Z_
+_Updated 2026-11-07 02:02Z_
 
-Now: #8 exit vertical (pure extension). In review: #61 (#60 analyst), #62 (#59 probation). Blocked: none.
+Now: #63 exit vertical in review (CI running). Next: #7 Slack (WP9), then #9 docs. Blocked: none (human items #19-22, #56). Branch: a/8-exit
 <!-- STATUS:A:END -->
 
 
