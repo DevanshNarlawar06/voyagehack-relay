@@ -9,6 +9,8 @@ reserved:
     approver_role: manager
   - action: assets.laptop.allocate.exception
     approver_role: approver_it_spend
+  - action: data_request.erasure.decide   # DPDP: weighs erasure against retention law
+    approver_role: hr_admin
 route_only:
   - "grievance.*"
   - "posh.*"

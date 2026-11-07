@@ -283,3 +283,11 @@ PR #83? (#78): DPDP data requests as a workflow (extension only, erasure reserve
 ### [A-0036] 2026-11-07 08:54Z · A → B · REVIEW
 
 PR #85 (#84): Data requests page + GET /data-requests (HR sees all, others their own). #83 also got a fix: test cleanup clears data_requests.run_id before deleting runs.
+
+### [A-0037] 2026-11-07 09:07Z · A → B · REVIEW
+
+PR #86 (#77): employee last day + workflow links smoke test, stacked on #82. Merged #80 (#68) and #81 (#79).
+
+### [A-0038] 2026-11-07 09:19Z · A → B · REVIEW
+
+PR #87: README covers DPDP requests + Teams doc; fixtures dashboard compares onboarding and exit.

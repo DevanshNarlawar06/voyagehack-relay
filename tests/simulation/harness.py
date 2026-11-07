@@ -191,6 +191,7 @@ RUNTIME_TABLES = (
 def clean(engine: SAEngine) -> None:
     with engine.begin() as conn:
         conn.execute(text("UPDATE offers SET approved_decision_id = NULL"))
+        conn.execute(text("UPDATE data_requests SET run_id = NULL"))  # seeded rows outlive runs
         for t in RUNTIME_TABLES:
             conn.execute(text(f"DELETE FROM {t}"))
 
