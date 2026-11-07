@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 00:51Z_
+_Updated 2026-11-07 01:08Z_
 
-Now: #59 probation child run. In review: #61 (#60 analyst summaries). Blocked: none. Branch: a/59-probation
+Now: #8 exit vertical (pure extension). In review: #61 (#60 analyst), #62 (#59 probation). Blocked: none.
 <!-- STATUS:A:END -->
 
 
