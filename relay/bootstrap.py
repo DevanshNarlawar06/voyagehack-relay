@@ -202,3 +202,34 @@ def simulate(
         mark = "OK " if o.as_expected else "!! "
         typer.echo(f"{mark}{o.candidate_ref} {o.scenario:26} {o.end_state:10} {o.task_kinds}")
     typer.echo(json.dumps(report.summary(), indent=2))
+
+
+@cli.command()
+def slack(
+    digest: bool = typer.Option(False, help="Send each manager's onboarding digest once and exit."),
+) -> None:
+    """Run the Slack app in Socket Mode (PRD 16.2). Needs SLACK_BOT_TOKEN and SLACK_APP_TOKEN.
+
+    DMs use the web chat's intake path; approval cards post to the named approver or the role's
+    channel, and clicks are decided as the mapped Relay user. Run a worker alongside it.
+    """
+    from relay.db.session import session_factory
+    from relay.slack import app as slack_app
+    from relay.slack.service import SlackService
+
+    bot_token = os.environ.get("SLACK_BOT_TOKEN")
+    app_token = os.environ.get("SLACK_APP_TOKEN")
+    if not bot_token or (not digest and not app_token):
+        typer.echo("Set SLACK_BOT_TOKEN and SLACK_APP_TOKEN first (issue #21).", err=True)
+        raise typer.Exit(2)
+    sessions = session_factory()
+    service = SlackService(sessions, default_services(engine=build_engine(sessions)))
+    if digest:
+        from slack_sdk import WebClient
+
+        sent = slack_app.post_digests(service, WebClient(token=bot_token))
+        typer.echo(f"sent {sent} digest(s)")
+        return
+    assert app_token is not None
+    typer.echo("slack app running (Socket Mode)")
+    slack_app.run(service, bot_token=bot_token, app_token=app_token)

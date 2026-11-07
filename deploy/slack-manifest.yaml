@@ -1,0 +1,30 @@
+# Slack app manifest for Relay (PRD 16.2). In Slack: Create an app > From a manifest > paste this.
+# Then: Basic Information > App-Level Tokens > generate one with `connections:write` (SLACK_APP_TOKEN),
+# and Install to Workspace (SLACK_BOT_TOKEN). Put both in .env, never in git. See docs/slack.md.
+display_information:
+  name: Relay
+  description: TBO's HR services assistant (synthetic demo)
+features:
+  app_home:
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Relay
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - chat:write          # DM replies, cards, digests
+      - chat:write.public   # role channels such as #hr-ops without inviting the bot first
+      - im:history          # read DMs sent to Relay
+      - im:read
+      - im:write
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.im
+  interactivity:
+    is_enabled: true        # card buttons and the reason modal
+  socket_mode_enabled: true # no public URL needed for the demo
+  org_deploy_enabled: false
+  token_rotation_enabled: false

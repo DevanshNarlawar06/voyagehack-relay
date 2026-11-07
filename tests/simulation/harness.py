@@ -182,7 +182,7 @@ class World:
 
 
 RUNTIME_TABLES = (
-    "timers", "human_tasks", "cost_events", "step_runs", "idempotency_ledger", "messages",
+    "slack_posts", "timers", "human_tasks", "cost_events", "step_runs", "idempotency_ledger", "messages",
     "conversations", "upload_links", "workflow_runs", "workflow_definitions", "kill_switches", "policy_versions",
     "users",
 )  # fmt: skip

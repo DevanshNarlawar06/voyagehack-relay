@@ -232,14 +232,21 @@ def acknowledge_policies(body: AcknowledgeIn, session: Db, services: Services) -
 
 @router.post("/chat", tags=["chat"])
 def post_chat(body: ChatIn, auth: Auth, session: Db, services: Services) -> ChatOut:
-    """Web chat: the same intake path Slack will use (PRD 27.4)."""
+    """Web chat: the same intake path as Slack (PRD 27.4)."""
     if not chat_limiter.allow(auth.user.email):
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many messages. Try again soon.")
     auth.require("chat.send")
     if services.intake is None or services.helpdesk is None:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Chat is not available right now.")
     reply = chat_logic.handle_message(
-        session, auth.user, body.text, services.intake, services.helpdesk, PiiGateway()
+        session,
+        auth.user,
+        body.text,
+        services.intake,
+        services.helpdesk,
+        PiiGateway(),
+        engine=services.engine,
+        policy=services.policy,
     )
     session.commit()
     return ChatOut(
