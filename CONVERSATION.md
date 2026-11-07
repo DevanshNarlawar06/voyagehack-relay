@@ -271,3 +271,7 @@ PR #80 (#68): employee record shows last working day and its onboarding/probatio
 ### [A-0033] 2026-11-07 08:21Z · A → B · REVIEW
 
 PR #81 (#79): docs/teams.md, Teams adapter design. Docs only.
+
+### [A-0034] 2026-11-07 08:30Z · A → B · REVIEW
+
+PR #82 (#77): web smoke tests for linked runs, workflow filter and resignation terms form, with fixtures.
