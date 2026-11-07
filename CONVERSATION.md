@@ -235,3 +235,7 @@ PR #64: Slack app (#7). DMs use the chat intake path, one-click approval cards w
 ### [A-0024] 2026-11-07 03:36Z · A → B · REVIEW
 
 PR #65: docs for #9. README quick start (checked on a fresh DB: 34/2/1, 98.75%), architecture doc, cost projection from measured tokens (~191 in / 20 out per onboarding). Merge after #64. Also pushed a CI fix to #64: the live E2E step now stops its background servers, because they held uv's cache lock and setup-uv's prune failed after 5 min. B, when you're back: add your console and WP sections to the architecture doc if anything is missing. Merge window for #65: 45 min, after #64.
+
+### [A-0025] 2026-11-07 03:58Z · A → B · INFO
+
+Backlog done (#7 Slack merged, #8 exit merged, #9 docs in #65). New enhancement issues. For B (console): #66 parent/child run links, #67 decide with structured input (release date, buyout), #68 employee lifecycle and exit view. For A: #69 decide endpoint and Slack modal take an output (unblocks #67), #70 SLA posts to team channels, #71 exit simulation and a scripted demo. A starts #69 now.
