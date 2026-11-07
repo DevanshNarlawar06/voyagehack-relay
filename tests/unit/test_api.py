@@ -6,7 +6,7 @@ import re
 import uuid
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -1099,3 +1099,30 @@ def test_runs_can_be_filtered_by_workflow(api: Api) -> None:
     api.run(definition_name="onboarding")
     rows = api.client("hr_ops").get("/api/v1/runs", params={"workflow": "exit"}).json()
     assert rows and {r["definition_name"] for r in rows} == {"exit"}
+
+
+# ---------------------------------------------------------------- employee lifecycle (#68)
+
+
+def test_an_employee_record_shows_notice_last_day_and_their_runs(api: Api) -> None:
+    person = m.Person(full_name="Leaver Person", email="leaver@test.example")
+    api.session.add(person)
+    api.session.flush()
+    code = f"TBO-{uuid.uuid4().hex[:6]}"
+    employee = m.Employee(
+        person_id=person.id,
+        employee_code=code,
+        state=m.EmployeeState.NOTICE,
+        last_working_day=date(2026, 12, 18),
+    )
+    api.session.add(employee)
+    api.session.flush()
+    onboarding = api.run(context={"ctx": {"employee": {"employee_id": str(employee.id)}}})
+    leaving = api.run(definition_name="exit", subject_id=code)
+    api.run(definition_name="exit", subject_id="someone-else")
+    client = api.client("hr_ops")
+    row = next(e for e in client.get("/api/v1/employees").json() if e["employee_code"] == code)
+    assert row["state"] == "notice" and row["last_working_day"] == "2026-12-18"
+    body = client.get(f"/api/v1/employees/{employee.id}").json()
+    assert [r["id"] for r in body["runs"]] == [str(onboarding.id), str(leaving.id)]
+    assert [r["definition_name"] for r in body["runs"]] == ["onboarding", "exit"]

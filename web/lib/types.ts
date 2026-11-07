@@ -270,6 +270,8 @@ export interface EmployeeSummary {
   state: EmployeeState;
   role_title: string | null;
   department: string | null;
+  /** Set once a resignation is accepted (exit). */
+  last_working_day?: string | null;
 }
 
 export interface EmployeeRecord extends EmployeeSummary {
@@ -277,6 +279,8 @@ export interface EmployeeRecord extends EmployeeSummary {
   documents: { id: string; category: string; retention_until: string | null }[];
   consents: { purpose_id: string; notice_version: string; withdrawn_at: string | null }[];
   data_requests: { id: string; type: string; status: string }[];
+  /** This employee's runs: onboarding, probation review, exit. */
+  runs?: RunLink[];
 }
 
 export interface ChatReply {
