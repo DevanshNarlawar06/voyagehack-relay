@@ -191,3 +191,16 @@ test("a manager accepts a resignation with a release date or a buyout, not both"
   await card.getByRole("button", { name: /Record decision/ }).click();
   await expect(page.getByRole("heading", { name: "Accept resignation" })).toBeHidden();
 });
+
+test("an employee on notice shows the last day and links to every workflow", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Employees");
+  await expect(page.getByText("Last day 2026-12-18")).toBeVisible();
+  await page.getByRole("button", { name: "Show record for Kiran Rao" }).click();
+  await page.getByRole("link", { name: "Exit", exact: true }).click();
+  await expect(page).toHaveURL(/\/runs\/run-0033$/);
+  await go(page, "Employees");
+  await page.getByRole("button", { name: "Show record for Neha Gupta" }).click();
+  await expect(page.getByRole("link", { name: "Onboarding probation" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Onboarding", exact: true })).toBeVisible();
+});

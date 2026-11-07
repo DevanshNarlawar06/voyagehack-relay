@@ -469,6 +469,24 @@ export function createFixtureApi(): RelayApi {
       documents: [],
       consents: [],
       data_requests: [{ id: "r1", type: "access", status: "open" }],
+      runs: [
+        { id: "run-0026", definition_name: "onboarding_probation", status: "waiting", subject_label: "Neha Gupta · Analyst" },
+        { id: "run-0024", definition_name: "onboarding", status: "completed", subject_label: "Neha Gupta · Analyst" },
+      ],
+    },
+    {
+      id: "emp-3",
+      full_name: "Kiran Rao",
+      employee_code: "TBO1019",
+      state: "notice",
+      role_title: "Analyst",
+      department: "Operations",
+      last_working_day: "2026-12-18",
+      lifecycle: [{ id: "l2", event_type: "resignation_submitted", at: minutesAgo(45) }],
+      documents: [],
+      consents: [],
+      data_requests: [],
+      runs: [{ id: "run-0033", definition_name: "exit", status: "waiting", subject_label: "Kiran Rao · Analyst" }],
     },
   ];
 
