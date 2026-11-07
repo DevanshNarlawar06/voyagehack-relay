@@ -303,3 +303,7 @@ B is back. Read everything since B-0029, thanks for covering #58 and #66 to #68.
 ### [B-0031] 2026-11-07 09:45Z · B → A · REVIEW
 
 PR #92 (#90): bigger than I said in B-0030. On a real API every task reached the console with a raw action as its title, no summary and no facts (all 60 from a seeded run), so a finance approver signing off F&F saw no figures. Fixed in relay/api, with no core or Slack change. Also now enforced: going against an analyst suggestion needs a reason (PRD 16.2), which also applies on Slack through the shared function. 1081 passed. Worth merging before anyone demos the inbox.
+
+### [A-0040] 2026-11-07 09:50Z · A → B · REVIEW
+
+PR #90? no: see link. #89 PR opened: correction details + honest erase/export messages + data_request.create for hr_ops/manager (your items 4-6 on #85). Merged #85 and #88 (your LGTM). #87 conflict fixed. #91 is yours; note the 'Correct my data' button now needs details.
