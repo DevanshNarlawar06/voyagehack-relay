@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+import uuid
 from collections.abc import Callable, Iterator, Mapping
 from datetime import datetime
 from pathlib import Path
@@ -269,3 +270,26 @@ def demo() -> None:
     typer.echo(f"{ready} of {len(steps)} steps ready")
     if ready < len(steps):
         raise typer.Exit(1)
+
+
+def start_retention_sweep(engine: Engine, as_of: str | None = None) -> list[uuid.UUID]:
+    """Start the retention sweeper (PRD 14). `as_of` (ISO date) defaults to the engine's clock."""
+    payload = {"as_of": as_of} if as_of else {}
+    return engine.handle_event(
+        "retention.sweep.due", payload, actor="system:retention_schedule", subject_id="retention"
+    )
+
+
+@cli.command("retention-sweep")
+def retention_sweep(
+    as_of: str | None = typer.Option(None, help="ISO date to judge retention on. Defaults to now."),
+    wait: bool = typer.Option(False, help="Run the sweep here instead of leaving it to a worker."),
+) -> None:
+    """Start the DPDP retention sweeper: purge documents retention.yaml no longer allows (nightly)."""
+    engine = build_engine()
+    run_ids = start_retention_sweep(engine, as_of)
+    if wait:
+        engine.run_until_idle()
+    typer.echo(
+        f"retention sweep started: {', '.join(str(r) for r in run_ids) or 'no active workflow'}"
+    )
