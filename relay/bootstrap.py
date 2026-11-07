@@ -165,12 +165,16 @@ def worker(
 @cli.command()
 def simulate(
     scenario: str | None = typer.Option(None, help="Only candidates of this PRD 22 scenario."),
+    workflow: str = typer.Option("onboarding", help="onboarding, exit, or all."),
 ) -> None:
-    """Play the seed scenarios through onboarding on a fast clock (needs `relay seed load` and mocks).
+    """Play the seed scenarios on a fast clock (needs `relay seed load` and mocks).
 
-    Talks to the mock service at RELAY_MOCKS_URL. Prints each candidate's end state, then the step
-    automation rate.
+    Talks to the mock service at RELAY_MOCKS_URL. Onboarding prints each candidate's end state and
+    the step automation rate; exit plays the five seed resignations (PRD 22).
     """
+    if workflow not in ("onboarding", "exit", "all"):
+        typer.echo("--workflow must be onboarding, exit or all", err=True)
+        raise typer.Exit(2)
     import json
     import os
     from datetime import UTC, datetime, timedelta
@@ -194,14 +198,28 @@ def simulate(
     engine = build_engine(sessions, clock=clock, worker_id="simulate")
     faults = HttpFaultControl(os.environ.get("RELAY_MOCKS_URL", "http://localhost:9000"))
     ds = read()
-    if scenario:
-        ds = Dataset(candidates=[c for c in ds.candidates if c["scenario"] == scenario])
-    player = ScenarioPlayer(engine, sessions, clock, in_process_api(engine, sessions), faults)
-    report = player.play_all(ds)
-    for o in report.outcomes:
-        mark = "OK " if o.as_expected else "!! "
-        typer.echo(f"{mark}{o.candidate_ref} {o.scenario:26} {o.end_state:10} {o.task_kinds}")
-    typer.echo(json.dumps(report.summary(), indent=2))
+    if workflow in ("onboarding", "all"):
+        if scenario:
+            ds = Dataset(candidates=[c for c in ds.candidates if c["scenario"] == scenario])
+        player = ScenarioPlayer(engine, sessions, clock, in_process_api(engine, sessions), faults)
+        report = player.play_all(ds)
+        for o in report.outcomes:
+            mark = "OK " if o.as_expected else "!! "
+            typer.echo(f"{mark}{o.candidate_ref} {o.scenario:26} {o.end_state:10} {o.task_kinds}")
+        typer.echo(json.dumps(report.summary(), indent=2))
+    if workflow in ("exit", "all"):
+        import asyncio
+
+        from relay.seeding.exits import ExitPlayer, prepare_leavers, provision
+
+        prepare_leavers(sessions)
+        exits = read().exits
+        asyncio.run(provision(load_connectors(), [str(e["employee_code"]) for e in exits]))
+        exit_report = ExitPlayer(engine, sessions, clock, faults).play_all(exits)
+        for x in exit_report.outcomes:
+            mark = "OK " if x.status == "completed" else "!! "
+            typer.echo(f"{mark}{x.code} {x.status:10} {x.task_actions}")
+        typer.echo(json.dumps(exit_report.summary(), indent=2))
 
 
 @cli.command()
@@ -233,3 +251,21 @@ def slack(
     assert app_token is not None
     typer.echo("slack app running (Socket Mode)")
     slack_app.run(service, bot_token=bot_token, app_token=app_token)
+
+
+@cli.command()
+def demo() -> None:
+    """Rehearse the 5-minute demo (PRD 22): each step, what to show, and whether it is ready."""
+    from relay.db.session import session_factory
+    from relay.seeding.demo import checklist
+
+    with session_factory()() as s:
+        steps = checklist(s)
+    for step in steps:
+        typer.echo(f"{'OK ' if step.ready else '!! '}{step.at}  {step.title}")
+        typer.echo(f"         {step.show}")
+        typer.echo(f"         {step.detail}")
+    ready = sum(step.ready for step in steps)
+    typer.echo(f"{ready} of {len(steps)} steps ready")
+    if ready < len(steps):
+        raise typer.Exit(1)

@@ -70,6 +70,10 @@ uv run relay simulate             # every PRD 22 scenario through onboarding on 
 `simulate` prints each candidate's end state (34 completed, 2 waiting on the joiner, 1 refused for an
 unapproved offer) and the step automation rate (about 99%).
 
+Add `--workflow exit` (or `all`) to play the five seed resignations too, and run `uv run relay demo`
+to rehearse the PRD 22 five-minute demo: it lists each step, what to show, and whether the data it
+needs is there.
+
 **4. Open the HR console**
 
 ```bash
