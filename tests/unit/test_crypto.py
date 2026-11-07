@@ -73,6 +73,8 @@ def test_missing_key_in_demo_mode_warns(
 
     monkeypatch.delenv("RELAY_ENCRYPTION_KEY", raising=False)
     monkeypatch.setattr(crypto, "get_settings", lambda: Settings(_env_file=None))
+    monkeypatch.setattr(crypto, "_warned_dev_key", False)
     with caplog.at_level("WARNING"):
         assert decrypt(encrypt("x")) == "x"
-    assert "dev key" in caplog.text
+        assert decrypt(encrypt("y")) == "y"
+    assert caplog.text.count("dev key") == 1  # once per process, not per call

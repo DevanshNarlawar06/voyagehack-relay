@@ -38,6 +38,22 @@ jobs:
         run: uv run relay db upgrade
       - name: Tests
         run: uv run pytest -q
+      - name: Live end to end (real HTTP, API + 2 workers + mocks)
+        # One real onboarding as HR and a joiner would do it: signed link, real upload, real
+        # policy acknowledgement. Quoted numbers must come from a path real users can take.
+        env:
+          RELAY_STORAGE_DIR: /tmp/relay-documents
+        run: |
+          uv run relay seed load
+          uv run uvicorn mocks.app:create_app --factory --port 9000 --log-level warning &
+          uv run uvicorn relay.bootstrap:create_app --factory --port 8000 --log-level warning &
+          uv run relay worker --worker-id ci-w1 &
+          uv run relay worker --worker-id ci-w2 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8000/docs >/dev/null && curl -sf http://localhost:9000/healthz >/dev/null && break
+            sleep 1
+          done
+          uv run python -m tests.e2e.live_onboarding --scenario clean
 
   web:
     runs-on: ubuntu-latest

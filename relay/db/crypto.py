@@ -29,6 +29,9 @@ def generate_key() -> str:
     return base64.urlsafe_b64encode(AESGCM.generate_key(bit_length=256)).decode()
 
 
+_warned_dev_key = False
+
+
 class MissingEncryptionKey(RuntimeError):
     """No RELAY_ENCRYPTION_KEY is configured and demo mode is off."""
 
@@ -40,7 +43,12 @@ def _configured_key() -> str:
     if raw:
         return raw
     if get_config().app.demo_mode:
-        _log.warning("RELAY_ENCRYPTION_KEY is not set; using the public dev key (demo mode only)")
+        global _warned_dev_key
+        if not _warned_dev_key:  # once per process, not on every encrypt/decrypt
+            _log.warning(
+                "RELAY_ENCRYPTION_KEY is not set; using the public dev key (demo mode only)"
+            )
+            _warned_dev_key = True
         return _DEV_KEY
     raise MissingEncryptionKey(
         "RELAY_ENCRYPTION_KEY is not set. Generate one with `relay config gen-key` and put it in .env"

@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import select
+from sqlalchemy import text as sa_text
 from sqlalchemy.orm import Session
 
 from relay.config import REPO_ROOT
@@ -48,7 +49,12 @@ class DefinitionStore:
         actor: str,
         activate: bool = True,
     ) -> m.WorkflowDefinition:
-        """Validate and store a definition, optionally activating it."""
+        """Validate and store a definition, optionally activating it.
+
+        Serialised with an advisory lock, so an API and workers starting together and registering
+        the same files do not race on the unique (name, version) constraint.
+        """
+        session.execute(sa_text("SELECT pg_advisory_xact_lock(hashtext('relay.registry'))"))
         wf = parse_definition(text)
         errors = validate_definition(wf, policies, deps)
         if errors:

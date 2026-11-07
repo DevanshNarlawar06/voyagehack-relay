@@ -35,7 +35,7 @@ dev = [
 ]
 
 [project.scripts]
-relay = "relay.cli:app"
+relay = "relay.bootstrap:cli"  # relay.cli + composed commands (worker, simulate)
 
 [project.optional-dependencies]
 llm = [

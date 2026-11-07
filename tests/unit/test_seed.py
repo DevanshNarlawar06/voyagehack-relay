@@ -73,16 +73,28 @@ def test_load_is_idempotent_and_records_offer_approvals(db_session: Session) -> 
     second = load(db_session, ds)
     assert first == second
     assert first.approved_offers == 36
-    assert db_session.scalar(select(func.count()).select_from(m.Candidate)) == 37
-    assert db_session.scalar(select(func.count()).select_from(m.Employee)) == 46
-    approvals = db_session.scalars(
-        select(m.HumanTask).where(m.HumanTask.action == "hiring.offer.approve")
+    # The test database is shared, so count only the seed's own rows.
+    refs = [c["candidate_ref"] for c in ds.candidates]
+    codes = [e["employee_code"] for e in ds.employees]
+    count = lambda q: db_session.scalar(select(func.count()).select_from(q.subquery()))  # noqa: E731
+    assert count(select(m.Candidate.id).where(m.Candidate.external_ref.in_(refs))) == 37
+    assert count(select(m.Employee.id).where(m.Employee.employee_code.in_(codes))) == 46
+    approval_ids = db_session.scalars(
+        select(m.Offer.approved_decision_id)
+        .join(m.Candidate, m.Candidate.offer_id == m.Offer.id)
+        .where(m.Candidate.external_ref.in_(refs), m.Offer.approved_decision_id.is_not(None))
     ).all()
+    approvals = [db_session.get(m.HumanTask, i) for i in approval_ids]
     assert len(approvals) == 36
     approver = db_session.scalar(select(m.User).where(m.User.email == "offer.approver@relay.test"))
-    assert approver is not None and all(t.decided_by == approver.id for t in approvals)
-    managed = db_session.scalar(
-        select(func.count()).select_from(m.Employee).where(m.Employee.manager_id.is_not(None))
+    assert approver is not None and all(
+        t is not None and t.decided_by == approver.id and t.action == "hiring.offer.approve"
+        for t in approvals
+    )
+    managed = count(
+        select(m.Employee.id).where(
+            m.Employee.employee_code.in_(codes), m.Employee.manager_id.is_not(None)
+        )
     )
     assert managed == 40
     # Minimisation: only the last 4 Aadhaar digits are stored

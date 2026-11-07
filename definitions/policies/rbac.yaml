@@ -78,6 +78,7 @@ actions:
   employee.create: { description: "Create pre-hire record" }
   hr.terms.compute: { description: "Compute joining terms from labour rules" }
   documents.request: { description: "Send upload link and consent notice" }
+  documents.collect: { description: "Gather the joiner's uploaded documents", purpose: onboarding_verification }
   documents.extract: { description: "Extract fields from uploaded documents", purpose: onboarding_verification }
   employee.verify: { description: "Cross-check identity fields", purpose: onboarding_verification }
   employee.activate_code: { description: "Allocate employee code" }
@@ -89,6 +90,8 @@ actions:
   statutory.pf.register: { description: "Register PF/UAN", purpose: statutory_registration }
   employee.buddy.assign: { description: "Assign onboarding buddy" }
   comms.manager_brief: { description: "Draft manager/buddy welcome brief" }
+  hr.policies.request: { description: "Ask the joiner to acknowledge required policies" }
+  comms.send: { description: "Send a templated or drafted message to an employee or manager" }
   calendar.events.create: { description: "Schedule day-one events" }
   employee.activate: { description: "Readiness gate, move to active" }
   employment.probation.confirm: { description: "Confirm/extend probation (reserved)" }

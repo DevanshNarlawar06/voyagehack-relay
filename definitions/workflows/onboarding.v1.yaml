@@ -1,0 +1,195 @@
+# Onboarding (PRD 5.1, 19). The canonical V1 workflow.
+# Start it with event `candidate.offer_accepted` and a payload of:
+#   candidate_ref, manager_code, decision_task_id (the recorded hiring.offer.approve), subject_label
+# Sensitive values (approved CTC, uploaded documents) travel through ctx sealed and are opened only
+# for the connector call or in-process skill that needs them.
+# The probation review (PRD 5.1 step 19) continues as a linked child run, so cycle time is measured
+# at readiness_gate.
+name: onboarding
+version: 1
+subject: employee
+description: Offer accepted to day-one ready, across HR, IT, Admin, Finance and the manager
+trigger: { event: candidate.offer_accepted, require_decision: hiring.offer.approve }
+context:
+  candidate_ref: "trigger.candidate_ref"
+  manager_code: "trigger.manager_code"
+  consented_purposes: "[]"  # filled from the joiner's consent with the upload
+steps:
+  - id: create_prehire
+    kind: rule
+    uses: rules.hr.create_prehire
+    action: employee.create
+    inputs: { candidate_ref: "ctx.candidate_ref", manager_code: "ctx.manager_code" }
+    outputs: { employee: "result" }
+
+  - id: compute_terms
+    kind: rule
+    uses: rules.labour.compute_onboarding_terms
+    action: hr.terms.compute
+    needs: [create_prehire]
+    inputs: { joining_date: "ctx.employee.joining_date", grade: "ctx.employee.grade" }
+    outputs: { terms: "result" }
+
+  - id: issue_upload_link
+    kind: rule
+    uses: rules.hr.issue_upload_link
+    action: documents.request
+    needs: [compute_terms]
+    inputs: { employee_id: "ctx.employee.employee_id", run_id: "run_id", now: "now" }
+    outputs: { invite: "result" }
+
+  - id: request_documents_and_consent
+    kind: connector
+    uses: notify.slack_dm
+    action: documents.request
+    needs: [issue_upload_link]
+    inputs:
+      recipient: "ctx.employee.personal_email"
+      body: "ctx.invite.message"  # sealed: opened only for the outgoing message
+
+  - id: await_documents
+    kind: wait
+    action: documents.request
+    needs: [request_documents_and_consent]
+    for_subject_action: documents.uploaded
+    sla: { remind_at: [24h, 48h], escalate_after: 72h, escalate_to: hr_ops }
+    outputs:
+      upload: "result"
+      consented_purposes: "result.consented_purposes"
+
+  - id: collect_documents
+    kind: rule
+    uses: rules.hr.collect_documents
+    action: documents.collect
+    needs: [await_documents]
+    inputs: { documents: "ctx.upload.documents" }
+    outputs: { bundle: "result" }
+
+  - id: extract_documents
+    kind: skill
+    uses: document_extractor
+    action: documents.extract
+    needs: [collect_documents]
+    inputs: { documents: "ctx.bundle.documents" }
+    outputs: { extracted: "result" }
+
+  - id: cross_check
+    kind: rule
+    uses: rules.hr.cross_check_identity
+    action: employee.verify
+    needs: [extract_documents]
+    inputs:
+      employee_id: "ctx.employee.employee_id"
+      sealed: "ctx.extracted.sealed"
+      submitted_joining_date: "ctx.bundle.submitted_joining_date"
+    outputs: { identity: "result" }
+
+  - id: activate_employee_id
+    kind: rule
+    uses: rules.hr.allocate_employee_code
+    action: employee.activate_code
+    needs: [cross_check]
+    inputs: { employee_id: "ctx.employee.employee_id" }
+    outputs: { code: "result.employee_code", work_email: "result.work_email" }
+
+  - parallel:
+      id: provision
+      needs: [activate_employee_id]
+      branches:
+        - - id: provision_identity
+            kind: connector
+            uses: directory.create_account
+            action: directory.account.create
+            inputs:
+              employee_code: "ctx.code"
+              display_name: "ctx.employee.full_name"
+              email: "ctx.work_email"
+        - - id: select_laptop_spec
+            kind: rule
+            uses: rules.it.select_laptop
+            action: assets.laptop.select
+            inputs: { grade: "ctx.employee.grade" }
+            outputs: { laptop: "result" }
+          - id: order_laptop
+            kind: connector
+            uses: assets.allocate_laptop
+            action: assets.laptop.allocate
+            inputs: { employee_code: "ctx.code", sku: "ctx.laptop.sku" }
+            attributes: { amount_inr: "ctx.laptop.price_inr" }
+            sla: { remind_at: [12h], escalate_after: 24h, escalate_to: it_ops }
+        - - id: issue_access_card
+            kind: connector
+            uses: access.issue_card
+            action: access.card.issue
+            inputs: { employee_code: "ctx.code", photo_ref: "'photos/' + ctx.code + '.jpg'" }
+        - - id: setup_payroll
+            kind: connector
+            uses: payroll.setup_employee
+            action: payroll.employee.setup
+            inputs: { employee_code: "ctx.code", ctc_inr: "ctx.employee.ctc" }
+            attributes: { ctc_matches_offer: "ctx.employee.ctc_matches_offer" }
+        - - id: register_statutory
+            kind: connector
+            uses: statutory.register_pf
+            action: statutory.pf.register
+            inputs: { employee_code: "ctx.code" }
+
+  - id: assign_buddy
+    kind: rule
+    uses: rules.hr.assign_buddy
+    action: employee.buddy.assign
+    needs: [activate_employee_id]
+    inputs: { employee_id: "ctx.employee.employee_id", now: "now" }
+    outputs: { buddy: "result" }
+
+  - id: draft_manager_brief
+    kind: skill
+    uses: comms_drafter
+    action: comms.manager_brief
+    needs: [assign_buddy]
+    inputs:
+      template: "'manager_brief'"
+      facts: >-
+        {'joiner_name': ctx.employee.full_name, 'role_title': ctx.employee.role_title,
+         'joining_date': ctx.terms.first_working_day, 'buddy_name': ctx.buddy.buddy_name}
+    outputs: { brief: "result" }
+
+  - id: notify_manager
+    kind: connector
+    uses: notify.email
+    action: comms.send
+    needs: [draft_manager_brief]
+    when: "ctx.employee.manager_email != null"
+    inputs:
+      recipient: "ctx.employee.manager_email"
+      body: "ctx.brief.subject + ': ' + ctx.brief.body"
+
+  - id: schedule_day_one
+    kind: connector
+    uses: calendar.create_events
+    action: calendar.events.create
+    needs: [provision]
+    inputs:
+      employee_code: "ctx.code"
+      events: >-
+        [{'title': 'Induction', 'start': ctx.terms.first_working_day + 'T10:00:00+05:30',
+          'end': ctx.terms.first_working_day + 'T11:00:00+05:30'},
+         {'title': 'IT handover', 'start': ctx.terms.first_working_day + 'T11:30:00+05:30',
+          'end': ctx.terms.first_working_day + 'T12:00:00+05:30'},
+         {'title': 'Buddy introduction', 'start': ctx.terms.first_working_day + 'T14:00:00+05:30',
+          'end': ctx.terms.first_working_day + 'T14:30:00+05:30'}]
+
+  - id: policy_acknowledgements
+    kind: wait
+    action: hr.policies.request
+    needs: [schedule_day_one]
+    for_subject_action: policies.acknowledged
+
+  - id: readiness_gate
+    kind: rule
+    uses: rules.hr.readiness_gate
+    action: employee.activate
+    needs: [provision, policy_acknowledgements, notify_manager]
+    inputs:
+      employee_id: "ctx.employee.employee_id"
+      probation_end: "ctx.terms.probation_end"

@@ -240,10 +240,6 @@ def validate(
     raise typer.Exit(1 if failed else 0)
 
 
-seed_app = typer.Typer(no_args_is_help=True, help="Synthetic dataset (seed/fixtures).")
-app.add_typer(seed_app, name="seed")
-
-
 @seed_app.command("generate")
 def seed_generate() -> None:
     """Regenerate seed/fixtures/*.json deterministically."""

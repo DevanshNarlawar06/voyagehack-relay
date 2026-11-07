@@ -94,8 +94,8 @@ def load(s: Session, ds: Dataset) -> LoadReport:
             )
             s.add(cand)
             s.flush()
+        o = c["offer"]
         if cand.offer_id is None:
-            o = c["offer"]
             offer = m.Offer(
                 candidate_id=cand.id,
                 ctc={"annual_inr": o["ctc"]},
@@ -108,26 +108,26 @@ def load(s: Session, ds: Dataset) -> LoadReport:
             s.add(offer)
             s.flush()
             cand.offer_id = offer.id
-            if o["approved"]:
-                task = m.HumanTask(
-                    kind=m.HumanTaskKind.RESERVED_DECISION,
-                    action="hiring.offer.approve",
-                    assignee_role="approver_offer",
-                    assignee_user_id=approver.id,
-                    context_packet={"candidate_ref": c["candidate_ref"], "source": "seed"},
-                    options=["approve", "reject"],
-                    status=m.HumanTaskStatus.DECIDED,
-                    decision={"option": "approve"},
-                    decided_by=approver.id,
-                    decided_at=datetime.now(UTC),
-                    reason="Offer approved in hiring (synthetic seed)",
-                )
-                s.add(task)
-                s.flush()
-                offer.approved_decision_id = task.id
-        if cand.offer_id is not None:
-            offer_row = s.get(m.Offer, cand.offer_id)
-            approved += bool(offer_row and offer_row.approved_decision_id)
+        offer_row = s.get(m.Offer, cand.offer_id)
+        assert offer_row is not None
+        if o["approved"] and offer_row.approved_decision_id is None:
+            task = m.HumanTask(
+                kind=m.HumanTaskKind.RESERVED_DECISION,
+                action="hiring.offer.approve",
+                assignee_role="approver_offer",
+                assignee_user_id=approver.id,
+                context_packet={"candidate_ref": c["candidate_ref"], "source": "seed"},
+                options=["approve", "reject"],
+                status=m.HumanTaskStatus.DECIDED,
+                decision={"option": "approve"},
+                decided_by=approver.id,
+                decided_at=datetime.now(UTC),
+                reason="Offer approved in hiring (synthetic seed)",
+            )
+            s.add(task)
+            s.flush()
+            offer_row.approved_decision_id = task.id
+        approved += bool(offer_row.approved_decision_id)
     s.flush()
     report = LoadReport(len(users), len(employees), len(ds.candidates), approved)
     append_event(
