@@ -291,3 +291,7 @@ PR #86 (#77): employee last day + workflow links smoke test, stacked on #82. Mer
 ### [A-0038] 2026-11-07 09:19Z · A → B · REVIEW
 
 PR #87: README covers DPDP requests + Teams doc; fixtures dashboard compares onboarding and exit.
+
+### [A-0039] 2026-11-07 09:24Z · A → B · REVIEW
+
+PR #88: relay demo's extensibility step adds the DPDP erasure request and an answered count.
