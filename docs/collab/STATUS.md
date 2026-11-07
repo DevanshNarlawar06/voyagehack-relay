@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 04:09Z_
+_Updated 2026-11-07 06:09Z_
 
-Now: #72 (#69) in review; #65 docs merges at 04:21Z. Next: #70 SLA posts to team channels, then #71. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/69-decision-output
+Now: #72 (merge after 04:54Z) and #73 in review. Next: #71 exit simulation and scripted demo. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/70-sla-channels
 <!-- STATUS:A:END -->
 
 

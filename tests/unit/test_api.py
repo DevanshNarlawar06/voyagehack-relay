@@ -1031,3 +1031,42 @@ def test_cors_allows_only_the_console(api: Api) -> None:
         headers={"Origin": "http://evil.example", "Access-Control-Request-Method": "GET"},
     )
     assert "access-control-allow-origin" not in blocked.headers
+
+
+# ---------------------------------------------------------------- decision output (#69)
+
+
+def _accept(api: Api, output: dict[str, object]) -> int:
+    task = api.task(
+        kind=m.HumanTaskKind.RESERVED_DECISION,
+        action="employment.resignation.accept",
+        assignee_role="manager",
+    )
+    response = api.client("manager").post(
+        f"/api/v1/tasks/{task.id}/decide", json={"option": "accept", "output": output}
+    )
+    return response.status_code
+
+
+def test_a_manager_can_agree_a_release_date_or_a_buyout(api: Api) -> None:
+    assert _accept(api, {"release_date": "2026-12-18"}) == 200
+    assert _accept(api, {"buyout_agreed": True}) == 200
+
+
+def test_decision_output_is_refused_outside_what_the_action_takes(api: Api) -> None:
+    assert _accept(api, {"decided_by": "someone-else"}) == 422
+    assert _accept(api, {"release_date": "not a date"}) == 422
+    assert _accept(api, {"release_date": "2026-12-18", "buyout_agreed": True}) == 422
+
+
+def test_a_reserved_decision_with_no_declared_fields_takes_no_output(api: Api) -> None:
+    task = api.task(
+        kind=m.HumanTaskKind.RESERVED_DECISION,
+        action="payroll.fnf.signoff",
+        assignee_role="approver_finance",
+    )
+    response = api.client("approver_finance").post(
+        f"/api/v1/tasks/{task.id}/decide",
+        json={"option": "accept", "output": {"amount_inr": 1}},
+    )
+    assert response.status_code == 422

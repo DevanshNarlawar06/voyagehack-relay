@@ -63,9 +63,10 @@ SLA_REMINDER = "sla.reminder"
 class ClickResult:
     """What a button click led to: decided, a reason is needed first, or refused."""
 
-    kind: Literal["decided", "needs_reason", "refused"]
+    kind: Literal["decided", "needs_reason", "needs_input", "refused"]
     text: str
     title: str = ""
+    action: str = ""
 
 
 class SlackService:
@@ -131,11 +132,24 @@ class SlackService:
             if task is None:
                 return ClickResult("refused", "That task no longer exists.")
             title = cards.card_title(task)
+            if not decisions.can_decide(task, user):
+                return ClickResult(
+                    "refused", f"You can't decide this one. It is for {task.assignee_role}."
+                )
+            if task.action in cards.MODALS:
+                return ClickResult("needs_input", "", title, task.action)
             if decisions.reason_required(task, option):
                 return ClickResult("needs_reason", "", title)
         return self.decide(slack_user_id, task_id, option, "")
 
-    def decide(self, slack_user_id: str, task_id: str, option: str, reason: str) -> ClickResult:
+    def decide(
+        self,
+        slack_user_id: str,
+        task_id: str,
+        option: str,
+        reason: str,
+        output: Mapping[str, object] | None = None,
+    ) -> ClickResult:
         """Record the decision as the mapped user, with every check the console applies."""
         with self.sessions() as s:
             user = self.user_for(s, slack_user_id)
@@ -144,7 +158,7 @@ class SlackService:
             auth = Authorizer(session=s, user=user, policy=self.services.policy)
             try:
                 task = decisions.decide_task(
-                    auth, self.services.engine, uuid.UUID(task_id), option, reason
+                    auth, self.services.engine, uuid.UUID(task_id), option, reason, output
                 )
             except decisions.TaskNotFound:
                 return ClickResult("refused", "That task no longer exists.")

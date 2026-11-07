@@ -9,6 +9,7 @@ from relay.slack import cards
 from relay.slack.app import (
     build_app,
     handle_click,
+    handle_input,
     handle_reason,
     post_pending_cards,
     post_pending_notices,
@@ -107,3 +108,41 @@ def test_an_sla_reminder_is_marked_only_once_it_is_posted() -> None:
     client.chat_postMessage.side_effect = [RuntimeError("down"), {"ts": "3.4"}]
     assert post_pending_notices(service, client) == 1
     service.mark_notice_posted.assert_called_once_with(7, "#it-fulfilment", "3.4")
+
+
+def _resignation_view(release: str | None, buyout: bool) -> dict[str, Any]:
+    values: dict[str, Any] = {
+        cards.RELEASE_BLOCK: {cards.RELEASE_INPUT: {"selected_date": release}},
+        cards.BUYOUT_BLOCK: {
+            cards.BUYOUT_INPUT: {"selected_options": [{"value": "yes"}] if buyout else []}
+        },
+        cards.REASON_BLOCK: {cards.REASON_INPUT: {"value": "agreed in 1:1"}},
+    }
+    return {"private_metadata": cards.button_value("t-1", "accept"), "state": {"values": values}}
+
+
+def test_accepting_a_resignation_opens_the_input_modal() -> None:
+    service, client = MagicMock(), MagicMock()
+    service.click.return_value = ClickResult(
+        "needs_input", "", "Resignation", "employment.resignation.accept"
+    )
+    handle_click(service, client, _click_body("accept"))
+    view = client.views_open.call_args.kwargs["view"]
+    assert view["callback_id"] == cards.INPUT_VIEW
+    blocks = {b.get("block_id") for b in view["blocks"]}
+    assert {cards.RELEASE_BLOCK, cards.BUYOUT_BLOCK} <= blocks
+
+
+def test_the_resignation_modal_reads_into_decision_output() -> None:
+    assert cards.read_resignation_modal(_resignation_view("2026-12-18", False)) == (
+        {"release_date": "2026-12-18"},
+        "agreed in 1:1",
+    )
+    assert cards.read_resignation_modal(_resignation_view(None, True))[0] == {"buyout_agreed": True}
+    assert cards.read_resignation_modal(_resignation_view(None, False))[0] == {}
+    service, client = MagicMock(), MagicMock()
+    service.decide.return_value = ClickResult("decided", "*Accept* by Meera", "Resignation")
+    handle_input(service, client, {"user": {"id": "U1"}}, _resignation_view("2026-12-18", False))
+    service.decide.assert_called_once_with(
+        "U1", "t-1", "accept", "agreed in 1:1", {"release_date": "2026-12-18"}
+    )
