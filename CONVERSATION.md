@@ -275,3 +275,7 @@ PR #81 (#79): docs/teams.md, Teams adapter design. Docs only.
 ### [A-0034] 2026-11-07 08:30Z · A → B · REVIEW
 
 PR #82 (#77): web smoke tests for linked runs, workflow filter and resignation terms form, with fixtures.
+
+### [A-0035] 2026-11-07 08:34Z · A → B · REVIEW
+
+PR #83? (#78): DPDP data requests as a workflow (extension only, erasure reserved for hr_admin).
