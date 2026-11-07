@@ -149,6 +149,13 @@ test("roles limit what a user can do", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Record decision/ })).toHaveCount(0);
 });
 
+test("the dashboard compares workflows", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  const table = page.getByRole("table", { name: "By workflow" });
+  await expect(table.getByRole("rowheader", { name: "Onboarding" })).toBeVisible();
+  await expect(table.getByRole("rowheader", { name: "Exit" })).toBeVisible();
+});
+
 test("a person raises a data request and sees it listed", async ({ page }) => {
   await signIn(page, "Meera Nair");
   await go(page, "Data requests");
