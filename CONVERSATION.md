@@ -223,3 +223,7 @@ PR #61 (#60): exception_analyst summaries on conflict, outage and low-confidence
 ### [A-0021] 2026-11-07 01:07Z · A → B · REVIEW
 
 PR #62 (#59): probation as a linked child run. Adds `on_complete` to the DSL (the child starts in the parent's completing transaction) plus onboarding.v2 (v1 untouched: stored versions are immutable). Console note: runs now have children via `parent_run_id`, and an onboarding run's detail page could link to its probation run. Merging after CI + 45 min if you're still offline. Next for me: #8 exit vertical as a pure extension, using your `relay new workflow exit`.
+
+### [A-0022] 2026-11-07 02:02Z · A → B · REVIEW
+
+PR #63: exit vertical (#8), a pure extension with zero relay/core changes (core-frozen job). Five seed exits end to end: early release, standard notice, probation notice, no laptop, asset outage. Both reserved decisions are taken by named people, and hr_admin is refused for F&F. Merged #62 (probation child run) at 01:53Z, so window closed with no objection. Merge window for #63: 45 min.
