@@ -1,0 +1,27 @@
+# Probation review (PRD 5.1 step 19). Started by onboarding when it completes (on_complete), as a
+# linked child run, so onboarding's cycle time ends at readiness_gate (PRD 19 note).
+name: onboarding_probation
+version: 1
+subject: employee
+description: At probation end, the named manager confirms, extends or refers to HR (reserved)
+trigger: { event: employee.activated }
+context:
+  employee_id: "trigger.employee_id"
+  probation_end: "trigger.probation_end"
+  manager_user_id: "trigger.manager_user_id"
+  consented_purposes: "[]"
+steps:
+  - id: wait_for_probation_end
+    kind: wait
+    action: employment.probation.schedule
+    until: "ctx.probation_end + 'T09:00:00+05:30'"
+
+  - id: probation_confirmation
+    kind: human
+    action: employment.probation.confirm
+    needs: [wait_for_probation_end]
+    task:
+      assignee_role: manager
+      assignee_user: "ctx.manager_user_id"
+      options: [confirm, extend, refer_to_hr]
+      context_from: ["ctx.probation_end"]

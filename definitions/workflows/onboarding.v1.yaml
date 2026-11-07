@@ -3,8 +3,8 @@
 #   candidate_ref, manager_code, decision_task_id (the recorded hiring.offer.approve), subject_label
 # Sensitive values (approved CTC, uploaded documents) travel through ctx sealed and are opened only
 # for the connector call or in-process skill that needs them.
-# The probation review (PRD 5.1 step 19) continues as a linked child run, so cycle time is measured
-# at readiness_gate.
+# The probation review (PRD 5.1 step 19) continues as a linked child run (on_complete below), so
+# cycle time is measured at readiness_gate.
 name: onboarding
 version: 1
 subject: employee
@@ -193,3 +193,11 @@ steps:
     inputs:
       employee_id: "ctx.employee.employee_id"
       probation_end: "ctx.terms.probation_end"
+
+on_complete:
+  - workflow: onboarding_probation
+    payload:
+      employee_id: "ctx.employee.employee_id"
+      probation_end: "ctx.terms.probation_end"
+      manager_user_id: "ctx.employee.manager_user_id"
+      subject_label: "ctx.employee.full_name + ' · probation'"
