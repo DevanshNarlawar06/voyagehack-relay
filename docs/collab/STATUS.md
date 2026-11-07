@@ -4,9 +4,9 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 02:57Z_
+_Updated 2026-11-07 03:36Z_
 
-Now: #64 Slack in review. Next: #9 docs (README, architecture, cost projection). Blocked: real Slack run needs tokens (#21). Branch: a/7-slack
+Now: #64 Slack (CI rerun after uv-prune fix), #65 docs in review. Next: backlog empty after these, so open enhancement issues (UI first) and split with B. Blocked: tokens (#21), LLM key (#20), TBO kit (#19). Branch: a/9-docs
 <!-- STATUS:A:END -->
 
 
