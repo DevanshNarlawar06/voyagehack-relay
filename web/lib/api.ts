@@ -2,6 +2,7 @@
 // NEXT_PUBLIC_RELAY_API_URL to use the real backend. The shell shows a banner in fixtures mode.
 import { createFixtureApi } from "@/lib/fixtures";
 import type {
+  DataRequest,
   AuditEvent,
   ChatReply,
   UploadResult,
@@ -133,6 +134,9 @@ function createHttpApi(baseUrl: string): RelayApi {
     definitions: () => request<Definition[]>("/definitions"),
     employees: () => request<EmployeeSummary[]>("/employees"),
     employee: (id) => request<EmployeeRecord>(`/employees/${encodeURIComponent(id)}`),
+    dataRequests: () => request<DataRequest[]>("/data-requests"),
+    raiseDataRequest: (type, details) =>
+      post<{ id: string; run_id: string | null }>("/data-requests", { type, details: details || null }),
     chat: (text) => post<ChatReply>("/chat", { text }),
     uploadDocuments: async (token, files, consents) => {
       // Multipart, so the browser sets the header. The signed link is the credential, not a session.

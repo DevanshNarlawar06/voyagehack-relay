@@ -1,6 +1,7 @@
 // Invented data for building the screens before the API exists. Nothing here is measured, and the
 // shell labels it as such. All people and identifiers are synthetic.
 import type {
+  DataRequest,
   AuditEvent,
   AuditEventDetail,
   ConnectorHealth,
@@ -168,7 +169,38 @@ const metrics: MetricsSummary = {
   cost_per_workflow_inr: "10.1260",
   variable_cost_per_workflow_inr: "0.1260",
   runs_by_status: { completed: 25, running: 3, waiting: 2, paused: 0, failed: 1 },
-  by_workflow: {},
+  by_workflow: {
+    onboarding: {
+      completed_runs: 20,
+      steps_completed: 380,
+      subject_actions: 40,
+      step_automation_rate: 0.921,
+      straight_through_rate: 0.8,
+      human_escalation_rate: 0.2,
+      cycle_time_p50_seconds: null,
+      cycle_time_p90_seconds: null,
+      subject_wait_p50_seconds: null,
+      variable_cost_inr: "0.0000",
+      infra_alloc_inr: "0.0000",
+      cost_per_workflow_inr: "10.1260",
+      variable_cost_per_workflow_inr: null,
+    },
+    exit: {
+      completed_runs: 5,
+      steps_completed: 95,
+      subject_actions: 10,
+      step_automation_rate: 0.884,
+      straight_through_rate: 0.6,
+      human_escalation_rate: 0.4,
+      cycle_time_p50_seconds: null,
+      cycle_time_p90_seconds: null,
+      subject_wait_p50_seconds: null,
+      variable_cost_inr: "0.0000",
+      infra_alloc_inr: "0.0000",
+      cost_per_workflow_inr: "10.0410",
+      variable_cost_per_workflow_inr: null,
+    },
+  },
   monthly_projection_inr: "12025.2000",
   projection_note:
     "Projection, not a measurement: measured variable cost per run x config/volumes.yaml + config/infra_costs.yaml.",
@@ -469,6 +501,35 @@ export function createFixtureApi(): RelayApi {
       documents: [],
       consents: [],
       data_requests: [{ id: "r1", type: "access", status: "open" }],
+      runs: [
+        { id: "run-0026", definition_name: "onboarding_probation", status: "waiting", subject_label: "Neha Gupta · Analyst" },
+        { id: "run-0024", definition_name: "onboarding", status: "completed", subject_label: "Neha Gupta · Analyst" },
+      ],
+    },
+    {
+      id: "emp-3",
+      full_name: "Kiran Rao",
+      employee_code: "TBO1019",
+      state: "notice",
+      role_title: "Analyst",
+      department: "Operations",
+      last_working_day: "2026-12-18",
+      lifecycle: [{ id: "l2", event_type: "resignation_submitted", at: minutesAgo(45) }],
+      documents: [],
+      consents: [],
+      data_requests: [],
+      runs: [{ id: "run-0033", definition_name: "exit", status: "waiting", subject_label: "Kiran Rao · Analyst" }],
+    },
+  ];
+
+  const dataRequests: DataRequest[] = [
+    {
+      id: "r1",
+      type: "access",
+      status: "completed",
+      run_id: null,
+      person_name: "Neha Gupta",
+      created_at: minutesAgo(2880),
     },
   ];
 
@@ -642,6 +703,22 @@ export function createFixtureApi(): RelayApi {
     employee: (id) => {
       const employee = employees.find((e) => e.id === id);
       return employee ? wait(employee) : Promise.reject(new Error("Employee not found."));
+    },
+    dataRequests: () => wait(dataRequests),
+    raiseDataRequest: (type, details) => {
+      if (type === "correction" && !details?.trim()) {
+        return Promise.reject(new Error("Say what should be corrected."));
+      }
+      const row: DataRequest = {
+        id: `r${dataRequests.length + 1}`,
+        type,
+        status: "in_progress",
+        run_id: null,
+        person_name: "Meera Nair",
+        created_at: new Date().toISOString(),
+      };
+      dataRequests.unshift(row);
+      return wait({ id: row.id, run_id: row.run_id });
     },
   };
 }

@@ -151,6 +151,27 @@ test("roles limit what a user can do", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Record decision/ })).toHaveCount(0);
 });
 
+test("the dashboard compares workflows", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  const table = page.getByRole("table", { name: "By workflow" });
+  await expect(table.getByRole("rowheader", { name: "Onboarding" })).toBeVisible();
+  await expect(table.getByRole("rowheader", { name: "Exit" })).toBeVisible();
+});
+
+test("a person raises a data request and sees it listed", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Data requests");
+  await expect(page.getByRole("rowheader", { name: "Neha Gupta" })).toBeVisible();
+  await page.getByRole("button", { name: "See my data" }).click();
+  await expect(page.getByRole("status")).toContainText("Request raised");
+  await expect(page.getByRole("rowheader", { name: "Meera Nair" })).toBeVisible();
+  const correct = page.getByRole("button", { name: "Correct my data" });
+  await expect(correct).toBeDisabled(); // a correction must say what to fix
+  await page.getByLabel(/What should change/).fill("My surname is Singh, not Sing");
+  await correct.click();
+  await expect(page.getByRole("cell", { name: "Correction" })).toBeVisible();
+});
+
 test("linked runs point both ways between onboarding and probation", async ({ page }) => {
   await signIn(page, "Meera Nair");
   await go(page, "Runs");
@@ -183,4 +204,17 @@ test("a manager accepts a resignation with a release date or a buyout, not both"
   await expect(release).toBeDisabled();
   await card.getByRole("button", { name: /Record decision/ }).click();
   await expect(page.getByRole("heading", { name: "Accept resignation" })).toBeHidden();
+});
+
+test("an employee on notice shows the last day and links to every workflow", async ({ page }) => {
+  await signIn(page, "Meera Nair");
+  await go(page, "Employees");
+  await expect(page.getByText("Last day 2026-12-18")).toBeVisible();
+  await page.getByRole("button", { name: "Show record for Kiran Rao" }).click();
+  await page.getByRole("link", { name: "Exit", exact: true }).click();
+  await expect(page).toHaveURL(/\/runs\/run-0033$/);
+  await go(page, "Employees");
+  await page.getByRole("button", { name: "Show record for Neha Gupta" }).click();
+  await expect(page.getByRole("link", { name: "Onboarding probation" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Onboarding", exact: true })).toBeVisible();
 });

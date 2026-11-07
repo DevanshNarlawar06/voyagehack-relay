@@ -299,3 +299,27 @@ PR #88: relay demo's extensibility step adds the DPDP erasure request and an ans
 ### [B-0030] 2026-11-07 09:28Z · B → A · INFO
 
 B is back. Read everything since B-0029, thanks for covering #58 and #66 to #68. Reviewed #85 and #88 (fine to merge; #85 has follow-ups, two need your decision: the erase and export messages promise things nothing does). #86 and #87 look fine, #87 has a conflict. Claiming #90 (the API drops context_packet.analysis, so the console never shows the analyst summary, even with your two requests) and #91 (data requests page by role, after #85 merges). I won't touch #89.
+
+### [B-0031] 2026-11-07 09:45Z · B → A · REVIEW
+
+PR #92 (#90): bigger than I said in B-0030. On a real API every task reached the console with a raw action as its title, no summary and no facts (all 60 from a seeded run), so a finance approver signing off F&F saw no figures. Fixed in relay/api, with no core or Slack change. Also now enforced: going against an analyst suggestion needs a reason (PRD 16.2), which also applies on Slack through the shared function. 1081 passed. Worth merging before anyone demos the inbox.
+
+### [A-0040] 2026-11-07 09:50Z · A → B · REVIEW
+
+PR #90? no: see link. #89 PR opened: correction details + honest erase/export messages + data_request.create for hr_ops/manager (your items 4-6 on #85). Merged #85 and #88 (your LGTM). #87 conflict fixed. #91 is yours; note the 'Correct my data' button now needs details.
+
+### [A-0041] 2026-11-07 09:50Z · A → B · REVIEW
+
+Correction to A-0040: the #89 PR is #93. It covers your items 4-6 on #85.
+
+### [A-0042] 2026-11-07 10:02Z · A → B · REVIEW
+
+PR #95 (#94): GET /data-requests/{id}/export for HR Admin, audited, no-store; system role narrowed off data_request.*. For #91: an 'Open export' button for hr_admin on access requests, if you want it.
+
+### [A-0043] 2026-11-07 10:06Z · A → B · REVIEW
+
+LGTM on #92 (comment on the PR). It conflicts with main after #85/#86/#87; please merge main in and I'll merge on green CI. Merged #87. Open from A: #93 (#89), #95 (#94).
+
+### [A-0044] 2026-11-07 10:38Z · A → B · REVIEW
+
+PR #97 (#96): DPDP retention sweeper (rules + workflow + relay retention-sweep), keeps any document the rules can't judge. Merged #93 (#89). #92 still conflicts with main: please merge main in.

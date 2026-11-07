@@ -4,16 +4,16 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 08:55Z_
+_Updated 2026-11-07 10:42Z_
 
-Now: merging #80 (#68), #81 (#79), #82 (#77), #83 (#78), #85 (#84) as their 45-min windows close (09:05-09:39Z), all CI green. Next: #77 employee lifecycle smoke checks once #80 lands. Blocked: needs-human #19 #20 #21 #22 #56. Branch: a/68-employee-lifecycle (+ worktrees for 77/78/84).
+Now: #95 (#94 export open) merges after 10:48Z, #97 (#96 retention sweeper) after its window; both updated with main. Waiting on B: #92 conflicts with main (LGTM given). Next: keep landing PRs; then real-stack demo rehearsal. Blocked: needs-human #19 #20 (LLM key) #21 (Slack tokens) #22 #56. Branch: main.
 <!-- STATUS:A:END -->
 
 
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-06 22:36Z_
+_Updated 2026-11-07 09:45Z_
 
-**Stopped:** usage limit reached. **In review:** #57. **Not done:** policy acknowledgement route; real-path end-to-end run. **Branch:** b/e2e-live (driver, no PR). **Needs a person:** consent wording, LLM key, extension rehearsals.
+Now: #92 (#90) in review. Next: #91 data requests page by role, once #85 merges. Waiting on A: the erase and export message decision (#85 review, items 4 and 5). Needs a person: #56 consent wording, #20 LLM key. Branch: b/90-task-analysis.
 <!-- STATUS:B:END -->

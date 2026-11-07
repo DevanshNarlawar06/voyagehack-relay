@@ -6,6 +6,8 @@ Agents do the routine HR work end to end, humans make every decision with legal,
 
 - Vertical 1 (depth): **Employee Onboarding**
 - Vertical 2 (extension proof): **Employee Exit**, built only through extension points
+- Also through extension points: **DPDP data requests** (access, correction, erasure), with erasure
+  reserved for HR Admin
 
 ## Documents
 
@@ -16,6 +18,7 @@ Agents do the routine HR work end to end, humans make every decision with legal,
 | [docs/cost-projection.md](docs/cost-projection.md) | Measured cost per onboarding and the monthly projection formula |
 | [docs/developer-guide.md](docs/developer-guide.md) | How to add a workflow, skill, connector or policy |
 | [docs/slack.md](docs/slack.md) | The Slack app and how to set it up |
+| [docs/teams.md](docs/teams.md) | Design for a Microsoft Teams adapter beside Slack, with no core change |
 | [docs/pii-inventory.md](docs/pii-inventory.md) | What personal data each skill sees, generated from the manifests |
 | [docs/problem-statements/PS6-darwinbox-hr.txt](docs/problem-statements/PS6-darwinbox-hr.txt) | Original TBO brief |
 | [docs/collab/PROTOCOL.md](docs/collab/PROTOCOL.md) | How the two build sessions coordinate |

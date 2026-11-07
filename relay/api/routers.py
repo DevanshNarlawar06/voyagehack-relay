@@ -559,6 +559,16 @@ def get_employee(employee_id: UUID, auth: Auth, session: Db) -> s.EmployeeDetail
 # ---------------------------------------------------------------- DPDP
 
 
+@router.get("/data-requests", tags=["dpdp"])
+def list_data_requests(auth: Auth, session: Db) -> list[s.DataRequestRowOut]:
+    """HR sees every DPDP request; anyone else sees only their own."""
+    if auth.check("employee.read").effect == "ALLOW":
+        return views.list_data_requests(session, None)
+    if auth.user.person_id is None:
+        return []
+    return views.list_data_requests(session, auth.user.person_id)
+
+
 @router.post("/data-requests", status_code=status.HTTP_201_CREATED, tags=["dpdp"])
 def create_data_request(
     body: s.DataRequestIn, auth: Auth, session: Db, services: Services
@@ -569,7 +579,9 @@ def create_data_request(
         raise HTTPException(
             status.HTTP_409_CONFLICT, "This account is not linked to a person record."
         )
-    row = m.DataRequest(person_id=auth.user.person_id, type=m.DataRequestType(body.type))
+    row = m.DataRequest(
+        person_id=auth.user.person_id, type=m.DataRequestType(body.type), details=body.details
+    )
     session.add(row)
     session.flush()
     append_event(

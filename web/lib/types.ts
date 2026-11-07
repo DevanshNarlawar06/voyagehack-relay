@@ -280,9 +280,21 @@ export interface EmployeeRecord extends EmployeeSummary {
   lifecycle: { id: string; event_type: string; at: string }[];
   documents: { id: string; category: string; retention_until: string | null }[];
   consents: { purpose_id: string; notice_version: string; withdrawn_at: string | null }[];
-  data_requests: { id: string; type: string; status: string }[];
+  data_requests: { id: string; type: string; status: string; run_id?: string | null }[];
   /** This employee's runs: onboarding, probation review, exit. */
   runs?: RunLink[];
+}
+
+export type DataRequestType = "access" | "correction" | "erasure";
+
+/** A DPDP request: HR sees everyone's, anyone else only their own. */
+export interface DataRequest {
+  id: string;
+  type: DataRequestType;
+  status: string;
+  run_id: string | null;
+  person_name: string;
+  created_at: string;
 }
 
 export interface ChatReply {
@@ -324,6 +336,8 @@ export interface RelayApi {
   definitions(): Promise<Definition[]>;
   employees(): Promise<EmployeeSummary[]>;
   employee(id: string): Promise<EmployeeRecord>;
+  dataRequests(): Promise<DataRequest[]>;
+  raiseDataRequest(type: DataRequestType, details?: string): Promise<{ id: string; run_id: string | null }>;
   chat(text: string): Promise<ChatReply>;
   uploadDocuments(
     token: string,

@@ -1,0 +1,77 @@
+# DPDP data requests (PRD 14, issue #78). Built only through extension points: no relay/core change.
+# v2 = v1 plus the person's own words (what to correct, or why to erase) on the HR task (#89).
+# Versions are immutable once stored, so changes go in a new version file.
+# Started by `POST /api/v1/data-requests` with event `data_request.created` and a payload of:
+#   data_request_id, type (access | correction | erasure)
+# Access builds the person's own record (sealed). A correction is decided by HR Ops, with a reason
+# for a rejection. Erasure is a reserved decision for HR Admin, who weighs what the law requires
+# Relay to keep. Every branch ends by recording the outcome and telling the person.
+name: data_request
+version: 2
+subject: person
+description: A data principal's request to see, correct or erase their data, answered and recorded
+trigger: { event: data_request.created }
+context:
+  data_request_id: "trigger.data_request_id"
+  request_type: "trigger.type"
+  consented_purposes: "[]"
+steps:
+  - id: verify_requester
+    kind: rule
+    uses: rules.dpdp.verify_requester
+    action: data_request.verify
+    inputs: { data_request_id: "ctx.data_request_id" }
+    outputs: { requester: "result" }
+
+  - id: build_export
+    kind: rule
+    uses: rules.dpdp.build_export
+    action: data_request.export.build
+    needs: [verify_requester]
+    when: "ctx.request_type == 'access'"
+    inputs: { data_request_id: "ctx.data_request_id" }
+    outputs: { export: "result" }
+
+  - id: review_correction
+    kind: human
+    action: data_request.correction.decide
+    needs: [verify_requester]
+    when: "ctx.request_type == 'correction'"
+    task:
+      assignee_role: hr_ops
+      options: [approve, reject]
+      context_from: ["ctx.requester.full_name", "ctx.request_type", "ctx.requester.details"]
+    outputs: { correction: "result" }
+
+  - id: decide_erasure
+    kind: human
+    action: data_request.erasure.decide
+    needs: [verify_requester]
+    when: "ctx.request_type == 'erasure'"
+    task:
+      assignee_role: hr_admin
+      options: [erase, refuse_retention]
+      context_from: ["ctx.requester.full_name", "ctx.request_type", "ctx.requester.details"]
+    outputs: { erasure: "result" }
+
+  - id: close_request
+    kind: rule
+    uses: rules.dpdp.close_request
+    action: data_request.close
+    needs: [build_export, review_correction, decide_erasure]
+    inputs:
+      data_request_id: "ctx.data_request_id"
+      outcome: >-
+        has(ctx.correction) ? ctx.correction.decision
+        : (has(ctx.erasure) ? ctx.erasure.decision : 'exported')
+    outputs: { closed: "result" }
+
+  - id: notify_requester
+    kind: connector
+    uses: notify.email
+    action: comms.send
+    needs: [close_request]
+    when: "ctx.requester.email != null"
+    inputs:
+      recipient: "ctx.requester.email"
+      body: "ctx.closed.message"
