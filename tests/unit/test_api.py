@@ -6,7 +6,7 @@ import re
 import uuid
 from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 from uuid import UUID
 
@@ -939,10 +939,14 @@ def test_data_request_is_about_the_signed_in_person(api: Api) -> None:
     person = m.Person(full_name="Requester")
     api.session.add(person)
     api.session.flush()
+    run = api.run()
+    assert api.engine is not None
+    api.engine.handle_event = lambda *_a, **_k: [run.id]  # type: ignore[method-assign]
     client = api.client("employee", email="me@test.example", person_id=person.id)
     response = client.post("/api/v1/data-requests", json={"type": "erasure"})
     assert response.status_code == 201
     assert response.json()["type"] == "erasure"
+    assert response.json()["run_id"] == str(run.id)  # the route started the workflow
     row = api.session.get(m.DataRequest, UUID(response.json()["id"]))
     assert row is not None
     assert row.person_id == person.id
@@ -1121,3 +1125,30 @@ def test_data_requests_list_is_everyone_for_hr_and_only_your_own_otherwise(api: 
         ("Asha Rao", "access", None)
     ]
     assert api.client("employee").get("/api/v1/data-requests").json() == []  # no person record
+
+
+# ---------------------------------------------------------------- employee lifecycle (#68)
+
+
+def test_an_employee_record_shows_notice_last_day_and_their_runs(api: Api) -> None:
+    person = m.Person(full_name="Leaver Person", email="leaver@test.example")
+    api.session.add(person)
+    api.session.flush()
+    code = f"TBO-{uuid.uuid4().hex[:6]}"
+    employee = m.Employee(
+        person_id=person.id,
+        employee_code=code,
+        state=m.EmployeeState.NOTICE,
+        last_working_day=date(2026, 12, 18),
+    )
+    api.session.add(employee)
+    api.session.flush()
+    onboarding = api.run(context={"ctx": {"employee": {"employee_id": str(employee.id)}}})
+    leaving = api.run(definition_name="exit", subject_id=code)
+    api.run(definition_name="exit", subject_id="someone-else")
+    client = api.client("hr_ops")
+    row = next(e for e in client.get("/api/v1/employees").json() if e["employee_code"] == code)
+    assert row["state"] == "notice" and row["last_working_day"] == "2026-12-18"
+    body = client.get(f"/api/v1/employees/{employee.id}").json()
+    assert [r["id"] for r in body["runs"]] == [str(onboarding.id), str(leaving.id)]
+    assert [r["definition_name"] for r in body["runs"]] == ["onboarding", "exit"]

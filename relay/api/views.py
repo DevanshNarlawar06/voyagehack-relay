@@ -302,6 +302,7 @@ _EMPLOYEE_COLUMNS = (
     m.Employee.state,
     m.Employee.role_title,
     m.Employee.department,
+    m.Employee.last_working_day,
 )
 
 
@@ -313,6 +314,7 @@ def _employee_out(row: Any) -> EmployeeOut:
         state=row.state.value,
         role_title=row.role_title,
         department=row.department,
+        last_working_day=row.last_working_day,
     )
 
 
@@ -379,8 +381,20 @@ def employee_detail(session: Session, employee_id: UUID) -> EmployeeDetailOut | 
             m.DataRequest.id, m.DataRequest.type, m.DataRequest.status, m.DataRequest.run_id
         ).where(m.DataRequest.person_id == person_id)
     )
+    # Onboarding knows the employee by id inside its context; exit by employee code.
+    keys = {str(employee_id), *([row.employee_code] if row.employee_code else [])}
+    runs = session.scalars(
+        select(m.WorkflowRun)
+        .where(
+            (m.WorkflowRun.subject_id.in_(keys))
+            | (m.WorkflowRun.context["ctx"]["employee"]["employee_id"].astext == str(employee_id))
+            | (m.WorkflowRun.context["ctx"]["employee_id"].astext == str(employee_id))
+        )
+        .order_by(m.WorkflowRun.started_at)
+    ).all()
     return EmployeeDetailOut(
         **_employee_out(row).model_dump(),
+        runs=[_link(run) for run in runs],
         lifecycle=[
             LifecycleOut(id=r.id, event_type=r.event_type, at=r.created_at) for r in lifecycle
         ],

@@ -323,6 +323,7 @@ class EmployeeOut(BaseModel):
     state: str
     role_title: str | None
     department: str | None
+    last_working_day: date | None = None
 
 
 class LifecycleOut(BaseModel):
@@ -365,6 +366,7 @@ class EmployeeDetailOut(EmployeeOut):
     documents: list[DocumentOut]
     consents: list[ConsentOut]
     data_requests: list[EmployeeRequestOut]
+    runs: list[RunLinkOut] = Field(default_factory=list)
 
 
 class DataRequestIn(BaseModel):

@@ -27,6 +27,7 @@ const USERS: User[] = [
   { email: "hr.ops@tbo-demo.test", display_name: "Rohan Das", roles: ["hr_ops"] },
   { email: "it.approver@tbo-demo.test", display_name: "Kabir Shah", roles: ["approver_it_spend"] },
   { email: "auditor@tbo-demo.test", display_name: "Leela Iyer", roles: ["auditor"] },
+  { email: "manager@tbo-demo.test", display_name: "Arjun Rao", roles: ["manager"] },
 ];
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
@@ -59,12 +60,30 @@ const ONBOARDING: [string, StepKind, string[], string | null][] = [
   ["readiness_gate", "rule", ["policy_acknowledgements", "notify_manager"], "employee.activate"],
 ];
 
-function steps(statuses: Partial<Record<string, StepStatus>>, fallback: StepStatus): Step[] {
-  return ONBOARDING.map(([step_id, kind, needs, action], index) => {
+const PROBATION: [string, StepKind, string[], string | null][] = [
+  ["wait_for_probation_end", "wait", [], "employment.probation.schedule"],
+  ["probation_confirmation", "human", ["wait_for_probation_end"], "employment.probation.confirm"],
+];
+
+const EXIT: [string, StepKind, string[], string | null][] = [
+  ["route_resignation", "rule", [], "employment.resignation.route"],
+  ["accept_resignation", "human", ["route_resignation"], "employment.resignation.accept"],
+  ["compute_exit_terms", "rule", ["accept_resignation"], "hr.exit_terms.compute"],
+];
+
+type Plan = [string, StepKind, string[], string | null][];
+
+function steps(
+  statuses: Partial<Record<string, StepStatus>>,
+  fallback: StepStatus,
+  plan: Plan = ONBOARDING,
+): Step[] {
+  return plan.map(([step_id, kind, needs, action], index) => {
     const status = statuses[step_id] ?? fallback;
     const started = status !== "PENDING" && status !== "READY";
     const done = status === "SUCCEEDED";
     const usesModel = kind === "skill" && done;
+    const laptop = action === "assets.laptop.allocate";
     return {
       step_id,
       kind,
@@ -80,12 +99,14 @@ function steps(statuses: Partial<Record<string, StepStatus>>, fallback: StepStat
         started && action
           ? {
               effect: status === "WAITING_HUMAN" ? "REQUIRE_HUMAN" : "ALLOW",
-              rule_ids: status === "WAITING_HUMAN" ? ["laptop_high_spend"] : ["allow"],
+              rule_ids: status !== "WAITING_HUMAN" ? ["allow"] : laptop ? ["laptop_high_spend"] : ["reserved"],
               policy_version: "approvals@1,rbac@1,reserved@1",
               reason:
-                status === "WAITING_HUMAN"
-                  ? "Laptops above ₹1.5L need IT spend approval [TBO IT Asset Policy §2.3]"
-                  : "all policy checks passed",
+                status !== "WAITING_HUMAN"
+                  ? "all policy checks passed"
+                  : laptop
+                    ? "Laptops above ₹1.5L need IT spend approval [TBO IT Asset Policy §2.3]"
+                    : `${action} is a reserved decision for a named person`,
             }
           : null,
       model_id: usesModel ? "mock/deterministic" : null,
@@ -103,11 +124,12 @@ function buildRun(
   status: RunDetail["status"],
   stepList: Step[],
   started: number,
+  definition_name = "onboarding",
 ): RunDetail {
   const done = stepList.filter((s) => s.status === "SUCCEEDED").length;
   return {
     id,
-    definition_name: "onboarding",
+    definition_name,
     definition_version: 1,
     subject_label,
     status,
@@ -218,6 +240,23 @@ export function createFixtureApi(): RelayApi {
       policy_acknowledgements: "PENDING",
       readiness_gate: "PENDING",
     }, "SUCCEEDED"), 900),
+    {
+      ...buildRun("run-0026", "Neha Gupta · Analyst", "waiting", steps({
+        probation_confirmation: "WAITING_HUMAN",
+      }, "SUCCEEDED", PROBATION), 1500, "onboarding_probation"),
+      parent_run_id: "run-0024",
+      parent: { id: "run-0024", definition_name: "onboarding", status: "completed", subject_label: "Neha Gupta · Analyst" },
+    },
+    {
+      ...buildRun("run-0024", "Neha Gupta · Analyst", "completed", steps(allDone, "SUCCEEDED"), 9000),
+      children: [
+        { id: "run-0026", definition_name: "onboarding_probation", status: "waiting", subject_label: "Neha Gupta · Analyst" },
+      ],
+    },
+    buildRun("run-0033", "Kiran Rao · Analyst", "waiting", steps({
+      accept_resignation: "WAITING_HUMAN",
+      compute_exit_terms: "PENDING",
+    }, "SUCCEEDED", EXIT), 45, "exit"),
   ];
 
   const tasks: HumanTask[] = [
@@ -284,6 +323,25 @@ export function createFixtureApi(): RelayApi {
         summary: "Probation ended yesterday. This decision is reserved for a named human.",
         facts: { Employee: "Neha Gupta", Grade: "L4", "Probation end": "Yesterday" },
         rule: "reserved@1 · employment.probation.confirm",
+      },
+      decision: null,
+      reason: null,
+    },
+    {
+      id: "task-104",
+      run_id: "run-0033",
+      step_id: "accept_resignation",
+      kind: "reserved_decision",
+      action: "employment.resignation.accept",
+      title: "Accept resignation",
+      assignee_role: "manager",
+      status: "open",
+      options: ["accept", "discuss_retention"],
+      sla_due_at: minutesAhead(1440),
+      context_packet: {
+        summary: "Kiran Rao resigned today and asked for 18 December as the last day.",
+        facts: { Employee: "Kiran Rao", Grade: "G2", "Notice period": "45 days", "Requested last day": "18 Dec" },
+        rule: "baseline · employment.resignation.accept",
       },
       decision: null,
       reason: null,

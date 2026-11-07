@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from relay.core.policy import PolicyService
 from relay.rules import it, labour
+from relay.rules.dpdp import DpdpRules
 from relay.rules.exit import ExitRules
 from relay.rules.hr import HrRules
 
@@ -29,6 +30,7 @@ def build_rules(
     return {
         **HrRules(sessions).functions(),
         **ExitRules(sessions, labour_tables).functions(),
+        **DpdpRules(sessions).functions(),
         "rules.labour.compute_onboarding_terms": compute_onboarding_terms,
         "rules.it.select_laptop": it.select_laptop,
     }

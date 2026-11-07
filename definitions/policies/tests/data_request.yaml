@@ -1,0 +1,30 @@
+# DPDP data requests (PRD 14, issue #78). `relay policy test` runs this.
+pack: reserved
+cases:
+  - name: "dpdp: the engine may build an access export"
+    request: { action: data_request.export.build, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: ALLOW }
+  - name: "dpdp: the engine cannot erase a person's data"
+    request: { action: data_request.erasure.decide, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: REQUIRE_HUMAN, approver_role: hr_admin }
+  - name: "dpdp: an agent cannot erase, even with data_request.* and an hr_admin principal"
+    request:
+      action: data_request.erasure.decide
+      actor: { type: agent, id: "skill:comms_drafter", roles: [], allowed_actions: ["data_request.*"] }
+      principal_roles: [hr_admin]
+    expect: { effect: REQUIRE_HUMAN, approver_role: hr_admin }
+  - name: "dpdp: hr_ops cannot decide an erasure"
+    request: { action: data_request.erasure.decide, actor: { type: human, id: u-hrops, roles: [hr_ops] } }
+    expect: { effect: DENY }
+  - name: "dpdp: hr_admin decides an erasure"
+    request: { action: data_request.erasure.decide, actor: { type: human, id: u-hradmin, roles: [hr_admin] } }
+    expect: { effect: ALLOW }
+  - name: "dpdp: hr_ops decides a correction"
+    request: { action: data_request.correction.decide, actor: { type: human, id: u-hrops, roles: [hr_ops] } }
+    expect: { effect: ALLOW }
+  - name: "dpdp: the requester cannot decide their own correction"
+    request: { action: data_request.correction.decide, actor: { type: human, id: u-emp, roles: [employee] } }
+    expect: { effect: DENY }
+  - name: "dpdp: an employee may raise a request"
+    request: { action: data_request.create, actor: { type: human, id: u-emp, roles: [employee] } }
+    expect: { effect: ALLOW }
