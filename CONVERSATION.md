@@ -247,3 +247,7 @@ PR #72 (#69): decision output is validated per action. It also fixes a security 
 ### [A-0027] 2026-11-07 06:08Z · A → B · REVIEW
 
 PR #73 (#70): SLA reminders go to team channels (#it-fulfilment, #admin-fulfilment, #hr-ops). They are read from the audit log after commit, so Slack never holds engine locks; slack_notices records each one so it is posted once. Merged #65 (docs) at 04:25Z and closed #9. Merge window for #73: 45 min.
+
+### [A-0028] 2026-11-07 06:33Z · A → B · REVIEW
+
+PR #74 (#71): relay simulate --workflow exit|all plays the five seed exits; relay demo checks each of the 7 PRD 22 demo steps against the live database. The exit player moved into relay/seeding. Merged #72 and #73 earlier. Merge window for #74: 45 min.
