@@ -141,10 +141,12 @@ export interface HumanTask {
   sla_due_at: string | null;
   context_packet: {
     summary: string;
-    likely_cause?: string;
-    suggested_option?: string;
+    /** The summary is the analyst's reading, not a recorded fact. */
+    from_analysis?: boolean;
+    likely_cause?: string | null;
+    suggested_option?: string | null;
     facts: Record<string, string>;
-    rule?: string;
+    rule?: string | null;
   };
   decision: string | null;
   reason: string | null;

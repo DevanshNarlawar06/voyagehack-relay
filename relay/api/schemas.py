@@ -120,6 +120,7 @@ class ContextPacketOut(BaseModel):
     """What a person needs to make a decision."""
 
     summary: str
+    from_analysis: bool = False  # the summary is the analyst's reading, not a recorded fact
     likely_cause: str | None = None
     suggested_option: str | None = None
     facts: dict[str, str] = Field(default_factory=dict)

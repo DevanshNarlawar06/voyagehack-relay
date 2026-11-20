@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from relay.api.decision_outputs import OutputRefused, validate_output
 from relay.api.deps import Authorizer, EngineGateway
+from relay.api.task_packet import suggested_option
 from relay.core.audit.writer import AuditEntry, append_event
 from relay.core.engine.engine import TaskDecisionRefused
 from relay.db import models as m
@@ -45,7 +46,7 @@ class InvalidDecision(ValueError):
 
 def reason_required(task: m.HumanTask, option: str) -> bool:
     """A person rejecting, overriding or going against the suggestion must say why."""
-    suggested = (task.context_packet or {}).get("suggested_option")
+    suggested = suggested_option(task.context_packet or {})
     return bool(_NEEDS_REASON.search(option)) or (suggested is not None and option != suggested)
 
 
