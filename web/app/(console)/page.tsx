@@ -24,9 +24,9 @@ function Stat({
 }) {
   const body = (
     <>
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+      <p className="text-[11.5px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">{label}</p>
+      <p className="mt-2 text-[30px] leading-none font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{note}</p>
     </>
   );
   return (
