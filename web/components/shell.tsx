@@ -17,6 +17,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -134,6 +135,7 @@ export function Shell({ children }: { children: ReactNode }) {
               {session.user.roles.map(humanize).join(" · ")}
             </p>
           </div>
+          <ThemeToggle className="grid size-8 place-items-center rounded-md text-sidebar-muted hover:bg-sidebar-active hover:text-sidebar-foreground" />
           <button
             type="button"
             onClick={signOut}
