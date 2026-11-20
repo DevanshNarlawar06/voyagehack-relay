@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 600" width="1600" height="600" font-family="'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6068"/>
+    </marker>
+    <style>
+      .title { font-size: 30px; font-weight: 700; fill: #15171a; }
+      .subtitle { font-size: 16px; fill: #5b6068; }
+      .h { font-size: 17px; font-weight: 650; fill: #15171a; }
+      .t { font-size: 13.5px; fill: #3c4047; }
+      .lbl { font-size: 13px; font-weight: 700; }
+      .e { stroke: #5b6068; stroke-width: 1.6; fill: none; }
+    </style>
+  </defs>
+  <rect width="1600" height="600" fill="#ffffff"/>
+  <text x="40" y="48" class="title">The life of one step</text>
+  <text x="40" y="74" class="subtitle">The same loop runs for every step of every workflow, whether a rule, a connector call, an agent or a person does the work.</text>
+
+  <!-- 1 -->
+  <rect x="40" y="130" width="230" height="110" rx="12" fill="#f4f3ef" stroke="#d8d6cf"/>
+  <text x="58" y="160" class="h">1 · Step is due</text>
+  <text x="58" y="184" class="t">Worker leases the run from</text>
+  <text x="58" y="202" class="t">the Postgres queue; inputs</text>
+  <text x="58" y="220" class="t">come from CEL over context</text>
+  <path class="e" d="M270 185 H310" marker-end="url(#a)"/>
+
+  <!-- 2 -->
+  <rect x="312" y="130" width="230" height="110" rx="12" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="330" y="160" class="h">2 · Kill switches</text>
+  <text x="330" y="184" class="t">Global, per workflow, per</text>
+  <text x="330" y="202" class="t">skill, per connector. If one</text>
+  <text x="330" y="220" class="t">is on, the run pauses here</text>
+  <path class="e" d="M542 185 H582" marker-end="url(#a)"/>
+
+  <!-- 3 -->
+  <rect x="584" y="130" width="270" height="110" rx="12" fill="#fbf0dc" stroke="#e2c48c"/>
+  <text x="602" y="160" class="h">3 · authorize(actor, action)</text>
+  <text x="602" y="184" class="t">RBAC, approvals, labour rules,</text>
+  <text x="602" y="202" class="t">reserved floor. Writes a Decision</text>
+  <text x="602" y="220" class="t">row with the policy versions</text>
+
+  <!-- branches -->
+  <path class="e" d="M854 160 H930 V140 H960" marker-end="url(#a)"/>
+  <path class="e" d="M854 185 H960" marker-end="url(#a)"/>
+  <path class="e" d="M854 210 H930 V330 H960" marker-end="url(#a)"/>
+
+  <!-- ALLOW -->
+  <rect x="962" y="96" width="290" height="88" rx="12" fill="#e3f1ed" stroke="#8cc3b5"/>
+  <text x="980" y="124" class="lbl" style="fill:#0f6b5c">ALLOW → execute</text>
+  <text x="980" y="148" class="t">Rule runs, connector calls through</text>
+  <text x="980" y="166" class="t">the idempotency ledger, or skill runs</text>
+
+  <!-- DENY -->
+  <rect x="962" y="196" width="290" height="70" rx="12" fill="#fbe7e5" stroke="#e3a9a2"/>
+  <text x="980" y="224" class="lbl" style="fill:#a3322a">DENY → stop, explain</text>
+  <text x="980" y="248" class="t">The reason and policy are on the record</text>
+
+  <!-- REQUIRE_HUMAN -->
+  <rect x="962" y="282" width="290" height="104" rx="12" fill="#fbf0dc" stroke="#e2c48c"/>
+  <text x="980" y="310" class="lbl" style="fill:#8a5300">REQUIRE_HUMAN → task</text>
+  <text x="980" y="334" class="t">Context packet to a named role in the</text>
+  <text x="980" y="352" class="t">inbox and Slack, with SLA reminders.</text>
+  <text x="980" y="370" class="t">The decision resumes the run</text>
+
+  <!-- to audit -->
+  <path class="e" d="M1252 140 H1300 V230 H1330" marker-end="url(#a)"/>
+  <path class="e" d="M1252 231 H1330" marker-end="url(#a)"/>
+  <path class="e" d="M1252 334 H1300 V232"/>
+
+  <rect x="1332" y="150" width="228" height="164" rx="12" fill="#15171a"/>
+  <text x="1350" y="180" class="h" style="fill:#ffffff">4 · Record</text>
+  <text x="1350" y="206" class="t" style="fill:#d6d9de">Step result, audit event</text>
+  <text x="1350" y="224" class="t" style="fill:#d6d9de">(hash-chained, versions</text>
+  <text x="1350" y="242" class="t" style="fill:#d6d9de">stamped) and INR cost,</text>
+  <text x="1350" y="260" class="t" style="fill:#d6d9de">in one transaction.</text>
+  <text x="1350" y="290" class="t" style="fill:#8f949c">Then the next step is due</text>
+
+  <!-- Skill detail -->
+  <rect x="40" y="440" width="1520" height="120" rx="14" fill="#efe9f7" stroke="#c4b3e0"/>
+  <text x="60" y="472" class="h">When the step is a skill (an agent)</text>
+  <text x="60" y="500" class="t">The agent acts for a principal, so its rights are the principal's rights ∩ the skill's allowlist. Its prompt holds no rules. Input passes the PII gateway</text>
+  <text x="60" y="520" class="t">(masked, and only the fields the manifest allows), the router picks tier1 then tier2 by confidence, and output is schema-validated. Below the skill's</text>
+  <text x="60" y="540" class="t">threshold the work goes to a person with the agent's analysis attached. The audit view shows exactly what left our system for each call.</text>
+</svg>

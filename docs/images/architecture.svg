@@ -1,0 +1,228 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1140" width="1600" height="1140" font-family="'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5b6068"/>
+    </marker>
+    <marker id="arrowAccent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f6b5c"/>
+    </marker>
+    <style>
+      .title { font-size: 30px; font-weight: 700; fill: #15171a; }
+      .subtitle { font-size: 16px; fill: #5b6068; }
+      .h { font-size: 17px; font-weight: 650; fill: #15171a; }
+      .hw { font-size: 17px; font-weight: 650; fill: #ffffff; }
+      .t { font-size: 13.5px; fill: #3c4047; }
+      .tw { font-size: 13.5px; fill: #d6d9de; }
+      .tag { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; fill: #5b6068; }
+      .chip { font-size: 13px; font-weight: 600; fill: #0f6b5c; }
+      .edge { stroke: #5b6068; stroke-width: 1.6; fill: none; }
+      .edgeA { stroke: #0f6b5c; stroke-width: 2; fill: none; }
+      .lbl { font-size: 12.5px; font-weight: 600; fill: #0f6b5c; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1140" fill="#ffffff"/>
+
+  <text x="40" y="48" class="title">Relay architecture</text>
+  <text x="40" y="74" class="subtitle">Governed HR workflow runtime: agents do the work, people make the reserved decisions, everything is checked, audited and costed.</text>
+
+  <!-- People -->
+  <g>
+    <rect x="40" y="100" width="360" height="40" rx="20" fill="#f4f3ef" stroke="#d8d6cf"/>
+    <text x="220" y="125" text-anchor="middle" class="t">HR Ops · HR Admin · approvers · auditor</text>
+    <rect x="440" y="100" width="360" height="40" rx="20" fill="#f4f3ef" stroke="#d8d6cf"/>
+    <text x="620" y="125" text-anchor="middle" class="t">Employees · managers · IT / Admin / Finance</text>
+    <rect x="840" y="100" width="360" height="40" rx="20" fill="#f4f3ef" stroke="#d8d6cf"/>
+    <text x="1020" y="125" text-anchor="middle" class="t">New joiners</text>
+  </g>
+  <path class="edge" d="M220 140 V166" marker-end="url(#arrow)"/>
+  <path class="edge" d="M620 140 V166" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1020 140 V166" marker-end="url(#arrow)"/>
+
+  <!-- Interfaces -->
+  <text x="40" y="162" class="tag" opacity="0">.</text>
+  <g>
+    <rect x="40" y="168" width="360" height="78" rx="12" fill="#e6eef8" stroke="#9db6d8"/>
+    <text x="60" y="197" class="h">HR console (Next.js)</text>
+    <text x="60" y="220" class="t">Dashboard, runs, inbox, policies,</text>
+    <text x="60" y="237" class="t">controls, audit, employees, Ask Relay</text>
+    <rect x="440" y="168" width="360" height="78" rx="12" fill="#e6eef8" stroke="#9db6d8"/>
+    <text x="460" y="197" class="h">Slack app (Socket Mode)</text>
+    <text x="460" y="220" class="t">Decision cards with context, chat intake,</text>
+    <text x="460" y="237" class="t">reminders and escalations by role channel</text>
+    <rect x="840" y="168" width="360" height="78" rx="12" fill="#e6eef8" stroke="#9db6d8"/>
+    <text x="860" y="197" class="h">Joiner upload page</text>
+    <text x="860" y="220" class="t">Signed link: documents and consent,</text>
+    <text x="860" y="237" class="t">no account needed</text>
+  </g>
+  <path class="edge" d="M220 246 V272" marker-end="url(#arrow)"/>
+  <path class="edge" d="M620 246 V272" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1020 246 V272" marker-end="url(#arrow)"/>
+
+  <!-- API -->
+  <rect x="40" y="274" width="1160" height="52" rx="12" fill="#15171a"/>
+  <text x="60" y="306" class="hw">FastAPI  /api/v1</text>
+  <text x="250" y="306" class="tw">Typed Pydantic contracts at every boundary · role-based sessions · no business logic in routers</text>
+  <path class="edge" d="M620 326 V356" marker-end="url(#arrow)"/>
+
+  <!-- Core -->
+  <rect x="40" y="358" width="1160" height="312" rx="16" fill="#fbfaf7" stroke="#0f6b5c" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="60" y="384" class="tag">RELAY/CORE · FROZEN: EXTENSIONS NEVER CHANGE IT</text>
+
+  <!-- Engine -->
+  <rect x="60" y="398" width="540" height="170" rx="12" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="80" y="428" class="h">Workflow engine (×2 workers)</text>
+  <text x="80" y="451" class="t">Deterministic orchestrator: never an LLM. Runs versioned</text>
+  <text x="80" y="469" class="t">workflow YAML from a leased queue in Postgres, retries safely,</text>
+  <text x="80" y="487" class="t">resumes after a crash. Every step is one of six typed kinds:</text>
+  <g>
+    <rect x="80" y="506" width="62" height="28" rx="14" fill="#e3f1ed"/><text x="111" y="525" text-anchor="middle" class="chip">rule</text>
+    <rect x="150" y="506" width="96" height="28" rx="14" fill="#e3f1ed"/><text x="198" y="525" text-anchor="middle" class="chip">connector</text>
+    <rect x="254" y="506" width="62" height="28" rx="14" fill="#e3f1ed"/><text x="285" y="525" text-anchor="middle" class="chip">skill</text>
+    <rect x="324" y="506" width="74" height="28" rx="14" fill="#e3f1ed"/><text x="361" y="525" text-anchor="middle" class="chip">human</text>
+    <rect x="406" y="506" width="62" height="28" rx="14" fill="#e3f1ed"/><text x="437" y="525" text-anchor="middle" class="chip">wait</text>
+    <rect x="476" y="506" width="88" height="28" rx="14" fill="#e3f1ed"/><text x="520" y="525" text-anchor="middle" class="chip">parallel</text>
+  </g>
+  <text x="80" y="556" class="t" style="fill:#5b6068">CEL expressions for conditions and context</text>
+
+  <!-- engine -> policy -->
+  <path class="edgeA" d="M600 470 H640" marker-end="url(#arrowAccent)"/>
+  <text x="604" y="458" class="lbl">ask</text>
+
+  <!-- Policy -->
+  <rect x="640" y="398" width="540" height="170" rx="12" fill="#fbf0dc" stroke="#e2c48c"/>
+  <text x="660" y="428" class="h">Policy engine · authorize() before every step</text>
+  <text x="660" y="453" class="t">→ ALLOW, DENY or REQUIRE_HUMAN, stored as a Decision row</text>
+  <text x="660" y="476" class="t">Reserved decisions (offer, probation, resignation, F&amp;F,</text>
+  <text x="660" y="494" class="t">erasure) have an immutable floor in code: config can only add</text>
+  <text x="660" y="517" class="t">Agents act for a principal: principal ∩ skill allowlist</text>
+  <text x="660" y="540" class="t">Policy packs are versioned YAML with their own tests,</text>
+  <text x="660" y="558" class="t">edited and activated by HR in the console</text>
+
+  <!-- Core bottom strip -->
+  <rect x="60" y="584" width="353" height="68" rx="10" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="78" y="611" class="h">Kill switches</text>
+  <text x="78" y="634" class="t">Checked at every step boundary</text>
+  <rect x="433" y="584" width="353" height="68" rx="10" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="451" y="611" class="h">Audit log</text>
+  <text x="451" y="634" class="t">Append-only, hash-chained, versions stamped</text>
+  <rect x="806" y="584" width="374" height="68" rx="10" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="824" y="611" class="h">Cost meter</text>
+  <text x="824" y="634" class="t">Tokens, CPU and infra in INR per step and run</text>
+
+  <!-- Core -> executors -->
+  <path class="edge" d="M177 670 V702" marker-end="url(#arrow)"/>
+  <path class="edge" d="M472 670 V702" marker-end="url(#arrow)"/>
+  <path class="edge" d="M767 670 V702" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1062 670 V702" marker-end="url(#arrow)"/>
+
+  <!-- Executors -->
+  <rect x="40" y="704" width="275" height="120" rx="12" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="58" y="732" class="h">Rules</text>
+  <text x="58" y="756" class="t">Plain Python, deterministic:</text>
+  <text x="58" y="774" class="t">notice periods, laptop spec, routing,</text>
+  <text x="58" y="792" class="t">identity cross-check, DPDP,</text>
+  <text x="58" y="810" class="t">document retention</text>
+
+  <rect x="335" y="704" width="275" height="120" rx="12" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="353" y="732" class="h">Connectors</text>
+  <text x="353" y="756" class="t">The only code that calls out (httpx).</text>
+  <text x="353" y="774" class="t">Idempotency ledger: a retry never</text>
+  <text x="353" y="792" class="t">orders two laptops. Outages become</text>
+  <text x="353" y="810" class="t">a task for a person</text>
+
+  <rect x="630" y="704" width="275" height="120" rx="12" fill="#efe9f7" stroke="#c4b3e0"/>
+  <text x="648" y="732" class="h">Skills (agents)</text>
+  <text x="648" y="756" class="t">Intake, document extractor,</text>
+  <text x="648" y="774" class="t">exception analyst, comms drafter,</text>
+  <text x="648" y="792" class="t">helpdesk. Low confidence goes</text>
+  <text x="648" y="810" class="t">to a person, never a guess</text>
+
+  <rect x="925" y="704" width="275" height="120" rx="12" fill="#ffffff" stroke="#d8d6cf"/>
+  <text x="943" y="732" class="h">Human tasks</text>
+  <text x="943" y="756" class="t">Reserved decisions, conflicts</text>
+  <text x="943" y="774" class="t">and exceptions with a context</text>
+  <text x="943" y="792" class="t">packet. SLA reminders, then</text>
+  <text x="943" y="810" class="t">escalation (console + Slack)</text>
+
+  <!-- Under executors -->
+  <path class="edge" d="M472 824 V856" marker-end="url(#arrow)"/>
+  <path class="edge" d="M767 824 V856" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1062 824 V856" marker-end="url(#arrow)"/>
+
+  <rect x="335" y="858" width="275" height="150" rx="12" fill="#f4f3ef" stroke="#d8d6cf"/>
+  <text x="353" y="886" class="h">TBO systems</text>
+  <text x="353" y="910" class="t">Directory, assets, access cards,</text>
+  <text x="353" y="928" class="t">payroll, statutory (PF), calendar,</text>
+  <text x="353" y="946" class="t">ticketing, notifications.</text>
+  <text x="353" y="970" class="t" style="fill:#5b6068">Mocks in the demo, with fault</text>
+  <text x="353" y="988" class="t" style="fill:#5b6068">injection for outages</text>
+
+  <rect x="630" y="858" width="275" height="76" rx="12" fill="#efe9f7" stroke="#c4b3e0"/>
+  <text x="648" y="886" class="h">Model router + PII gateway</text>
+  <text x="648" y="910" class="t">Masks personal data first; tier1</text>
+  <text x="648" y="926" class="t">then tier2 by confidence (LiteLLM)</text>
+  <path class="edge" d="M767 934 V954" marker-end="url(#arrow)"/>
+  <rect x="630" y="956" width="275" height="52" rx="12" fill="#ffffff" stroke="#c4b3e0"/>
+  <text x="648" y="979" class="h">Gemini 3.x Flash</text>
+  <text x="648" y="998" class="t">or the offline mock provider</text>
+
+  <rect x="925" y="858" width="275" height="150" rx="12" fill="#f4f3ef" stroke="#d8d6cf"/>
+  <text x="943" y="886" class="h">Named people decide</text>
+  <text x="943" y="910" class="t">HR Ops, HR Admin, hiring</text>
+  <text x="943" y="928" class="t">manager, IT, Admin, Finance.</text>
+  <text x="943" y="952" class="t">Only the exact role can decide;</text>
+  <text x="943" y="970" class="t">an agent can never approve a</text>
+  <text x="943" y="988" class="t">reserved action</text>
+
+  <rect x="40" y="858" width="275" height="150" rx="12" fill="#f4f3ef" stroke="#d8d6cf"/>
+  <text x="58" y="886" class="h">Triggers</text>
+  <text x="58" y="910" class="t">Offer accepted, resignation,</text>
+  <text x="58" y="928" class="t">probation due, data request,</text>
+  <text x="58" y="946" class="t">retention sweep. Each starts</text>
+  <text x="58" y="964" class="t">a run of a pinned workflow</text>
+  <text x="58" y="982" class="t">version</text>
+
+  <!-- Postgres -->
+  <rect x="40" y="1040" width="1160" height="64" rx="12" fill="#0f6b5c"/>
+  <text x="60" y="1068" class="hw">PostgreSQL 16: one store, one transaction per step</text>
+  <text x="60" y="1090" class="tw" style="fill:#d7ece6">Records · runs · steps · tasks · decisions · idempotency ledger · audit chain · cost events · pgvector</text>
+  <path class="edge" d="M1220 520 V1072 H1200" marker-end="url(#arrow)"/>
+  <path class="edge" d="M1200 520 H1220"/>
+
+  <!-- Sidebar: extension surface -->
+  <rect x="1250" y="168" width="310" height="484" rx="14" fill="#e3f1ed" stroke="#8cc3b5"/>
+  <text x="1270" y="198" class="h">Extension surface</text>
+  <text x="1270" y="218" class="t" style="fill:#5b6068">definitions/ · loaded and validated</text>
+  <text x="1270" y="252" class="h">workflows/</text>
+  <text x="1270" y="274" class="t">onboarding v1, v2 · probation</text>
+  <text x="1270" y="292" class="t">exit v1 · data_request v1, v2</text>
+  <text x="1270" y="326" class="h">policies/ + tests/</text>
+  <text x="1270" y="348" class="t">rbac · reserved · approvals</text>
+  <text x="1270" y="366" class="t">labour_rules · retention</text>
+  <text x="1270" y="400" class="h">skills/ + prompts/</text>
+  <text x="1270" y="422" class="t">5 skill manifests with data</text>
+  <text x="1270" y="440" class="t">allowlists and thresholds</text>
+  <text x="1270" y="474" class="h">connectors/</text>
+  <text x="1270" y="496" class="t">8 HTTP connector specs</text>
+  <line x1="1270" y1="522" x2="1540" y2="522" stroke="#8cc3b5"/>
+  <text x="1270" y="550" class="t" font-weight="600" style="fill:#0f6b5c">Exit and DPDP data requests</text>
+  <text x="1270" y="568" class="t" font-weight="600" style="fill:#0f6b5c">were added here alone,</text>
+  <text x="1270" y="586" class="t" font-weight="600" style="fill:#0f6b5c">with no change to the core.</text>
+  <path class="edgeA" d="M1250 440 H1202" marker-end="url(#arrowAccent)"/>
+
+  <!-- Sidebar: invariants -->
+  <rect x="1250" y="704" width="310" height="400" rx="14" fill="#15171a"/>
+  <text x="1270" y="734" class="hw">Guarantees enforced in code</text>
+  <text x="1270" y="766" class="tw">1  Typed steps; orchestrator is no LLM</text>
+  <text x="1270" y="796" class="tw">2  No action without a Decision row</text>
+  <text x="1270" y="826" class="tw">3  Reserved floor; agents never ALLOW</text>
+  <text x="1270" y="856" class="tw">4  Side effects once, via the ledger</text>
+  <text x="1270" y="886" class="tw">5  Models only via router + PII mask</text>
+  <text x="1270" y="916" class="tw">6  Audit append-only, hash-chained</text>
+  <text x="1270" y="946" class="tw">7  Agent rights = principal ∩ skill</text>
+  <text x="1270" y="976" class="tw">8  Rules never live in prompts</text>
+  <text x="1270" y="1006" class="tw">9  Kill switches at every step</text>
+  <text x="1270" y="1036" class="tw">10 Every version stamped on audit</text>
+  <text x="1270" y="1078" class="tw" style="fill:#8f949c">Import contracts checked in CI</text>
+</svg>
