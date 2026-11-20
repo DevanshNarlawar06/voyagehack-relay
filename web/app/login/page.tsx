@@ -50,14 +50,11 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <aside className="relative hidden flex-col bg-[radial-gradient(60rem_40rem_at_120%_-10%,rgb(63_185_160/0.18),transparent_60%)] justify-between overflow-hidden bg-sidebar p-10 text-sidebar-foreground lg:flex">
-        <Link href="/welcome" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-bold text-accent-foreground">
-            R
-          </span>
-          Relay
+        <Link href="/welcome" className="wordmark text-[30px]">
+          relay
         </Link>
         <div>
-          <h2 className="max-w-md text-3xl font-semibold tracking-tight text-balance">
+          <h2 className="max-w-md font-serif text-5xl leading-[1.05] font-normal text-balance">
             HR work that runs itself, with people on the decisions that matter.
           </h2>
           <ul className="mt-6 space-y-3 text-sidebar-foreground/80">
@@ -80,7 +77,7 @@ export default function LoginPage() {
           >
             <ArrowLeft className="size-3.5" aria-hidden /> About Relay
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+          <h1 className="text-4xl">Sign in</h1>
           <p className="mt-1 text-sm text-muted-foreground">Use your work account to open the HR console.</p>
 
           <form className="mt-6 space-y-4" onSubmit={submit}>

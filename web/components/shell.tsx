@@ -82,10 +82,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh flex-col md:flex-row">
       <aside className="flex shrink-0 flex-col bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-dvh md:w-60">
         <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
-          <span className="grid size-7 place-items-center rounded-md bg-accent text-[13px] font-bold text-accent-foreground">
-            R
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight">Relay</span>
+          <span className="wordmark text-[26px]">relay</span>
           {api.isDemoData && (
             <span
               role="note"

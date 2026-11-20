@@ -60,7 +60,7 @@ export function PageHeader({
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
       <div>
-        <h1 className="text-[26px] leading-tight font-semibold">{title}</h1>
+        <h1 className="text-[36px] leading-[1.05]">{title}</h1>
         {description && <p className="mt-1.5 max-w-2xl text-[15px] text-muted-foreground">{description}</p>}
       </div>
       {actions}

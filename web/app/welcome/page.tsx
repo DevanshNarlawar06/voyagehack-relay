@@ -49,11 +49,8 @@ export default function WelcomePage() {
   return (
     <main className="min-h-dvh">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 sm:px-6">
-        <span className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-          <span className="grid size-8 place-items-center rounded-lg bg-accent text-sm font-bold text-accent-foreground">
-            R
-          </span>
-          Relay
+        <span className="wordmark text-[30px]">
+          relay
         </span>
         <Link
           href="/login"
@@ -65,7 +62,7 @@ export default function WelcomePage() {
 
       <section className="mx-auto max-w-6xl px-4 pt-10 pb-14 sm:px-6 sm:pt-16">
         <p className="text-sm font-medium text-accent">AI-native HR services for TBO</p>
-        <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+        <h1 className="mt-3 max-w-3xl text-5xl leading-[1.02] text-balance sm:text-7xl">
           HR work that runs itself, with people on the decisions that matter.
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-muted-foreground text-pretty">
@@ -102,7 +99,7 @@ export default function WelcomePage() {
 
       <section id="how" className="border-t border-border bg-surface/60">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
-          <h2 className="text-2xl font-semibold tracking-tight">How Relay works</h2>
+          <h2 className="font-serif text-4xl font-normal">How Relay works</h2>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             A platform, not a point solution. Onboarding runs in depth, and the exit journey was added
             through workflow, policy and rule files alone, with no change to the core.
