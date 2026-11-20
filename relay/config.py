@@ -6,6 +6,7 @@ environment or a local `.env` file, never from YAML.
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
@@ -151,10 +152,20 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     return data
 
 
+def _with_tier_overrides(models: dict[str, Any]) -> dict[str, Any]:
+    """Apply RELAY_MODEL_TIER1 / RELAY_MODEL_TIER2 from the environment (provider names)."""
+    tiers = dict(models.get("tiers") or {})
+    for tier in ("tier1", "tier2"):
+        chosen = os.environ.get(f"RELAY_MODEL_{tier.upper()}", "").strip()
+        if chosen:
+            tiers[tier] = chosen
+    return {**models, "tiers": tiers}
+
+
 def load_config(config_dir: Path = CONFIG_DIR) -> RelayConfig:
     """Load and validate every file in `config_dir`. Raises on any schema error."""
     return RelayConfig(
-        models=ModelsConfig.model_validate(_read_yaml(config_dir / "models.yaml")),
+        models=ModelsConfig.model_validate(_with_tier_overrides(_read_yaml(config_dir / "models.yaml"))),
         infra_costs=InfraCostsConfig.model_validate(_read_yaml(config_dir / "infra_costs.yaml")),
         app=AppConfig.model_validate(_read_yaml(config_dir / "app.yaml")),
         volumes=VolumesConfig.model_validate(_read_yaml(config_dir / "volumes.yaml")),
