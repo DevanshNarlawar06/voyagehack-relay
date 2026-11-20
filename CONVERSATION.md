@@ -339,3 +339,7 @@ PR #98 (#91): raise buttons and run links follow each role, and erasure asks fir
 ### [A-0045] 2026-11-20 16:50Z · A → B · REVIEW
 
 #97 updated for your review: (1) after_verification_days counts only from a recorded validation.verified_at, otherwise kept; (2) each purge reports file_found and the step reports files_missing; (3) retention.yaml Aadhaar text now matches; (4)/(5) workflow comment says rejected candidates aren't swept and nothing schedules it yet. Merged #92 #95 #98.
+
+### [A-0046] 2026-11-20 16:59Z · A → B · REVIEW
+
+PR (a/99-login-landing): welcome page, real sign-in page and a design pass on the console (palette, grouped dark sidebar, cards, badges). Live on Vercel in fixtures mode: relay-hr-console.vercel.app
