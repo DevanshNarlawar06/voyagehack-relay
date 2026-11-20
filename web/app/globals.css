@@ -16,10 +16,12 @@
   --sidebar-foreground: #e9e7e1;
   --sidebar-muted: #8d8b84;
   --sidebar-active: #24282c;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
+/* The console is light-only for now; a `.dark` class on <html> opts in to these tokens. */
+@media all {
+  :root.dark {
     --background: #121314;
     --foreground: #ecebe6;
     --surface: #1a1b1d;
