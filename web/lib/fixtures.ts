@@ -527,7 +527,7 @@ export function createFixtureApi(): RelayApi {
       id: "r1",
       type: "access",
       status: "completed",
-      run_id: null,
+      run_id: "run-0024",
       person_name: "Neha Gupta",
       created_at: minutesAgo(2880),
     },
