@@ -1,8 +1,10 @@
 # DPDP retention sweeper (PRD 14). Built only through extension points: no relay/core change.
-# Started nightly by `relay retention-sweep` (event `retention.sweep.due`, optional `as_of` date).
+# Started by `relay retention-sweep` (event `retention.sweep.due`, optional `as_of` date), by hand
+# or from a nightly cron: nothing schedules it yet.
 # Finds documents past what retention.yaml allows and purges them: the encrypted file is deleted,
 # extracted fields are cleared, and the audited step result names each purged document.
-# When the rules can't tell (no employee record, no exit date), a document is kept.
+# When the rules can't tell (no employee record, no exit date, no verification date), a document
+# is kept. Rejected candidates' documents are not swept yet (they have no employee record).
 name: retention_sweeper
 version: 1
 subject: system

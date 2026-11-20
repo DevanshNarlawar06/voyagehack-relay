@@ -66,10 +66,13 @@ def _document(
     state: m.EmployeeState | None,
     last_day: date | None = None,
     uploaded: datetime | None = None,
+    verified_at: str | None = None,
+    with_file: bool = True,
 ) -> uuid.UUID:
     """A person, maybe an employee, and one document with a file on disk."""
     ref = uuid.uuid4().hex
-    (world.storage / ref).write_text("ciphertext", encoding="ascii")
+    if with_file:
+        (world.storage / ref).write_text("ciphertext", encoding="ascii")
     with world.sessions.begin() as s:
         person = m.Person(full_name="Retention Case")
         s.add(person)
@@ -88,6 +91,7 @@ def _document(
             category=category,
             storage_ref=ref,
             extracted={"name": "Retention Case"},
+            validation={"verified_at": verified_at} if verified_at else None,
         )
         if uploaded is not None:
             doc.created_at = uploaded
@@ -116,7 +120,13 @@ def _doc(world: World, doc_id: uuid.UUID) -> m.Document:
 def test_the_sweeper_purges_only_expired_documents_and_audits_each(world: World) -> None:
     left = _document(world, m.DocumentCategory.PHOTO, m.EmployeeState.EXITED, date(2000, 1, 1))
     verified = _document(
+        world, m.DocumentCategory.AADHAAR, m.EmployeeState.ACTIVE, verified_at="1999-06-01"
+    )
+    unverified = _document(  # uploaded long ago, never verified: counting from upload is too early
         world, m.DocumentCategory.AADHAAR, m.EmployeeState.ACTIVE, uploaded=LONG_AGO
+    )
+    lost_file = _document(  # expired, but its file is not where the sweeper looks
+        world, m.DocumentCategory.PHOTO, m.EmployeeState.EXITED, date(2000, 1, 1), with_file=False
     )
     working = _document(world, m.DocumentCategory.PAN, m.EmployeeState.ACTIVE)
     no_exit_date = _document(world, m.DocumentCategory.PHOTO, m.EmployeeState.EXITED)
@@ -126,22 +136,22 @@ def test_the_sweeper_purges_only_expired_documents_and_audits_each(world: World)
     )  # 8 years after exit: kept
 
     files = {d: _doc(world, d).storage_ref for d in (left, verified)}
+    _doc(world, unverified)
     ctx = _sweep(world)
 
     for gone in (left, verified):
         doc = _doc(world, gone)
         assert doc.storage_ref == PURGED and doc.extracted is None
         assert not (world.storage / files[gone]).exists()  # the encrypted file is deleted
-    for kept in (working, no_exit_date, no_employee, recent_leaver):
+    for kept in (working, no_exit_date, no_employee, recent_leaver, unverified):
         doc = _doc(world, kept)
         assert doc.storage_ref != PURGED and doc.extracted == {"name": "Retention Case"}
         assert (world.storage / doc.storage_ref).exists()
     assert _doc(world, recent_leaver).retention_until == date(2008, 5, 30)
     purge = ctx["purge"]
-    assert purge["count"] == 2  # type: ignore[index]
-    assert sorted(d["document_id"] for d in purge["documents"]) == sorted(  # type: ignore[index]
-        [str(left), str(verified)]
-    )
+    assert purge["count"] == 3 and purge["files_missing"] == 1  # type: ignore[index]
+    found = {d["document_id"]: d["file_found"] for d in purge["documents"]}  # type: ignore[index]
+    assert found == {str(left): True, str(verified): True, str(lost_file): False}
     with world.sessions() as s:
         assert verify_chain(s).ok
 
@@ -163,4 +173,5 @@ def test_keep_until_follows_the_category_rule() -> None:
     assert keep_until(exit_rule, None, date(2024, 1, 1), date(2020, 1, 1)) is None  # no employee
     verify_rule = {"while": ["onboarding"], "after_verification_days": 30}
     assert keep_until(verify_rule, "active", None, date(2024, 1, 1)) == date(2024, 1, 31)
+    assert keep_until(verify_rule, "active", None, None) is None  # never verified: keep
     assert keep_until({"while": []}, "exited", date(2024, 1, 1), date(2020, 1, 1)) is None

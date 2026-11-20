@@ -28,21 +28,34 @@ def keep_until(
     rule: Mapping[str, Any],
     state: str | None,
     last_working_day: date | None,
-    uploaded: date,
+    verified: date | None,
 ) -> date | None:
     """The last day a document must be kept, or None while it must be kept or nobody can tell.
 
-    `state` is the employee's state (None when there is no employee record).
+    `state` is the employee's state (None when there is no employee record). `verified` is when
+    the document was verified, from its `validation.verified_at`; without it a document whose rule
+    counts from verification is kept, because the upload date would purge it too early.
     """
     if state is None or state in rule.get("while", []):
         return None
     if "after_verification_days" in rule:
-        return uploaded + timedelta(days=int(rule["after_verification_days"]))
+        if verified is None:
+            return None
+        return verified + timedelta(days=int(rule["after_verification_days"]))
     if "after_exit_days" in rule:
         if last_working_day is None:
             return None
         return last_working_day + timedelta(days=int(rule["after_exit_days"]))
     return None
+
+
+def _verified(doc: m.Document) -> date | None:
+    """When the document was verified, if that was recorded."""
+    raw = (doc.validation or {}).get("verified_at")
+    try:
+        return date.fromisoformat(str(raw)[:10]) if raw else None
+    except ValueError:
+        return None
 
 
 class RetentionRules:
@@ -81,9 +94,7 @@ class RetentionRules:
             for doc, state, last_day in rows:
                 rule = rules.get(doc.category.value)
                 until = (
-                    keep_until(
-                        rule, state.value if state else None, last_day, doc.created_at.date()
-                    )
+                    keep_until(rule, state.value if state else None, last_day, _verified(doc))
                     if isinstance(rule, Mapping)
                     else None
                 )
@@ -109,11 +120,14 @@ class RetentionRules:
                 doc = s.get(m.Document, uuid.UUID(raw))
                 if doc is None or doc.storage_ref == PURGED:
                     continue
-                (self.storage_dir / Path(doc.storage_ref).name).unlink(missing_ok=True)
+                path = self.storage_dir / Path(doc.storage_ref).name
+                file_found = path.exists()  # false: already gone, or a wrong storage dir
+                path.unlink(missing_ok=True)
                 doc.storage_ref, doc.extracted, doc.validation = PURGED, None, None
                 purged.append(
                     {
                         "document_id": raw,
+                        "file_found": file_found,
                         "person_id": str(doc.person_id),
                         "category": doc.category.value,
                         "retention_until": doc.retention_until.isoformat()
@@ -121,4 +135,5 @@ class RetentionRules:
                         else None,
                     }
                 )
-        return {"count": len(purged), "documents": purged}
+        missing = sum(not d["file_found"] for d in purged)
+        return {"count": len(purged), "files_missing": missing, "documents": purged}

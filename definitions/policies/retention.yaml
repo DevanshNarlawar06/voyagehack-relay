@@ -4,7 +4,7 @@ owner: hr_admin
 description: DPDP retention per data category and subject state (read by the retention_sweeper workflow).
 categories:
   pan:        { while: [pre_hire, onboarding, active, notice], after_exit_days: 2920, source: "Income-tax record keeping (8 years), placeholder" }
-  aadhaar:    { while: [pre_hire, onboarding], after_verification_days: 30, source: "Minimise: keep last 4 digits only after verification" }
+  aadhaar:    { while: [pre_hire, onboarding], after_verification_days: 30, source: "Minimise: purge the document and its extracted fields 30 days after verification" }
   bank_proof: { while: [pre_hire, onboarding, active, notice], after_exit_days: 2920, source: "Payroll records, placeholder" }
   education:  { while: [pre_hire, onboarding, active, notice], after_exit_days: 365, source: "Company policy, placeholder" }
   photo:      { while: [pre_hire, onboarding, active, notice], after_exit_days: 30, source: "Access card only" }
