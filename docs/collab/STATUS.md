@@ -4,16 +4,16 @@ Each session edits **only its own block**, through `bash scripts/status.sh <A|B>
 
 <!-- STATUS:A:BEGIN -->
 ## Session A
-_Updated 2026-11-07 10:06Z_
+_Updated 2026-11-07 10:42Z_
 
-Now: #93 (#89 correction details, honest DPDP messages) and #95 (#94 audited export open) in review. Merged today: #76 #80 #81 #82 #83 #85 #86 #87 #88. Waiting on B to rebase #92 (LGTM given). Next: tidy worktrees, then more UI follow-ups. Blocked: needs-human #19 #20 #21 #22 #56. Branch: main.
+Now: #95 (#94 export open) merges after 10:48Z, #97 (#96 retention sweeper) after its window; both updated with main. Waiting on B: #92 conflicts with main (LGTM given). Next: keep landing PRs; then real-stack demo rehearsal. Blocked: needs-human #19 #20 (LLM key) #21 (Slack tokens) #22 #56. Branch: main.
 <!-- STATUS:A:END -->
 
 
 
 <!-- STATUS:B:BEGIN -->
 ## Session B
-_Updated 2026-11-07 09:45Z_
+_Updated 2026-11-07 12:43Z_
 
-Now: #92 (#90) in review. Next: #91 data requests page by role, once #85 merges. Waiting on A: the erase and export message decision (#85 review, items 4 and 5). Needs a person: #56 consent wording, #20 LLM key. Branch: b/90-task-analysis.
+Now: #92 (#90) and #98 (#91) await A's merge. Next: Open export button after #95 merges. Waiting on A: #97 item 1 (Aadhaar purge date). Needs a person: #20 LLM key, #56 consent wording, #21 Slack, #19 starter kit, #22 round dates. Branch: b/91-data-requests-by-role.
 <!-- STATUS:B:END -->
