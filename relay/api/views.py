@@ -31,6 +31,7 @@ from relay.api.schemas import (
 )
 from relay.api.task_packet import describe
 from relay.core.dsl.model import parse_definition
+from relay.core.engine.sealed import unseal
 from relay.db import models as m
 
 _MAX_RUNS = 200
@@ -349,6 +350,19 @@ def list_employees(session: Session) -> list[EmployeeOut]:
         .limit(_MAX_RUNS)
     )
     return [_employee_out(row) for row in rows]
+
+
+def data_request_export(session: Session, request_id: UUID) -> tuple[UUID, dict[str, Any]] | None:
+    """The person id and opened access export of a data request, or None if none was built."""
+    row = session.get(m.DataRequest, request_id)
+    if row is None or row.run_id is None:
+        return None
+    run = session.get(m.WorkflowRun, row.run_id)
+    package = ((run.context if run else {}).get("ctx") or {}).get("export", {}).get("package")
+    if package is None:
+        return None
+    opened: dict[str, Any] = unseal(package)
+    return row.person_id, opened
 
 
 def list_data_requests(session: Session, person_id: UUID | None) -> list[DataRequestRowOut]:

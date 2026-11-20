@@ -25,6 +25,15 @@ cases:
   - name: "dpdp: the requester cannot decide their own correction"
     request: { action: data_request.correction.decide, actor: { type: human, id: u-emp, roles: [employee] } }
     expect: { effect: DENY }
+  - name: "dpdp: the engine cannot open an export"
+    request: { action: data_request.export.open, actor: { type: system, id: engine, roles: [system] } }
+    expect: { effect: DENY }
+  - name: "dpdp: hr_ops cannot open an export"
+    request: { action: data_request.export.open, actor: { type: human, id: u-hrops, roles: [hr_ops] } }
+    expect: { effect: DENY }
+  - name: "dpdp: hr_admin opens an export"
+    request: { action: data_request.export.open, actor: { type: human, id: u-hradmin, roles: [hr_admin] } }
+    expect: { effect: ALLOW }
   - name: "dpdp: a manager may raise a request about themselves"
     request: { action: data_request.create, actor: { type: human, id: u-mgr, roles: [manager] } }
     expect: { effect: ALLOW }

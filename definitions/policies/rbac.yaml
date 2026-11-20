@@ -26,7 +26,12 @@ roles:
     - "grievance.route"
     - "posh.route"
     - "whistleblower.route"
-    - "data_request.*"   # erasure is still reserved for hr_admin (reserved.yaml)
+    # data requests: only what the workflow does; opening an export is a person's act
+    - "data_request.verify"
+    - "data_request.export.build"
+    - "data_request.correction.decide"   # opens the HR Ops task
+    - "data_request.erasure.decide"      # reserved: always goes to HR Admin
+    - "data_request.close"
   hr_ops:
     - "runs.read"
     - "tasks.*"
@@ -128,6 +133,7 @@ actions:
   data_request.correction.decide: { description: "Approve or reject a correction to the person's record" }
   data_request.erasure.decide: { description: "Erase, or refuse because the law requires keeping the data (reserved)" }
   data_request.close: { description: "Record how a data request ended" }
+  data_request.export.open: { description: "Open a prepared access export to deliver it (HR Admin, audited)" }
 
 purposes:   # documentation only; legitimate-use purposes skip the consent check
   onboarding_verification: Verify identity and eligibility documents of a new joiner
