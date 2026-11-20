@@ -32,6 +32,9 @@ class Provider(_Strict):
     litellm_model: str
     price_inr: Price
     region: str = "unspecified"  # shown in "what left our system" and the PII inventory
+    # For reasoning models (e.g. Gemini 3). Hidden reasoning counts against the output token cap,
+    # so a small cap can leave no room for the answer. "minimal" keeps short JSON replies whole.
+    reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
 
 
 class ModelDefaults(_Strict):
@@ -165,7 +168,9 @@ def _with_tier_overrides(models: dict[str, Any]) -> dict[str, Any]:
 def load_config(config_dir: Path = CONFIG_DIR) -> RelayConfig:
     """Load and validate every file in `config_dir`. Raises on any schema error."""
     return RelayConfig(
-        models=ModelsConfig.model_validate(_with_tier_overrides(_read_yaml(config_dir / "models.yaml"))),
+        models=ModelsConfig.model_validate(
+            _with_tier_overrides(_read_yaml(config_dir / "models.yaml"))
+        ),
         infra_costs=InfraCostsConfig.model_validate(_read_yaml(config_dir / "infra_costs.yaml")),
         app=AppConfig.model_validate(_read_yaml(config_dir / "app.yaml")),
         volumes=VolumesConfig.model_validate(_read_yaml(config_dir / "volumes.yaml")),

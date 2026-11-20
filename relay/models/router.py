@@ -54,6 +54,8 @@ class _LiteLLMProvider:
         kwargs: dict[str, Any] = {}
         if request.json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        if request.reasoning_effort is not None:
+            kwargs["reasoning_effort"] = request.reasoning_effort
         response = litellm.completion(
             model=request.model,
             messages=request.messages,
@@ -263,6 +265,7 @@ class ModelRouter:
             max_output_tokens=request.max_output_tokens or defaults.max_output_tokens,
             output_schema=request.output_schema,
             json_mode=defaults.json_mode,
+            reasoning_effort=config.reasoning_effort,
         )
         try:
             response = _select_provider(config).complete(provider_request)

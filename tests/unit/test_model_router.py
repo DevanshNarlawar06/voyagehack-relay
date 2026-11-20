@@ -588,3 +588,22 @@ def test_only_the_router_imports_litellm_anywhere_in_relay() -> None:
         path.as_posix() for path in Path("relay").rglob("*.py") if "litellm" in _imports(path)
     }
     assert importers == {"relay/models/router.py"}
+
+
+def test_litellm_provider_passes_reasoning_effort(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, Any]] = []
+
+    def completion(**kwargs: Any) -> Any:
+        calls.append(kwargs)
+        message = SimpleNamespace(content='{"intent": "resign"}')
+        usage = SimpleNamespace(prompt_tokens=5, completion_tokens=3)
+        return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=usage)
+
+    monkeypatch.setitem(sys.modules, "litellm", SimpleNamespace(completion=completion))
+    provider = router_module._LiteLLMProvider()
+    base = ("gemini/x", [{"role": "user", "content": "x"}], 0, 50, {"type": "object"}, True)
+    reply = provider.complete(ProviderRequest(*base, reasoning_effort="minimal"))
+    provider.complete(ProviderRequest(*base))
+    assert reply.text == '{"intent": "resign"}'
+    assert calls[0]["reasoning_effort"] == "minimal"
+    assert "reasoning_effort" not in calls[1]

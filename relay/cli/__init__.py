@@ -28,6 +28,8 @@ def _load_env_file() -> None:
     from relay.config import REPO_ROOT
 
     load_dotenv(REPO_ROOT / ".env", override=False)
+
+
 db_app = typer.Typer(no_args_is_help=True, help="Database migrations.")
 config_app = typer.Typer(no_args_is_help=True, help="Configuration.")
 app.add_typer(db_app, name="db")

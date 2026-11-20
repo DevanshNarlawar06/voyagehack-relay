@@ -40,3 +40,27 @@ def test_bad_enum_is_rejected(tmp_path: Path) -> None:
     )
     with pytest.raises(ValidationError):
         load_config(tmp_path)
+
+
+def test_env_overrides_a_tier(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RELAY_MODEL_TIER1", "gemini_flash_lite")
+    monkeypatch.delenv("RELAY_MODEL_TIER2", raising=False)
+    models = load_config().models
+    assert models.tiers["tier1"] == "gemini_flash_lite"
+    assert models.tiers["tier2"] == "mock"
+
+
+def test_env_override_naming_an_unknown_provider_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("RELAY_MODEL_TIER2", "no_such_provider")
+    with pytest.raises(ValidationError):
+        load_config()
+
+
+def test_gemini_providers_keep_reasoning_minimal() -> None:
+    # Gemini 3 spends hidden reasoning tokens from the output cap; without this, JSON is cut off.
+    providers = load_config().models.providers
+    for name in ("gemini_flash_lite", "gemini_flash"):
+        assert providers[name].reasoning_effort == "minimal"
+    assert providers["mock"].reasoning_effort is None

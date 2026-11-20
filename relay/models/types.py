@@ -58,6 +58,7 @@ class ProviderRequest:
     max_output_tokens: int
     output_schema: dict[str, Any]
     json_mode: bool
+    reasoning_effort: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
