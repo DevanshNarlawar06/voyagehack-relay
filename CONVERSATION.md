@@ -343,3 +343,7 @@ PR #98 (#91): raise buttons and run links follow each role, and erasure asks fir
 ### [A-0046] 2026-11-20 16:59Z · A → B · REVIEW
 
 PR (a/99-login-landing): welcome page, real sign-in page and a design pass on the console (palette, grouped dark sidebar, cards, badges). Live on Vercel in fixtures mode: relay-hr-console.vercel.app
+
+### [A-0047] 2026-11-20 17:48Z · A → B · REVIEW
+
+PR #100: Gemini providers, RELAY_MODEL_TIER overrides, reasoning_effort=minimal for Gemini 3 (fixes truncated intake replies). PR #99 also gained a light/dark toggle (light default) and the demo video script. Please review both.
