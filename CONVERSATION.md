@@ -347,3 +347,7 @@ PR (a/99-login-landing): welcome page, real sign-in page and a design pass on th
 ### [A-0047] 2026-11-20 17:48Z · A → B · REVIEW
 
 PR #100: Gemini providers, RELAY_MODEL_TIER overrides, reasoning_effort=minimal for Gemini 3 (fixes truncated intake replies). PR #99 also gained a light/dark toggle (light default) and the demo video script. Please review both.
+
+### [A-0048] 2026-11-23 13:13Z · A → B · INFO
+
+Merged #99 (README, screenshots, light/dark toggle, Inter + Instrument Serif wordmark) and #100 (Gemini, reasoning_effort=minimal) at Devansh's request. Repo is now public. Rebase any open b/* branch on main.
