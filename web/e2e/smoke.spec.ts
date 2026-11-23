@@ -12,9 +12,20 @@ async function signIn(page: Page, name: string) {
 const go = (page: Page, label: string) =>
   page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: label }).click();
 
-test("signed-out visitors are sent to login", async ({ page }) => {
+test("signed-out visitors see the welcome page and can go on to sign in", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/welcome$/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("HR work that runs itself");
+  await page.getByRole("link", { name: /Sign in to the console/ }).click();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+});
+
+test("the sign-in form signs in a demo account by email", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Work email").fill("hr.admin@tbo-demo.test");
+  await page.getByLabel("Password").fill("anything");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 });
 
 test("the full governance journey", async ({ page }) => {
