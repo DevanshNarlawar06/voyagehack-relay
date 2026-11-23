@@ -1,10 +1,15 @@
 # PRD 13.3. Provider change = edit this file only.
 providers:
   mock:    { litellm_model: "mock/deterministic", price_inr: { in_per_1k: 0.01, out_per_1k: 0.03 }, region: local }
-  primary: { litellm_model: "<provider>/<small-model>", price_inr: { in_per_1k: 0.0, out_per_1k: 0.0 } }  # fill from eval
-  large:   { litellm_model: "<provider>/<large-model>", price_inr: { in_per_1k: 0.0, out_per_1k: 0.0 } }
+  # Gemini (needs GEMINI_API_KEY). Older ids (2.5) are closed to new keys and Pro is outside the
+  # free quota, so both tiers use Flash models. Prices are ESTIMATES, not verified list prices;
+  # a free-tier key is billed nothing. Check Google's pricing page before quoting costs.
+  gemini_flash_lite: { litellm_model: "gemini/gemini-3.1-flash-lite", price_inr: { in_per_1k: 0.009, out_per_1k: 0.035 }, region: google, reasoning_effort: minimal }
+  gemini_flash:      { litellm_model: "gemini/gemini-3.5-flash", price_inr: { in_per_1k: 0.027, out_per_1k: 0.22 }, region: google, reasoning_effort: minimal }
 tiers:
-  tier1: mock     # switch to primary once evals pick a model
-  tier2: mock     # switch to large
+  # Offline by default, so tests and CI never call a model. RELAY_MODEL_TIER1 / RELAY_MODEL_TIER2
+  # (in the environment or .env, read by the `relay` CLI) switch a tier to a provider above.
+  tier1: mock
+  tier2: mock
 defaults: { max_output_tokens: 400, temperature: 0, json_mode: true }
 thresholds: {}    # per skill, written from evals/threshold_report.md
